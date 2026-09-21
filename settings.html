@@ -1,0 +1,778 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ACCOUNT SETTINGS — SALARY COMPUTER</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* ==========================================================================
+           1. DESIGN TOKENS & SYSTEM VARIABLES (DYNAMIC SYSTEM GLOBAL THEMING)
+           ========================================================================== */
+        :root {
+            --bg: #0b0f1a; 
+            --surface: rgba(255, 255, 255, 0.03);
+            --primary: #22c55e; 
+            --success: #ffee00;
+            --text-main: #f1f5f9;
+            --glass: rgba(255, 255, 255, 0.08);
+            --border-glass: rgba(255, 255, 255, 0.12);
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 40px 10px 140px 10px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+            box-sizing: border-box;
+            overflow-x: hidden;
+            transition: background 0.4s ease;
+        }
+
+        /* ==========================================================================
+           2. CORE LAYOUT CONTAINER
+           ========================================================================== */
+        .container {
+            width: 100%;
+            max-width: 440px;
+            background: var(--surface);
+            backdrop-filter: blur(25px);
+            -webkit-backdrop-filter: blur(25px);
+            padding: 25px;
+            border-radius: 24px;
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255,255,255,0.1);
+            border: 1px solid var(--border-glass);
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        .header-nav {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .back-btn {
+            background: var(--glass);
+            border: 1px solid var(--border-glass);
+            color: var(--text-main);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .back-btn:hover {
+            background: var(--primary);
+            color: #000;
+            border-color: var(--primary);
+            transform: scale(1.05);
+        }
+
+        h1 {
+            font-size: 0.9rem;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.15em;
+            margin: 0;
+            font-weight: 800;
+        }
+
+        /* ==========================================================================
+           3. CURRENT PROFILE BANNER (IDENTITY NODE DISPLAY)
+           ========================================================================== */
+        .profile-identity-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-glass);
+            padding: 16px;
+            border-radius: 20px;
+            margin-bottom: 24px;
+        }
+
+        .profile-avatar-wrapper {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: 2px solid var(--primary);
+            overflow: hidden;
+            background: rgba(0,0,0,0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .profile-avatar-wrapper img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .profile-meta-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .profile-meta-info .user-name {
+            font-size: 0.9rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--text-main);
+            letter-spacing: 0.05em;
+        }
+
+        .profile-meta-info .user-role {
+            font-size: 0.68rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            color: #94a3b8;
+            letter-spacing: 0.08em;
+        }
+
+        /* ==========================================================================
+           4. DATA MATRIX FORM CONTROLS
+           ========================================================================== */
+        .form-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-left: 2px;
+            margin-bottom: 8px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.12em;
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="email"],
+        .form-group input[type="time"],
+        .form-group input[type="number"],
+        .form-group select {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--border-glass);
+            padding: 14px;
+            border-radius: 14px;
+            color: white;
+            font-size: 0.95rem;
+            box-sizing: border-box;
+            font-weight: 600;
+            outline: none;
+            text-transform: uppercase;
+            transition: border-color 0.3s, box-shadow 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 12px rgba(255, 255, 255, 0.05);
+        }
+
+        .daily-rate-isolated-row {
+            background: rgba(0, 0, 0, 0.25);
+            border: 1.5px solid var(--border-glass);
+            padding: 18px 16px;
+            border-radius: 18px;
+            margin-bottom: 24px;
+        }
+
+        .daily-rate-isolated-row label {
+            color: var(--text-main);
+            font-weight: 800;
+            font-size: 0.75rem;
+        }
+
+        .daily-rate-isolated-row input[type="number"] {
+            font-weight: 800 !important;
+            font-size: 1.1rem !important;
+            border-color: rgba(255, 255, 255, 0.2);
+            color: var(--text-main);
+        }
+
+        .day-matrix {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 6px;
+        }
+
+        .day-chip {
+            position: relative;
+        }
+
+        .day-chip input[type="checkbox"] {
+            position: absolute;
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .day-chip label {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--border-glass);
+            padding: 12px 0;
+            border-radius: 12px;
+            font-size: 0.72rem;
+            font-weight: 800;
+            color: #94a3b8;
+            cursor: pointer;
+            margin: 0;
+            text-align: center;
+            text-transform: uppercase;
+            transition: all 0.2s ease;
+        }
+
+        .day-chip input[type="checkbox"]:checked + label {
+            background: var(--primary);
+            color: #000000;
+            border-color: var(--primary);
+            font-weight: 800;
+        }
+
+        .checkbox-container-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px dashed var(--border-glass);
+            padding: 16px;
+            border-radius: 14px;
+            cursor: pointer;
+            user-select: none;
+            margin-top: 6px;
+            transition: border-color 0.2s ease;
+        }
+
+        .checkbox-container-row:hover {
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .checkbox-container-row input[type="checkbox"] {
+            appearance: none;
+            -webkit-appearance: none;
+            background-color: rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 10px;
+            border-radius: 8px;
+            display: inline-block;
+            position: relative;
+            cursor: pointer;
+            outline: none;
+            flex-shrink: 0;
+        }
+
+        .checkbox-container-row input[type="checkbox"]:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .checkbox-container-row input[type="checkbox"]:checked:after {
+            content: '\2714';
+            font-size: 12px;
+            position: absolute;
+            top: 2px;
+            left: 4px;
+            color: #000000;
+        }
+
+        .checkbox-container-row span {
+            font-size: 0.75rem;
+            font-weight: 800;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            line-height: 1.4;
+        }
+
+        .action-btn {
+            width: 100%;
+            height: 54px;
+            border: none;
+            border-radius: 35px;
+            font-weight: 800;
+            font-size: 0.92rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            background-color: var(--primary);
+            color: #000;
+            cursor: pointer;
+            box-shadow: 0 12px 35px rgba(0, 0, 0, 0.3);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            margin-top: 24px;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(255, 255, 255, 0.05);
+        }
+
+        /* ==========================================================================
+           5. NEW WORKFLOW UI ARCHITECTURE: LOADERS & NOTIFICATION MECHANISMS
+           ========================================================================== */
+        .engine-loader-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(11, 15, 26, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            transition: opacity 0.4s ease, visibility 0.4s ease;
+        }
+
+        .engine-loader-overlay.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .spinner-ring {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255, 255, 255, 0.05);
+            border-radius: 50%;
+            border-top-color: var(--primary);
+            animation: spinEngine 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spinEngine {
+            to { transform: rotate(360deg); }
+        }
+
+        .loader-status-text {
+            font-size: 0.75rem;
+            font-weight: 800;
+            letter-spacing: 0.2em;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+
+        .toast-notification-hub {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: rgba(0, 0, 0, 0.8);
+            border: 1px solid var(--border-glass);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            padding: 14px 28px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 10000;
+            opacity: 0;
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+            pointer-events: none;
+        }
+
+        .toast-notification-hub.active {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast-indicator-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--primary);
+        }
+
+        .toast-body-text {
+            font-size: 0.72rem;
+            font-weight: 800;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Async UI Loading Overlay -->
+    <div id="globalEngineLoader" class="engine-loader-overlay">
+        <div class="spinner-ring"></div>
+        <div class="loader-status-text">Synchronizing Remote Assets...</div>
+    </div>
+
+    <!-- UI Background Sync Toast Core Container -->
+    <div id="toastHub" class="toast-notification-hub">
+        <div id="toastDot" class="toast-indicator-dot"></div>
+        <div id="toastText" class="toast-body-text">Processing Session...</div>
+    </div>
+
+    <div class="container">
+        <div class="header-nav">
+            <button class="back-btn" onclick="window.location.href='home.html'" title="RETURN TO ENGINE">
+                <i data-lucide="arrow-left" style="width:18px;height:18px;"></i>
+            </button>
+            <h1>PROFILE CONFIGURATION</h1>
+            <div style="width:40px;"></div>
+        </div>
+
+        <div class="profile-identity-card">
+            <div class="profile-avatar-wrapper">
+                <img id="userDisplayAvatar" src="https://global.discourse-cdn.com/monzo/original/3X/8/6/866e6d84e8c756b19050fbe2ca0932858118614c.jpg" alt="AVATAR NODE">
+            </div>
+            <div class="profile-meta-info">
+                <div class="user-name" id="userDisplayName">LOADING PREFERENCES...</div>
+                <div class="user-role" id="userDisplayRole">AUTHENTICATED EMPLOYEE</div>
+            </div>
+        </div>
+
+        <form id="settingsForm" onsubmit="event.preventDefault();">
+            <div class="form-group">
+                <label>LAST NAME</label>
+                <input type="text" id="lastName" required autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label>FIRST NAME</label>
+                <input type="text" id="firstName" required autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label>MIDDLE INITIAL</label>
+                <input type="text" id="middleInitial" maxlength="2" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label>ID NO.</label>
+                <input type="email" id="emailAddress" required autocomplete="off">
+            </div>
+
+            <div class="daily-rate-isolated-row">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label>DAILY RATE VALUE (₱)</label>
+                    <input type="number" id="dailyRate" step="0.01" required autocomplete="off">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>POSITION</label>
+                <input type="text" id="position" required autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label>DEPARTMENT</label>
+                <select id="departmentSelect">
+                    <option value="Admin">ADMIN</option>
+                    <option value="Finance">FINANCE</option>
+                    <option value="Custom">OTHER (TYPE CUSTOM)</option>
+                </select>
+                <input type="text" id="departmentCustom" style="display:none; margin-top:8px;" autocomplete="off">
+            </div>
+
+            <div class="form-group">
+                <label>SCHEDULE OF DUTIES</label>
+                <div class="day-matrix">
+                    <div class="day-chip"><input type="checkbox" id="day-Mon" value="Monday"><label for="day-Mon">MON</label></div>
+                    <div class="day-chip"><input type="checkbox" id="day-Tue" value="Tuesday"><label for="day-Tue">TUE</label></div>
+                    <div class="day-chip"><input type="checkbox" id="day-Wed" value="Wednesday"><label for="day-Wed">WED</label></div>
+                    <div class="day-chip"><input type="checkbox" id="day-Thu" value="Thursday"><label for="day-Thu">THU</label></div>
+                    <div class="day-chip"><input type="checkbox" id="day-Fri" value="Friday"><label for="day-Fri">FRI</label></div>
+                    <div class="day-chip"><input type="checkbox" id="day-Sat" value="Saturday"><label for="day-Sat">SAT</label></div>
+                    <div class="day-chip"><input type="checkbox" id="day-Sun" value="Sunday"><label for="day-Sun">SUN</label></div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap:12px;">
+                <div class="form-group">
+                    <label>TIME IN</label>
+                    <input type="time" id="timeIn" value="08:00" required>
+                </div>
+                <div class="form-group">
+                    <label>TIME OUT</label>
+                    <input type="time" id="timeOut" value="17:00" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>REST PERIOD INTERMISSION</label>
+                <div class="checkbox-container-row" id="lunchBreakRow">
+                    <input type="checkbox" id="hasLunchBreak" checked>
+                    <span>INCLUDE LUNCH BREAK(12-1 PM)</span>
+                </div>
+            </div>
+
+            <button type="button" class="action-btn" id="saveBtn" onclick="window.location.href='payslip.html'">PROCEED TO PAYSLIP</button>
+        </form>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDaeNQF4qmW0vvwxUPp_NztnT0hoLzm1BQ",
+            authDomain: "svls-289ee.firebaseapp.com",
+            databaseURL: "https://svls-289ee-default-rtdb.firebaseio.com",
+            projectId: "svls-289ee",
+            storageBucket: "svls-289ee.firebasestorage.app",
+            messagingSenderId: "500705386198",
+            appId: "1:500705386198:web:96f189662bc2aa99cf7377",
+            measurementId: "G-5TNBMQ2HN5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        const userId = localStorage.getItem("userId");
+        if (!userId) window.location.href = "login.html";
+
+        // Premium Assets Lookup Matrix (Integrated for self-contained background/theme syncing)
+const premium3dAssets = {
+    'https://global.discourse-cdn.com/monzo/original/3X/8/6/866e6d84e8c756b19050fbe2ca0932858118614c.jpg': 'https://global.discourse-cdn.com/monzo/original/3X/8/6/866e6d84e8c756b19050fbe2ca0932858118614c.jpg',
+    'https://i.pinimg.com/474x/0e/d0/0d/0ed00d2ea51a4a714536d9b5d103827d.jpg': 'https://i.pinimg.com/474x/0e/d0/0d/0ed00d2ea51a4a714536d9b5d103827d.jpg',
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQhTNDbz1dNOrf54nnTuJcFcYzlK5xng6T7fg&s': 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQhTNDbz1dNOrf54nnTuJcFcYzlK5xng6T7fg&s',
+    'https://img.magnific.com/premium-photo/memoji-handsome-indian-guy-man-white-background-emoji-cartoon-character_826801-7987.jpg?w=360': 'https://img.magnific.com/premium-photo/memoji-handsome-indian-guy-man-white-background-emoji-cartoon-character_826801-7987.jpg?w=360',
+    'https://png.pngtree.com/png-vector/20251122/ourmid/pngtree-korean-idol-memoji-teenager-blonde-buzz-cut-smiling-with-sunglasses-png-image_18044448.webp': 'https://png.pngtree.com/png-vector/20251122/ourmid/pngtree-korean-idol-memoji-teenager-blonde-buzz-cut-smiling-with-sunglasses-png-image_18044448.webp',
+    'https://i.pinimg.com/1200x/da/5d/c8/da5dc83e0e40e252ff46d4c9c3960fca.jpg': 'https://i.pinimg.com/1200x/da/5d/c8/da5dc83e0e40e252ff46d4c9c3960fca.jpg',
+    'https://pbs.twimg.com/media/EEq9BVQWkAA_nvZ.jpg': 'https://pbs.twimg.com/media/EEq9BVQWkAA_nvZ.jpg',
+    'https://ih1.redbubble.net/image.1994467948.4288/raf,360x360,075,t,fafafa:ca443f4786.jpg': 'https://ih1.redbubble.net/image.1994467948.4288/raf,360x360,075,t,fafafa:ca443f4786.jpg',
+    'https://i.pinimg.com/564x/72/49/6f/72496f59f26075667d354fe9883ff8be.jpg': 'https://i.pinimg.com/564x/72/49/6f/72496f59f26075667d354fe9883ff8be.jpg',
+    'https://i.pinimg.com/736x/92/e6/74/92e674f6195b6fbcda64f47d6aa274cc.jpg': 'https://i.pinimg.com/736x/92/e6/74/92e674f6195b6fbcda64f47d6aa274cc.jpg',
+    'bg-theme-1': 'https://img.magnific.com/premium-vector/smooth-gradient-colors-from-teal-orange-with-black-background-grainy-white-background-ar-3_858664-35836.jpg?semt=ais_hybrid&w=740&q=80?w=150',
+    'bg-theme-2': 'https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=800',
+    'bg-theme-3': 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=800',
+    'bg-theme-4': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=800',
+    'btn-theme-1': 'https://images.unsplash.com/photo-1618005198143-e5283b519a7f?w=300',
+    'btn-theme-2': 'https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=300',
+    'btn-theme-3': 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=300',
+    'btn-theme-4': 'https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=300'
+};
+
+function hexToRgb(hex) {
+    let c;
+    if (/^#([A-Fa-f0-9]{3}){1,2}$/.test(hex)) {
+        c = hex.substring(1).split('');
+        if (c.length == 3) { c = [c[0], c[0], c[1], c[1], c[2], c[2]]; }
+        c = '0x' + c.join('');
+        return [(c >> 16) & 255, (c >> 8) & 255, c & 255].join(',');
+    }
+    return "255,115,0";
+}
+
+        let debounceTimer = null;
+        let setupComplete = false;
+
+           // --- TOAST NOTIFICATION CONTROLLER ---
+        function triggerToast(message, isWorking = false) {
+            const toast = document.getElementById('toastHub');
+            const txt = document.getElementById('toastText');
+            const dot = document.getElementById('toastDot');
+
+            txt.innerText = message;
+            dot.style.backgroundColor = isWorking ? "#ffaa00" : "var(--primary)";
+            
+            toast.classList.add('active');
+            
+            if (!isWorking) {
+                setTimeout(() => {
+                    toast.classList.remove('active');
+                }, 2500);
+            }
+        }
+
+        function hideToast() {
+            document.getElementById('toastHub').classList.remove('active');
+        }
+
+        function toggleDeptCustom(value) {
+            const customInput = document.getElementById('departmentCustom');
+            if (value === 'Custom') {
+                customInput.style.display = 'block';
+                customInput.setAttribute('required', 'true');
+            } else {
+                customInput.style.display = 'none';
+                customInput.removeAttribute('required');
+            }
+        }
+
+        // --- VISUAL SETUP & BACKGROUND FIX HANDLING ---
+        async function fetchIdentityAndTheme() {
+            try {
+                const accountRef = doc(db, "accounts", userId);
+                const accountSnap = await getDoc(accountRef);
+
+                if (accountSnap.exists()) {
+                    const accountData = accountSnap.data();
+
+                    const customProfileName = accountData.customName || localStorage.getItem("userName") || "UNKNOWN USER";
+                    document.getElementById('userDisplayName').innerText = customProfileName.toUpperCase();
+                    
+                    if (accountData.avatarUrl) {
+                        document.getElementById('userDisplayAvatar').src = accountData.avatarUrl;
+                    }
+
+                    // robust, type-checked runtime handling for background profiles
+                    const bgMode = accountData.bgMode || "color";
+                    const bgValue = accountData.bgValue || "#0b0f1a";
+
+                 // --- UPDATED BACKGROUND HANDLING SYSTEM ---
+            if (accountData.bgMode === "image") {
+                const bgImg = premium3dAssets[accountData.bgValue] || accountData.bgValue;
+                document.body.style.backgroundImage = `url('${bgImg}')`;
+                document.body.style.backgroundSize = "cover";
+                document.body.style.backgroundAttachment = "fixed";
+            } else if (accountData.bgValue) {
+                document.body.style.backgroundImage = "none";
+                document.body.style.backgroundColor = accountData.bgValue;
+                // Sync to custom properties if needed by stylesheets
+                document.documentElement.style.setProperty('--bg', accountData.bgValue);
+            }
+            // ------------------------------------------
+
+
+                    if (accountData.btnValue) {
+                        document.documentElement.style.setProperty('--primary', accountData.btnValue);
+                    }
+                }
+
+                const settingsRef = doc(db, "salary_settings", userId);
+                const settingsSnap = await getDoc(settingsRef);
+
+                if (settingsSnap.exists()) {
+                    const data = settingsSnap.data();
+                    document.getElementById('lastName').value = (data.lastName || '').toUpperCase();
+                    document.getElementById('firstName').value = (data.firstName || '').toUpperCase();
+                    document.getElementById('middleInitial').value = (data.middleInitial || '').toUpperCase();
+                    document.getElementById('emailAddress').value = data.emailAddress || '';
+                    document.getElementById('dailyRate').value = data.dailyRate || '';
+                    document.getElementById('position').value = (data.position || '').toUpperCase();
+                    document.getElementById('timeIn').value = data.timeIn || '08:00';
+                    document.getElementById('timeOut').value = data.timeOut || '17:00';
+                    document.getElementById('hasLunchBreak').checked = data.hasLunchBreak !== false;
+
+                    if (data.department === 'Admin' || data.department === 'Finance') {
+                        document.getElementById('departmentSelect').value = data.department;
+                    } else if (data.department) {
+                        document.getElementById('departmentSelect').value = 'Custom';
+                        toggleDeptCustom('Custom');
+                        document.getElementById('departmentCustom').value = data.department.toUpperCase();
+                    }
+
+                    if (data.dutyDays && Array.isArray(data.dutyDays)) {
+                        data.dutyDays.forEach(day => {
+                            const chip = document.querySelector(`.day-chip input[value="${day}"]`);
+                            if (chip) chip.checked = true;
+                        });
+                    }
+                }
+            } catch (err) {
+                console.error("System configuration parsing failure:", err);
+            } finally {
+                // Kill loading display screen once all tasks yield
+                document.getElementById('globalEngineLoader').classList.add('hidden');
+                setupComplete = true;
+            }
+        }
+
+        // --- BACKGROUND AUTOMATED DISPATCH TRANSACTION ---
+        async function autoSaveSystemSettings() {
+            if (!setupComplete) return;
+
+            triggerToast("Saving settings...", true);
+
+            const deptSelect = document.getElementById('departmentSelect').value;
+            const finalDept = deptSelect === 'Custom' ? document.getElementById('departmentCustom').value.trim() : deptSelect;
+
+            const selectedDays = [];
+            document.querySelectorAll('.day-matrix input[type="checkbox"]:checked').forEach(cb => {
+                selectedDays.push(cb.value);
+            });
+
+            const payload = {
+                lastName: document.getElementById('lastName').value.trim().toUpperCase(),
+                firstName: document.getElementById('firstName').value.trim().toUpperCase(),
+                middleInitial: document.getElementById('middleInitial').value.trim().toUpperCase(),
+                emailAddress: document.getElementById('emailAddress').value.trim(),
+                dailyRate: parseFloat(document.getElementById('dailyRate').value) || 0,
+                position: document.getElementById('position').value.trim().toUpperCase(),
+                department: finalDept.toUpperCase(),
+                dutyDays: selectedDays,
+                timeIn: document.getElementById('timeIn').value,
+                timeOut: document.getElementById('timeOut').value,
+                hasLunchBreak: document.getElementById('hasLunchBreak').checked,
+                updatedAt: Date.now()
+            };
+
+            try {
+                await setDoc(doc(db, "salary_settings", userId), payload, { merge: true });
+                triggerToast("Settings synced successfully!", false);
+            } catch (error) {
+                console.error("Background data synchronization error:", error);
+                triggerToast("Failed auto-sync operation.", false);
+            }
+        }
+
+        // --- DEBOUNCE DELAY IMPLEMENTATION HUB ---
+        function queueSyncPipeline() {
+            if (!setupComplete) return;
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                autoSaveSystemSettings();
+            }, 1000); // 1 Second Wait Threshold Rule applied natively
+        }
+
+        // --- EVENT ATTACHMENT DECK ---
+        window.onload = () => {
+            fetchIdentityAndTheme();
+            if (window.lucide) window.lucide.createIcons();
+
+            // Intercept and bind mutation actions across input landscape
+            const formElements = document.querySelectorAll('#settingsForm input, #settingsForm select');
+            formElements.forEach(elem => {
+                if (elem.id !== 'departmentSelect') {
+                    elem.addEventListener('input', queueSyncPipeline);
+                }
+                elem.addEventListener('change', queueSyncPipeline);
+            });
+
+            // Special UI condition modifiers
+            document.getElementById('departmentSelect').addEventListener('change', (e) => {
+                toggleDeptCustom(e.target.value);
+                queueSyncPipeline();
+            });
+
+            document.getElementById('lunchBreakRow').addEventListener('click', (e) => {
+                if (e.target.id !== 'hasLunchBreak') {
+                    const cb = document.getElementById('hasLunchBreak');
+                    cb.checked = !cb.checked;
+                    queueSyncPipeline();
+                }
+            });
+        };
+    </script>
+</body>
+</html>

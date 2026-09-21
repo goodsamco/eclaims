@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monochrome Line Duel</title>
+    <link rel="stylesheet" href="style.css">
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <!-- Main Container -->
+    <div class="game-container">
+        
+        <!-- Header Controls & Status -->
+        <header class="top-nav">
+            <div class="user-badge">
+                <img id="userDisplayAvatar" class="avatar-img" src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix" alt="Avatar">
+                <span id="userDisplayName" class="user-name">Operator</span>
+            </div>
+            
+            <div class="room-info">
+                <span id="roomCodeDisplay">ROOM: ----</span>
+                <span id="playerCountDisplay">PLAYERS: 0/6</span>
+            </div>
+
+            <button class="icon-btn" id="leaveRoomBtn" title="Leave Room" style="display: none;">
+                <i data-lucide="log-out"></i>
+            </button>
+        </header>
+
+        <!-- Lobby Menu Overlay -->
+        <div id="lobbyOverlay" class="overlay-panel">
+            <h1 class="game-title">LINE DUEL</h1>
+            <p class="subtitle">Monochrome Multi-Player Arena (2, 4, 6 Players)</p>
+
+            <div class="control-box">
+                <div class="input-group">
+                    <label for="maxPlayersSelect">SELECT GAME MODE</label>
+                    <select id="maxPlayersSelect" class="custom-select">
+                        <option value="2">2 Players (1v1)</option>
+                        <option value="4">4 Players (2v2)</option>
+                        <option value="6">6 Players (3v3)</option>
+                    </select>
+                </div>
+
+                <button id="createRoomBtn" class="action-btn">CREATE ROOM</button>
+                
+                <div class="divider"><span>OR</span></div>
+
+                <div class="input-group">
+                    <input type="text" id="joinRoomInput" placeholder="ENTER ROOM CODE" maxlength="6" style="text-transform: uppercase;">
+                </div>
+                <button id="joinRoomBtn" class="action-btn secondary">JOIN ROOM</button>
+            </div>
+        </div>
+
+        <!-- Waiting Room Overlay -->
+        <div id="waitingOverlay" class="overlay-panel" style="display: none;">
+            <h2>WAITING FOR PLAYERS...</h2>
+            <div id="waitingStatus" class="status-text">1 / 2 Players Connected</div>
+            <div id="playerList" class="player-slots-grid"></div>
+            <p class="hint-text">Game will automatically start when the room is full.</p>
+        </div>
+
+        <!-- Game Over Overlay -->
+        <div id="gameOverOverlay" class="overlay-panel" style="display: none;">
+            <h2 id="winnerText">TEAM 1 WINS!</h2>
+            <div class="stats-summary" id="finalStats"></div>
+            <button id="playAgainBtn" class="action-btn">RETURN TO LOBBY</button>
+        </div>
+
+        <!-- Scoreboard HUD -->
+        <div id="gameHud" class="hud-layer" style="display: none;">
+            <div class="team-score team-left">
+                <span class="label">LEFT SIDE</span>
+                <span id="scoreLeft" class="score">0</span>
+            </div>
+            <div class="match-timer" id="gameTimer">03:00</div>
+            <div class="team-score team-right">
+                <span class="label">RIGHT SIDE</span>
+                <span id="scoreRight" class="score">0</span>
+            </div>
+        </div>
+
+        <!-- Game Arena Canvas -->
+        <canvas id="gameCanvas" width="800" height="400"></canvas>
+
+        <!-- Touch Controls (Mobile Friendly) -->
+        <div class="mobile-controls">
+            <div class="btn-group">
+                <button id="btnLeft" class="touch-btn"><i data-lucide="arrow-left"></i></button>
+                <button id="btnRight" class="touch-btn"><i data-lucide="arrow-right"></i></button>
+            </div>
+            <div class="btn-group">
+                <button id="btnJump" class="touch-btn"><i data-lucide="arrow-up"></i></button>
+                <button id="btnFire" class="touch-btn fire"><i data-lucide="crosshair"></i></button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Firebase Modular SDK & Global Bridge -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getDatabase, ref, set, get, onValue, update, remove, onDisconnect } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyDaeNQF4qmW0vvwxUPp_NztnT0hoLzm1BQ",
+            authDomain: "svls-289ee.firebaseapp.com",
+            databaseURL: "https://svls-289ee-default-rtdb.firebaseio.com",
+            projectId: "svls-289ee",
+            storageBucket: "svls-289ee.firebasestorage.app",
+            messagingSenderId: "500705386198",
+            appId: "1:500705386198:web:96f189662bc2aa99cf7377",
+            measurementId: "G-5TNBMQ2HN5"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        window.db = getFirestore(app);
+        window.rtdb = getDatabase(app);
+        window.rtdbUtils = { ref, set, get, onValue, update, remove, onDisconnect };
+
+        // Fetch User ID & account info
+        const userId = localStorage.getItem("userId") || "user_" + Math.random().toString(36).substring(2, 8);
+        window.currentUserId = userId;
+
+        if (window.db) {
+            const userDocRef = doc(window.db, "accounts", userId);
+            onSnapshot(userDocRef, (snapshot) => {
+                if (snapshot.exists()) {
+                    const data = snapshot.data();
+                    const name = data.customName || "Operator";
+                    const avatar = data.avatarUrl || "avatar-m1";
+                    
+                    document.getElementById('userDisplayName').innerText = name.split(' ')[0];
+                    if (avatar.startsWith('http')) {
+                        document.getElementById('userDisplayAvatar').src = avatar;
+                    }
+                }
+            });
+        }
+
+        // Initialize Lucide Icons after DOM loads
+        if (window.lucide) {
+            window.lucide.createIcons();
+        }
+    </script>
+
+    <!-- Game Engine Script -->
+    <script src="game.js" defer></script>
+</body>
+</html>

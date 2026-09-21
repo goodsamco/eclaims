@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>eSOA - ICD10 Diagnosis Codes</title>
+    
+    <!-- Design System Typography Links -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Poppins:wght@400;600;800&family=Roboto+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <link rel="stylesheet" href="esoa.css">
+</head>
+<body onmouseleave="resetMagnet()">
+
+    <!-- 1. Real-Time Peer Presence Slider Hub -->
+    <div class="peer-wrapper-row">
+        <button class="scroll-nav-btn prev" title="Scroll Left"><i data-lucide="chevron-left"></i></button>
+        <div class="peer-active-hub" id="peerActiveHub">
+            <!-- Dynamically populated via Firebase Realtime Database Engine -->
+        </div>
+        <button class="scroll-nav-btn next" title="Scroll Right"><i data-lucide="chevron-right"></i></button>
+    </div>
+
+    <!-- 2. Minimalist Apple Style Top Sticky Navigation Row -->
+    <div class="top-nav">
+        <button class="top-btn" title="Reset Layout Focus" onclick="resetFocus()"><i data-lucide="refresh-cw"></i></button> 
+        <button class="top-btn" title="Senior Discount Calculator" onclick="toggleModal('srModal', true)"><i data-lucide="user-check"></i></button>
+        
+        <!-- eSOA Page Portal Route Toggle -->
+        <button class="top-btn" title="eSOA Portal" onclick="window.location.href='esoa.html'"><i data-lucide="receipt"></i></button>
+        
+        <!-- Active Page Anchor: Highlighted via glass background definition -->
+        <button class="top-btn active" title="ICD10 Codes" onclick="window.location.href='icd10.html'" style="background-color: rgba(255, 255, 255, 0.15);"><i data-lucide="stethoscope"></i></button>
+        <button class="top-btn" title="CF4 Claim Form" onclick="window.location.href='cf4.html'"><i data-lucide="credit-card"></i></button>
+    </div>
+
+    <!-- 3. Real-Time Account Avatar Hooks & Status Elements -->
+    <img id="userDisplayAvatar" class="profile-avatar-node" src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix" alt="User Avatar" onclick="window.location.href='customization.html'">
+    <span id="userDisplayName" class="name-string">Operator</span>
+
+    <!-- 4. Real-Time Chat Overlaid Dock Panel Overlay -->
+    <div class="chat-docking-panel" id="chatDock">
+        <div class="chat-header-bar">
+            <span id="chatTargetName">Active Session Chat</span>
+            <button class="chat-close-trigger" onclick="closeChatSession()"><i data-lucide="x"></i></button>
+        </div>
+        
+        <div class="chat-scroller-view" id="chatScroller"></div>
+        
+        <div class="chat-input-row">
+            <input type="text" id="chatMsgInput" placeholder="Aa" onkeydown="if(event.key === 'Enter') sendChatPayload()">
+            <button onclick="sendChatPayload()">Send</button>
+        </div>
+    </div>
+
+    <!-- 5. Main Content Matrix: ICD10 Clipboard Copy Data Targets -->
+    <div class="container" id="mainContainer">
+        <div id="highlighter"></div>
+        
+        <h2>Infectious & Parasitic</h2>
+        <div class="item-row" data-val="A09.9"><span class="text-content">A09.9 — Gastroenteritis / Diarrhea</span></div>
+        <div class="item-row" data-val="A01.0"><span class="text-content">A01.0 — Typhoid Fever</span></div>
+        <div class="add-btn-circle" onclick="openList('infectious')"><i data-lucide="plus"></i></div>
+        
+        <h2>Respiratory System</h2>
+        <div class="item-row" data-val="J20.9"><span class="text-content">J20.9 — Acute Bronchitis, Unspecified</span></div>
+        <div class="item-row" data-val="J18.9"><span class="text-content">J18.9 — Pneumonia, Unspecified Organism</span></div>
+        <div class="item-row" data-val="J45.909"><span class="text-content">J45.909 — Unspecified Asthma</span></div>
+        <div class="add-btn-circle" onclick="openList('respiratory')"><i data-lucide="plus"></i></div>
+        
+        <h2>Circulatory & Metabolic</h2>
+        <div class="item-row" data-val="I10"><span class="text-content">I10 — Essential (Primary) Hypertension</span></div>
+        <div class="item-row" data-val="E11.9"><span class="text-content">E11.9 — Type 2 Diabetes Mellitus without complications</span></div>
+        <div class="item-row" data-val="I63.9"><span class="text-content">I63.9 — Cerebral Infarction, Unspecified (Stroke)</span></div>
+        <div class="add-btn-circle" onclick="openList('circulatory')"><i data-lucide="plus"></i></div>
+
+        <h2>Genitourinary & Others</h2>
+        <div class="item-row" data-val="N39.0"><span class="text-content">N39.0 — Urinary Tract Infection, Site Not Specified</span></div>
+        <div class="item-row" data-val="R51"><span class="text-content">R51 — Headache</span></div>
+        <div class="item-row" data-val="R50.9"><span class="text-content">R50.9 — Fever, Unspecified</span></div>
+        <div class="add-btn-circle" onclick="openList('others_icd')"><i data-lucide="plus"></i></div>
+    </div>
+
+    <!-- 6. Bottom Magnetic Dynamic Utility Zone -->
+    <div class="bottom-zone" id="copyZone" onclick="copyFocusedItem()"> 
+        <button class="btn-main-copy" id="magnetBtn">COPY</button>
+    </div>
+
+    <!-- 7. Calculator Overlay Layout Elements -->
+    <div class="modal-overlay" id="srModal" onclick="closeOutside(event, 'srModal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3>DISCOUNT CALCULATOR</h3>
+            <div class="input-group"> 
+                <label>HOSPITAL CHARGES</label> 
+                <input id="hospCharges" type="number" placeholder="0.00" oninput="calcSr()"> 
+            </div>
+            <div class="input-group"> 
+                <label>CASE RATE (PHIC)</label> 
+                <input id="caseRate" type="number" placeholder="0.00" oninput="calcSr()"> 
+            </div>
+            <div class="modal-result">
+                <div id="finalDiscount">0.00</div>
+            </div>
+            <div class="modal-copy-zone" id="modalCopyBtn" onclick="copyModalValue()">COPY RESULT</div> 
+            <button class="modal-close-btn" onclick="toggleModal('srModal', false)">Dismiss</button>
+        </div>
+    </div>
+
+    <!-- 8. Dynamic Popover Item Grid Modals -->
+    <div class="modal-overlay" id="listModal" onclick="closeOutside(event, 'listModal')">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <h3 id="listTitle">SELECT DIAGNOSIS</h3>
+            <div id="listContainer"></div> 
+            <button class="modal-close-btn" onclick="toggleModal('listModal', false)">Dismiss</button>
+        </div>
+    </div>
+
+    <!-- Initialization Scripts -->
+    <script type="module" src="esoa.js"></script>
+    <script>
+        // Local extension items configuration specifically scoped to medical diagnosis vectors
+        window.addEventListener('DOMContentLoaded', () => {
+            if(window.extraItems) {
+                window.extraItems.infectious = ["A06.0 — Acute Amebic Dysentery", "B34.9 — Viral Infection, Unspecified"];
+                window.extraItems.respiratory = ["J06.9 — Acute Upper Respiratory Infection", "J44.9 — COPD, Unspecified"];
+                window.extraItems.circulatory = ["I21.9 — Acute Myocardial Infarction", "E78.5 — Hyperlipidemia, Unspecified"];
+                window.extraItems.others_icd = ["M79.1 — Myalgia", "K21.9 — GERD without Esophagitis", "Z00.00 — General Adult Medical Examination"];
+            }
+        });
+    </script>
+</body>
+</html>

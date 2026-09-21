@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PAYSLIP ENGINE — SALARY COMPUTER</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="payslip.css">
+</head>
+<body>
+
+    <div class="engine-container">
+        <div class="top-nav-deck">
+            <button class="nav-btn" onclick="window.location.href='settings.html'" title="SETTINGS">
+                <i data-lucide="arrow-left" style="width:18px;height:18px;"></i>
+            </button>
+            <h1>TIME & PAYSLIP SYSTEM</h1>
+            <div style="width:40px;"></div>
+        </div>
+
+        <div class="profile-badge-deck">
+            <div class="profile-meta-row">
+                <span class="lbl">NAME</span>
+                <span class="val" id="profSettingsNameDisplay">-</span>
+            </div>
+            <div class="profile-meta-row">
+                <span class="lbl">USERNAME</span>
+                <span class="val" id="profNameDisplay">-</span>
+            </div>
+            <div class="profile-meta-row">
+                <span class="lbl">ID NO.</span>
+                <span class="val" id="profEmailDisplay">-</span>
+            </div>
+            <div class="profile-meta-row">
+                <span class="lbl">POSITION</span>
+                <span class="val" id="profPosDisplay">-</span>
+            </div>
+            <div class="profile-meta-row">
+                <span class="lbl">DEPARTMENT</span>
+                <span class="val" id="profDeptDisplay">-</span>
+            </div>
+        </div>
+
+        <div class="form-block">
+            <label>PAYSLIP TIME PERIOD CLOSURE</label>
+            <select id="periodSelector"></select>
+        </div>
+
+        <div class="form-block">
+            <label>PAYABLE CYCLE COVERAGE WINDOW</label>
+            <input type="text" id="payableRangeDisplay" readonly style="opacity: 0.8; background: rgba(0,0,0,0.2);">
+        </div>
+
+        <div class="form-block">
+            <label>DUTY TIME RECORD (CLICK DATE TO FILE TIME)</label>
+            <div class="calendar-deck" id="calendarNodeGrid"></div>
+        </div>
+
+        <div class="form-block" style="background: rgba(255, 255, 255, 0.02); padding: 14px; border-radius: 16px; border: 1px solid var(--border-glass); margin-bottom: 20px;">
+            <label style="margin-bottom: 12px; display: block;">INCENTIVES</label>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div>
+                    <label style="font-size:0.6rem; color: #94a3b8; font-weight:800;">HOLIDAY PAY</label>
+                    <input type="number" id="inputDoublePay" value="0.00" step="0.01">
+                </div>
+                <div>
+                    <label style="font-size:0.6rem; color: #94a3b8; font-weight:800;">REIMBURSEMENTS / ALLOWANCE</label>
+                    <input type="number" id="inputReimbursements" value="0.00" step="0.01">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-block" style="background: rgba(0,0,0,0.2); padding: 14px; border-radius: 16px; border: 1px solid var(--border-glass);">
+            <label style="margin-bottom: 12px; display: block;">STATUTORY CONTRIBUTIONS</label>
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;">
+                <div>
+                    <label style="font-size:0.6rem;">SSS</label>
+                    <input type="number" id="inputSSS" value="0.00" step="0.01">
+                </div>
+                <div>
+                    <label style="font-size:0.6rem;">PHIC</label>
+                    <input type="number" id="inputPHIC" value="0.00" step="0.01">
+                </div>
+                <div>
+                    <label style="font-size:0.6rem;">HDMF</label>
+                    <input type="number" id="inputHDMF" value="0.00" step="0.01">
+                </div>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 10px;">
+                <div>
+                    <label style="font-size:0.6rem;">FOR CASH ADVANCES</label>
+                    <input type="number" id="inputAdvances" value="0.00" step="0.01">
+                </div>
+            </div>
+        </div>
+
+        <div class="form-block">
+            <label>SALARY DETAILS BREAKDOWN</label>
+            <table class="matrix-table">
+                <thead>
+                    <tr><th>EARNINGS STREAM</th><th style="text-align: right;">VALUE AMOUNT</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>BASIC PAY</td><td style="text-align: right; color:#fff;" id="breakdownBasic">₱0.00</td></tr>
+                    <tr><td>OVERTIME PAY</td><td style="text-align: right; color:#fff;" id="breakdownOT">₱0.00</td></tr>
+                    <tr><td>EXTRA INCENTIVES</td><td style="text-align: right; color:#fff;" id="breakdownIncentives">₱0.00</td></tr>
+                    <tr style="border-top: 1px solid var(--border-glass); font-weight:800;">
+                        <td>GROSS PAY VALUE</td><td style="text-align: right; color:var(--primary);" id="breakdownGross">₱0.00</td></tr>
+                </tbody>
+            </table>
+
+            <table class="matrix-table" style="margin-top: 12px;">
+                <thead>
+                    <tr><th>DEDUCTIONS</th><th style="text-align: right;">VALUE AMOUNT</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>SSS CONTRIBUTION</td><td style="text-align: right; color:#fff;" id="breakdownSSS">₱0.00</td></tr>
+                    <tr><td>PHILHEALTH CONTRIBUTION</td><td style="text-align: right; color:#fff;" id="breakdownPHIC">₱0.00</td></tr>
+                    <tr><td>PAG-IBIG FUND CONTRIBUTION</td><td style="text-align: right; color:#fff;" id="breakdownHDMF">₱0.00</td></tr>
+                    <tr><td>LATE / UNDERTIME</td><td style="text-align: right; color:#ef4444;" id="breakdownPenalties">₱0.00</td></tr>
+                    <tr><td>CASH ADVANCES ACCOUNTS</td><td style="text-align: right; color:#ef4444;" id="breakdownAdvances">₱0.00</td></tr>
+                    <tr style="border-top: 1px solid var(--border-glass); font-weight:800;">
+                        <td>TOTAL DEDUCTIONS</td><td style="text-align: right; color:#ef4444;" id="breakdownTotalDed">₱0.00</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="form-block">
+            <label>DETAILED DAILY TRACKING BREAKDOWN</label>
+            <div class="scannable-table-wrapper">
+                <table class="matrix-table" id="uiDailyBreakdownTable">
+                    <thead>
+                        <tr>
+                            <th>DATE</th>
+                            <th>DAY</th>
+                            <th>IN1</th>
+                            <th>OUT1</th>
+                            <th>IN2</th>
+                            <th>OUT2</th>
+                            <th>OT IN</th>
+                            <th>OT OUT</th>
+                            <th>LATES (MINS)</th>
+                            <th>UNDERTIME (MINS)</th>
+                            <th style="text-align: right;">DAILY GROSS</th>
+                            <th style="text-align: right;">OT GROSS</th>
+                            <th style="text-align: right;">DEDUCTION DAY CUT</th>
+                            <th style="text-align: right;">DAILY NET</th>
+                        </tr>
+                    </thead>
+                    <tbody id="uiDailyBreakdownBody"></tbody>
+                    <tfoot>
+                        <tr style="border-top: 2px solid var(--border-glass); font-weight: 800; background: rgba(255,255,255,0.02);">
+                            <td colspan="8">TOTALS</td>
+                            <td id="totalLates">0</td>
+                            <td id="totalUndertime">0</td>
+                            <td style="text-align: right; color: #fff;" id="totalDailyGrossOnly">₱0.00</td>
+                            <td style="text-align: right; color: #38bdf8;" id="totalOtGrossOnly">₱0.00</td>
+                            <td style="text-align: right; color: #ef4444;" id="totalDed">₱0.00</td>
+                            <td style="text-align: right; color: #38bdf8;" id="totalDailyNet">₱0.00</td>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+
+        <div class="net-pay-display-deck" id="netPayWrapperDeck">
+            <div class="lbl">NET PAY</div>
+            <div class="val-stream" id="breakdownNet">₱0.00</div>
+            <div id="lockBadgeDisplay" class="lock-indicator" style="display: none;">RECORD LOCKED</div>
+        </div>
+
+        <div style="margin-top: 24px; display: flex; flex-direction: column; gap: 12px;">
+            <button class="engine-btn primary-btn" id="btnSaveToCloud">
+                <i data-lucide="cloud-lightning" style="width:16px;height:16px;"></i> SAVE
+            </button>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <button class="engine-btn" id="btnPrintPreview">
+                    <i data-lucide="printer" style="width:16px;height:16px;"></i> PRINT PREVIEW
+                </button>
+                <button class="engine-btn" id="btnExportCSV">
+                    <i data-lucide="file-text" style="width:16px;height:16px;"></i> EXPORT CSV
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="timeConfigModalOverlay">
+        <div class="modal-box" id="modalBoxContainer">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+                <h3 style="margin: 0; font-size: 0.85rem; letter-spacing: 0.05em; text-transform: uppercase;" id="modalTargetDateHeader">LOGS TRANSACTION RECORD</h3>
+                <button class="nav-btn" style="width:32px; height:32px;" id="btnModalClose">
+                    <i data-lucide="x" style="width:14px;height:14px;"></i>
+                </button>
+            </div>
+
+            <div class="realtime-stats-bar">
+                <div class="stat-block">
+                    <div class="lbl">LATE MINUTES</div>
+                    <div class="val" id="rtLateDisplay" style="color: #ef4444;">0 MINS</div>
+                </div>
+                <div class="stat-block">
+                    <div class="lbl">UNDERTIME MINUTES</div>
+                    <div class="val" id="rtUndertimeDisplay" style="color: #f59e0b;">0 MINS</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-block">
+                    <label>IN1</label>
+                    <input type="time" id="modalTimeIn1">
+                </div>
+                <div class="form-block">
+                    <label>OUT1</label>
+                    <input type="time" id="modalTimeOut1">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                <div class="form-block">
+                    <label>IN2</label>
+                    <input type="time" id="modalTimeIn2">
+                </div>
+                <div class="form-block">
+                    <label>OUT2</label>
+                    <input type="time" id="modalTimeOut2">
+                </div>
+            </div>
+
+            <div class="checkbox-container-row" style="margin-bottom: 0; margin-top: 10px; padding: 10px;" id="chkEnableOTWrapper">
+                <input type="checkbox" id="chkEnableOT">
+                <span style="font-size:0.65rem; font-weight:700;">OVERTIME</span>
+            </div>
+
+            <div class="nested-row-segment" id="otSubSectionDeck" style="display: none;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 0;">
+                    <div class="form-block" style="margin-bottom: 0;">
+                        <label>OT IN</label>
+                        <input type="time" id="modalTimeInOT">
+                    </div>
+                    <div class="form-block" style="margin-bottom: 0;">
+                        <label>OT OUT</label>
+                        <input type="time" id="modalTimeOutOT">
+                    </div>
+                </div>
+            </div>
+
+            <div id="modalActionFooterDeck" style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px; margin-top: 20px;">
+                <button class="engine-btn primary-btn" style="height: 48px;" id="btnModalApply">
+                    APPLY CHANGES
+                </button>
+                <button class="engine-btn danger-btn" style="height: 48px;" id="btnModalClear">
+                    CLEAR
+                </button>
+            </div>
+            <div id="modalLockedWarningLabel" style="display: none; margin-top: 20px; text-align: center; color: #ef4444; font-size: 0.7rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; background: rgba(239, 68, 68, 0.1); padding: 12px; border-radius: 12px;">
+                <i data-lucide="lock" style="width:12px; height:12px; inline-size: auto; vertical-align: middle; margin-right: 4px;"></i> HISTORICAL ARCHIVE RECORD READ-ONLY
+            </div>
+        </div>
+    </div>
+
+    <div id="print-render-matrix"></div>
+
+    <script type="module" src="payslip.js"></script>
+</body>
+</html>
