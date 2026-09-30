@@ -3250,80 +3250,115 @@ body {
 
 
 /* ======================================================================
-   FINAL NARROW-WINDOW HOVER FIX
-   Prevent the hovered/active row from expanding its LAYOUT width.
-   The row remains exactly the same width; only its contents are visually
-   enlarged. This prevents the list/container from shifting left/right.
+   NARROW-WINDOW POSITION LOCK
+   Based on the previous correct layout.
+   ONLY prevents the clicked/active item from causing horizontal movement.
    ====================================================================== */
 
-.item-row {
-    box-sizing: border-box !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    flex: 0 0 100% !important;
-    overflow: visible !important;
-    transform-origin: center center !important;
-}
-
-/* Keep the row's layout box fixed when hovered. */
-.item-row:hover,
-.container:has(.item-row:hover) .item-row:hover {
-    box-sizing: border-box !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    min-width: 0 !important;
-    flex-basis: 100% !important;
-    padding-left: 16px !important;
-    padding-right: 0 !important;
-    margin-left: 0 !important;
-    margin-right: 0 !important;
+/*
+   Keep the page from reacting to the visual overflow produced by the
+   clicked/hovered row. The list itself stays in exactly the same place.
+*/
+html,
+body {
+    overflow-x: clip !important;
+    scrollbar-gutter: stable !important;
 }
 
 /*
-   The visual enlargement is centered inside the existing row box.
-   It no longer grows from the left edge, which was making the narrow
-   window appear to jump sideways.
+   The container remains left-aligned with a permanent, fixed gutter.
+   Do not let an active/hovered row change the container's horizontal
+   position or create a horizontal scrolling area.
 */
-.container:has(.item-row:hover) .item-row:hover {
-    transform-origin: center center !important;
-}
-
-/* Never let the scaled row create document-level horizontal width. */
 .container {
+    position: relative !important;
+    left: 0 !important;
+    right: auto !important;
+    margin-left: 0 !important;
+    margin-right: auto !important;
     box-sizing: border-box !important;
-    width: min(100%, 680px) !important;
-    max-width: 680px !important;
-    min-width: 0 !important;
     overflow-x: clip !important;
+    overflow-y: visible !important;
 }
 
+/*
+   Every list row keeps the same left edge and the same marker position.
+   The row may still visually scale exactly as before.
+*/
+.item-row {
+    position: relative !important;
+    left: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+    overflow: visible !important;
+}
+
+/* Fixed marker column — never moves when the item becomes active. */
+.item-row::before,
+.item-row:has(.text-active)::before {
+    left: 2px !important;
+    right: auto !important;
+}
+
+/*
+   Clicking/focusing an item must not introduce a different horizontal
+   position, width, margin, or padding. Keep the existing visual behavior.
+*/
+.item-row:focus,
+.item-row:focus-visible,
+.item-row:active,
+.item-row:has(.text-active) {
+    left: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    box-sizing: border-box !important;
+}
+
+/*
+   Clip the visual enlargement at the viewport/container instead of
+   allowing it to create horizontal overflow that can move the page.
+*/
 @media (max-width: 700px) {
-    .container {
-        width: 100% !important;
-        max-width: 100% !important;
-        min-width: 0 !important;
-        box-sizing: border-box !important;
+    html,
+    body {
         overflow-x: clip !important;
+        scrollbar-gutter: stable !important;
     }
 
-    .item-row,
-    .item-row:hover,
-    .container:has(.item-row:hover) .item-row:hover {
+    .container {
+        position: relative !important;
+        left: 0 !important;
+        right: auto !important;
+        margin-left: 0 !important;
+        margin-right: auto !important;
+        box-sizing: border-box !important;
         width: 100% !important;
         max-width: 100% !important;
-        min-width: 0 !important;
-        flex: 0 0 100% !important;
-        box-sizing: border-box !important;
+        overflow-x: clip !important;
+        overflow-y: visible !important;
+    }
+
+    .item-row {
+        position: relative !important;
+        left: 0 !important;
         margin-left: 0 !important;
         margin-right: 0 !important;
+        box-sizing: border-box !important;
     }
 
-    /*
-       Keep the hover enlargement, but make it a visual transform only.
-       The original row dimensions remain unchanged.
-    */
-    .container:has(.item-row:hover) .item-row:hover {
-        transform-origin: center center !important;
+    .item-row::before,
+    .item-row:has(.text-active)::before {
+        left: 2px !important;
+        right: auto !important;
+    }
+
+    .item-row:focus,
+    .item-row:focus-visible,
+    .item-row:active,
+    .item-row:has(.text-active) {
+        left: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
     }
 }
