@@ -3105,185 +3105,192 @@ body.copy-flash .item-row:has(.text-active) .text-content {
 }
 
 
-/* ==========================================================================
-   FINAL LIST / DOT / MODAL REFINEMENT
-   ========================================================================== */
+/* ======================================================================
+   FINAL PATCH — STABLE LIST GUTTER / PERSISTENT ACTIVE DOT / ORIGINAL MODAL
+   ====================================================================== */
 
+/* Keep a permanent left gutter for the active marker.
+   The gutter belongs to the list itself, so copying/active-state changes
+   cannot change the document width or shift the list on narrow windows. */
 .container {
-    padding-left: 24px !important;
+    position: relative !important;
+    padding-left: 22px !important;
     padding-right: 0 !important;
     overflow: visible !important;
 }
 
 .item-row {
-    width: calc(100% - 8px) !important;
-    min-height: 42px !important;
-    margin: 1px 0 !important;
-    padding: 5px 10px !important;
+    position: relative !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 8px 0 !important;
+    min-height: 48px !important;
+    width: 100% !important;
+    background: transparent !important;
     border: 0 !important;
-    border-radius: 999px !important;
-    box-shadow: none !important;
+    border-radius: 0 !important;
     transform-origin: left center !important;
-    transition:
-        transform 360ms cubic-bezier(.12, 1.65, .28, 1),
-        opacity 280ms ease,
-        font-weight 220ms ease,
-        background-color 180ms ease !important;
 }
 
-.item-row:hover {
-    padding: 5px 10px !important;
-    border: 0 !important;
-    border-radius: 999px !important;
-    background: rgba(0, 0, 0, 0.035) !important;
-    transform: scale(1.40) !important;
-    z-index: 50 !important;
-}
-
-/* Permanent reserved lane for the active dot. */
-.item-row:has(.text-active)::before {
-    left: -18px !important;
+/* The marker slot is ALWAYS present on every row.
+   Only its visibility changes; its physical space never changes. */
+.item-row::before {
+    content: '' !important;
+    display: block !important;
+    position: absolute !important;
+    left: -16px !important;
     top: 50% !important;
     width: 6px !important;
     height: 6px !important;
     margin: 0 !important;
-    border: 0 !important;
-    border-radius: 50% !important;
-    background: #000 !important;
-    transform: translateY(-50%) !important;
-    pointer-events: none !important;
-    z-index: 60 !important;
-}
-
-@supports selector(.item-row:has(+ .item-row:hover)) {
-    .container:has(.item-row:hover) .item-row {
-        transform: scale(1) !important;
-    }
-
-    .container:has(.item-row:hover) .item-row:has(+ .item-row:hover),
-    .container:has(.item-row:hover) .item-row:hover + .item-row {
-        transform: scale(1.20) !important;
-    }
-
-    .container:has(.item-row:hover) .item-row:has(+ .item-row + .item-row:hover),
-    .container:has(.item-row:hover) .item-row:hover + .item-row + .item-row {
-        transform: scale(1.09) !important;
-    }
-
-    .container:has(.item-row:hover) .item-row:has(+ .item-row + .item-row + .item-row:hover),
-    .container:has(.item-row:hover) .item-row:hover + .item-row + .item-row + .item-row {
-        transform: scale(1.03) !important;
-    }
-
-    .container:has(.item-row:hover) .item-row:hover {
-        transform: scale(1.40) !important;
-        opacity: 1 !important;
-    }
-}
-
-.add-btn-circle {
-    width: 34px !important;
-    height: 34px !important;
-    margin: 5px 0 10px 0 !important;
     padding: 0 !important;
     border: 0 !important;
     border-radius: 50% !important;
+    background: #000 !important;
+    box-shadow: none !important;
+    transform: translateY(-50%) !important;
+    pointer-events: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+/* Active marker: it moves to the active row, but the reserved slot stays. */
+.item-row:has(.text-active)::before {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Do not let copy feedback remove/reflow the marker slot. */
+body.copy-flash .item-row::before {
+    display: block !important;
+}
+
+body.copy-flash .item-row:has(.text-active)::before {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* No hover background. Keep the original elastic/zoom behavior. */
+.item-row:hover,
+.container:has(.item-row:hover) .item-row:hover {
     background: transparent !important;
-    color: #000 !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: center !important;
-    transition: transform 220ms cubic-bezier(.12, 1.65, .28, 1) !important;
+    border: 0 !important;
 }
 
-.add-btn-circle:hover {
-    background: rgba(0, 0, 0, 0.04) !important;
-    transform: scale(1.15) !important;
+/* Keep zoom purely transform-based so it never changes layout dimensions. */
+.item-row:hover {
+    padding-left: 0 !important;
 }
 
-/* Modal list follows the same compact, borderless interaction language. */
+/* Modal: restore the original modal geometry/spacing/interaction.
+   Only the visible line borders are removed. */
 .modal-content {
+    width: 90% !important;
+    max-width: 400px !important;
+    padding: 30px 24px !important;
+    text-align: center !important;
+    background: #fff !important;
+    color: #000 !important;
     border: 0 !important;
+    border-radius: 24px !important;
     box-shadow: none !important;
-    border-radius: 28px !important;
-}
-
-#listContainer {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: 1px !important;
-    padding: 2px 0 !important;
-    overflow: visible !important;
-}
-
-.modal-content .list-item {
-    position: relative !important;
-    width: 100% !important;
     box-sizing: border-box !important;
-    margin: 0 !important;
-    padding: 8px 12px !important;
-    min-height: 40px !important;
-    display: flex !important;
-    align-items: center !important;
-    border: 0 !important;
-    border-radius: 999px !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    color: #000 !important;
-    transform-origin: left center !important;
-    transition:
-        transform 360ms cubic-bezier(.12, 1.65, .28, 1),
-        background-color 180ms ease,
-        font-weight 180ms ease !important;
-}
-
-.modal-content .list-item:hover {
-    border: 0 !important;
-    border-radius: 999px !important;
-    background: rgba(0, 0, 0, 0.035) !important;
-    color: #000 !important;
-    transform: scale(1.12) !important;
-    z-index: 20 !important;
-}
-
-.modal-content .list-item:focus,
-.modal-content .list-item:active {
-    border: 0 !important;
-    outline: none !important;
-    box-shadow: none !important;
+    max-height: 80vh !important;
+    overflow-y: auto !important;
 }
 
 .modal-content .list-item,
-.modal-content .list-item * {
-    text-align: left;
+.list-item {
+    padding: 16px !important;
+    margin: 8px 0 !important;
+    border-radius: 16px !important;
+    text-align: left !important;
+    cursor: pointer !important;
+    color: #000 !important;
+    background: rgba(82, 82, 82, 0.02) !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    transition: 0.2s !important;
 }
 
+.modal-content .list-item:hover,
+.list-item:hover {
+    background-color: rgba(255, 255, 255, 0.04) !important;
+    border: 0 !important;
+    color: #000 !important;
+    transform: none !important;
+}
+
+/* Restore modal input/result/button geometry; remove only their outer line borders. */
+.modal-content input {
+    width: 100% !important;
+    padding: 16px !important;
+    margin-top: 5px !important;
+    border-radius: 16px !important;
+    border: 0 !important;
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 1.3rem !important;
+    box-sizing: border-box !important;
+    text-align: center !important;
+    font-weight: 700 !important;
+    outline: none !important;
+}
+
+.modal-content input:focus {
+    border: 0 !important;
+    outline: none !important;
+}
+
+.modal-result {
+    margin: 25px 0 !important;
+    padding: 20px !important;
+    background-color: rgba(255,255,255,0.04) !important;
+    border-radius: 20px !important;
+    border: 0 !important;
+}
+
+.modal-copy-zone {
+    height: 60px !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    cursor: pointer !important;
+    background: #000 !important;
+    color: #fff !important;
+    border-radius: 16px !important;
+    border: 0 !important;
+    font-weight: 800 !important;
+    transition: 0.2s !important;
+}
+
+.modal-close-btn {
+    margin-top: 20px !important;
+    background: transparent !important;
+    border: 0 !important;
+    color: #666 !important;
+    cursor: pointer !important;
+    font-size: 0.8rem !important;
+    text-decoration: underline !important;
+}
+
+/* Narrow windows: keep the gutter inside the available viewport. */
 @media (max-width: 700px) {
     .container {
-        padding-left: 20px !important;
+        padding-left: 18px !important;
+        padding-right: 0 !important;
     }
 
     .item-row {
-        min-height: 40px !important;
-        padding: 5px 8px !important;
+        min-height: 46px !important;
+        padding: 7px 0 !important;
     }
 
-    .item-row:hover,
-    .container:has(.item-row:hover) .item-row:hover {
-        transform: scale(1.24) !important;
+    .item-row::before {
+        left: -13px !important;
     }
 
-    .container:has(.item-row:hover) .item-row:has(+ .item-row:hover),
-    .container:has(.item-row:hover) .item-row:hover + .item-row {
-        transform: scale(1.12) !important;
-    }
-
-    .container:has(.item-row:hover) .item-row:has(+ .item-row + .item-row:hover),
-    .container:has(.item-row:hover) .item-row:hover + .item-row + .item-row {
-        transform: scale(1.05) !important;
-    }
-
-    .item-row:has(.text-active)::before {
-        left: -15px !important;
+    .item-row:hover {
+        padding-left: 0 !important;
     }
 }
