@@ -3362,3 +3362,92 @@ body {
         margin-right: 0 !important;
     }
 }
+
+
+/* ======================================================================
+   FINAL SMALL LAYOUT TUNING
+   Keep the corrected narrow-window positioning exactly as-is.
+   Only:
+   1) align PLUS with the list,
+   2) tighten normal list spacing,
+   3) give the zoomed row visual breathing room,
+   4) bold ONLY the copied/active row with the dot.
+   ====================================================================== */
+
+/* PLUS: align its content with the same left edge as the list text. */
+.add-btn-circle {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    padding-left: 16px !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* Tight normal list spacing without changing the fixed left position. */
+.item-row {
+    margin-top: 0 !important;
+    margin-bottom: 2px !important;
+}
+
+/*
+   Keep the zoomed item visually separated from its neighbors.
+   This uses transform only, so it does NOT alter the list's layout width
+   or cause the narrow-window position shift that was already fixed.
+*/
+.container:has(.item-row:hover) .item-row:hover {
+    z-index: 20 !important;
+    transform-origin: center center !important;
+}
+
+/* ======================================================================
+   COPY / ACTIVE WEIGHT
+   Do NOT bold the entire list during copy.
+   Only the row carrying .text-active (the row with the dot) is bold.
+   ====================================================================== */
+
+/* Cancel previous hover/proximity font-weight rules. */
+.item-row:hover .text-content,
+.container:has(.item-row:hover) .item-row:hover .text-content,
+.container:has(.item-row:hover) .item-row:has(+ .item-row:hover) .text-content,
+.container:has(.item-row:hover) .item-row:hover + .item-row .text-content,
+.container:has(.item-row:hover) .item-row:has(+ .item-row + .item-row:hover) .text-content,
+.container:has(.item-row:hover) .item-row:hover + .item-row + .item-row .text-content {
+    font-weight: 400 !important;
+}
+
+/* Copy flash: leave every non-active item at normal weight. */
+body.copy-flash .item-row .text-content {
+    font-weight: 400 !important;
+}
+
+/* The copied/current item only — identified by the permanent active dot. */
+.item-row:has(.text-active) .text-content,
+body.copy-flash .item-row:has(.text-active) .text-content {
+    font-weight: 800 !important;
+}
+
+/* Keep the active text state itself bold. */
+.item-row:has(.text-active) .text-active {
+    font-weight: 800 !important;
+}
+
+/* PLUS is never bolded just because copy-flash is active. */
+body.copy-flash .add-btn-circle {
+    font-weight: 400 !important;
+}
+
+@media (max-width: 700px) {
+    .add-btn-circle {
+        padding-left: 16px !important;
+        padding-right: 0 !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        box-sizing: border-box !important;
+    }
+
+    .item-row {
+        margin-top: 0 !important;
+        margin-bottom: 2px !important;
+    }
+}
