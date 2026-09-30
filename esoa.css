@@ -2815,3 +2815,291 @@ body.copy-flash .add-btn-circle {
 .expansion-trigger-node {
     border-radius: 0 !important;
 }
+
+/* ==========================================================================\n   19. FINAL SOFT-SELECTION / BELL-CURVE PASS\n   ========================================================================== */
+
+/* Keep the page in one stable layout. Visual enlargement uses transforms only. */
+html,
+body {
+    overflow-x: hidden !important;
+}
+
+body {
+    background: #fff !important;
+    padding-bottom: 30vh !important;
+}
+
+/* Main list: completely open, borderless, left anchored. */
+.container {
+    background: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    overflow: visible !important;
+}
+
+#highlighter {
+    display: none !important;
+}
+
+.item-row {
+    position: relative !important;
+    z-index: 1;
+    width: 100% !important;
+    min-height: 48px;
+    margin: 0 !important;
+    padding: 8px 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-left: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    transform: scale(1) !important;
+    transform-origin: left center !important;
+    transition:
+        transform 360ms cubic-bezier(.12, 1.65, .28, 1),
+        opacity 280ms ease,
+        font-weight 220ms ease;
+    will-change: transform;
+}
+
+.item-row:hover {
+    z-index: 30;
+    background: transparent !important;
+    border: 0 !important;
+    transform: scale(1.34) !important;
+}
+
+.item-row .text-content {
+    display: block;
+    transform: none !important;
+    transform-origin: left center !important;
+    color: #000 !important;
+    text-align: left !important;
+    font-weight: 400 !important;
+    transition: font-weight 220ms ease;
+}
+
+.item-row:hover .text-content {
+    font-weight: 800 !important;
+}
+
+/*
+   True soft-selection curve:
+   focus = very large
+   +/-1 = large
+   +/-2 = medium
+   +/-3+ = normal
+   Nothing else becomes bold merely because something is hovered.
+*/
+@supports selector(.item-row:has(+ .item-row:hover)) {
+    .container:has(.item-row:hover) .item-row {
+        opacity: 1 !important;
+        transform: scale(1) !important;
+    }
+
+    /* One row away from focus */
+    .container:has(.item-row:hover) .item-row:has(+ .item-row:hover),
+    .container:has(.item-row:hover) .item-row:hover + .item-row {
+        transform: scale(1.18) !important;
+    }
+
+    /* Two rows away from focus */
+    .container:has(.item-row:hover) .item-row:has(+ .item-row + .item-row:hover),
+    .container:has(.item-row:hover) .item-row:hover + .item-row + .item-row {
+        transform: scale(1.08) !important;
+    }
+
+    /* Three rows away from focus */
+    .container:has(.item-row:hover) .item-row:has(+ .item-row + .item-row + .item-row:hover),
+    .container:has(.item-row:hover) .item-row:hover + .item-row + .item-row + .item-row {
+        transform: scale(1.03) !important;
+    }
+
+    .container:has(.item-row:hover) .item-row:hover {
+        z-index: 50;
+        opacity: 1 !important;
+        transform: scale(1.34) !important;
+    }
+
+    /* Only the actual hovered row is bold. */
+    .container:has(.item-row:hover) .item-row .text-content {
+        font-weight: 400 !important;
+    }
+
+    .container:has(.item-row:hover) .item-row:hover .text-content {
+        font-weight: 800 !important;
+    }
+}
+
+/* Current/active row: tiny offset dot only. */
+.item-row:has(.text-active)::before {
+    content: '' !important;
+    display: block !important;
+    position: absolute !important;
+    left: -20px !important;
+    top: 50% !important;
+    width: 5px !important;
+    height: 5px !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background: #000 !important;
+    transform: translateY(-50%) !important;
+    box-shadow: none !important;
+}
+
+/* Plus entry follows the same open-list language. */
+.add-btn-circle {
+    width: 100% !important;
+    height: 48px !important;
+    margin: 0 !important;
+    padding: 8px 0 !important;
+    justify-content: flex-start !important;
+    background: transparent !important;
+    color: #000 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    opacity: .45;
+    transform-origin: left center !important;
+    transition: transform 360ms cubic-bezier(.12, 1.65, .28, 1), opacity 220ms ease;
+}
+
+.add-btn-circle:hover {
+    background: transparent !important;
+    color: #000 !important;
+    opacity: 1;
+    transform: scale(1.18) !important;
+}
+
+/*
+   Copy feedback must never move the page.
+   Do not globally bold every row during copy-flash.
+   The existing active row remains the visual source of truth.
+*/
+body.copy-flash {
+    background: #fff !important;
+    color: #000 !important;
+}
+
+body.copy-flash .item-row {
+    transform: none !important;
+}
+
+body.copy-flash .item-row .text-content {
+    font-weight: 400 !important;
+}
+
+body.copy-flash .item-row:has(.text-active) .text-content {
+    font-weight: 800 !important;
+}
+
+/* Prevent copy success styling from moving or resizing the document. */
+.btn-main-copy,
+.btn-main-copy:hover,
+.btn-main-copy:focus,
+.btn-main-copy:active,
+.btn-main-copy.success-state {
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: transparent !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    opacity: 0 !important;
+    transform: none !important;
+    animation: none !important;
+    filter: none !important;
+}
+
+/* Bottom copy surface: transparent by default, gradient only while entered. */
+.bottom-zone {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 25vh !important;
+    min-height: 150px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+    background: transparent !important;
+    background-color: transparent !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    outline: 0 !important;
+    border-radius: 0 !important;
+    overflow: hidden !important;
+    cursor: pointer !important;
+    z-index: 2000 !important;
+    isolation: isolate;
+}
+
+.bottom-zone::before,
+.bottom-zone::after {
+    content: none !important;
+    display: none !important;
+}
+
+.bottom-zone:hover {
+    background:
+        linear-gradient(
+            to top,
+            rgba(0, 0, 0, .16) 0%,
+            rgba(0, 0, 0, .10) 22%,
+            rgba(0, 0, 0, .045) 48%,
+            rgba(0, 0, 0, 0) 82%
+        ) !important;
+    background-color: transparent !important;
+}
+
+.bottom-zone:active {
+    background:
+        linear-gradient(
+            to top,
+            rgba(0, 0, 0, .20) 0%,
+            rgba(0, 0, 0, .11) 25%,
+            rgba(0, 0, 0, .04) 52%,
+            rgba(0, 0, 0, 0) 84%
+        ) !important;
+    background-color: transparent !important;
+}
+
+@media (max-width: 700px) {
+    .item-row:hover {
+        transform: scale(1.22) !important;
+    }
+
+    .container:has(.item-row:hover) .item-row:hover {
+        transform: scale(1.22) !important;
+    }
+
+    .container:has(.item-row:hover) .item-row:has(+ .item-row:hover),
+    .container:has(.item-row:hover) .item-row:hover + .item-row {
+        transform: scale(1.12) !important;
+    }
+
+    .container:has(.item-row:hover) .item-row:has(+ .item-row + .item-row:hover),
+    .container:has(.item-row:hover) .item-row:hover + .item-row + .item-row {
+        transform: scale(1.05) !important;
+    }
+
+    .item-row:has(.text-active)::before {
+        left: -15px !important;
+    }
+
+    .bottom-zone {
+        height: 28vh !important;
+        min-height: 135px !important;
+    }
+}
