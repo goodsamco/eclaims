@@ -3247,3 +3247,83 @@ body {
         padding-left: 16px !important;
     }
 }
+
+
+/* ======================================================================
+   FINAL NARROW-WINDOW HOVER FIX
+   Prevent the hovered/active row from expanding its LAYOUT width.
+   The row remains exactly the same width; only its contents are visually
+   enlarged. This prevents the list/container from shifting left/right.
+   ====================================================================== */
+
+.item-row {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    flex: 0 0 100% !important;
+    overflow: visible !important;
+    transform-origin: center center !important;
+}
+
+/* Keep the row's layout box fixed when hovered. */
+.item-row:hover,
+.container:has(.item-row:hover) .item-row:hover {
+    box-sizing: border-box !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    flex-basis: 100% !important;
+    padding-left: 16px !important;
+    padding-right: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/*
+   The visual enlargement is centered inside the existing row box.
+   It no longer grows from the left edge, which was making the narrow
+   window appear to jump sideways.
+*/
+.container:has(.item-row:hover) .item-row:hover {
+    transform-origin: center center !important;
+}
+
+/* Never let the scaled row create document-level horizontal width. */
+.container {
+    box-sizing: border-box !important;
+    width: min(100%, 680px) !important;
+    max-width: 680px !important;
+    min-width: 0 !important;
+    overflow-x: clip !important;
+}
+
+@media (max-width: 700px) {
+    .container {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        box-sizing: border-box !important;
+        overflow-x: clip !important;
+    }
+
+    .item-row,
+    .item-row:hover,
+    .container:has(.item-row:hover) .item-row:hover {
+        width: 100% !important;
+        max-width: 100% !important;
+        min-width: 0 !important;
+        flex: 0 0 100% !important;
+        box-sizing: border-box !important;
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    /*
+       Keep the hover enlargement, but make it a visual transform only.
+       The original row dimensions remain unchanged.
+    */
+    .container:has(.item-row:hover) .item-row:hover {
+        transform-origin: center center !important;
+    }
+}
