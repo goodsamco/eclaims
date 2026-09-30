@@ -3451,3 +3451,110 @@ body.copy-flash .add-btn-circle {
         margin-bottom: 2px !important;
     }
 }
+
+
+/* ======================================================================
+   FINAL LIST DENSITY + RIGHTWARD HOVER EXPANSION
+   Keep the previously-fixed narrow-window positioning.
+   ====================================================================== */
+
+/* TIGHT BASE STATE — no extra padding/margin while idle. */
+.item-row {
+    box-sizing: border-box !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+    padding-left: 16px !important;
+    padding-right: 0 !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+/* PLUS follows the same tight list geometry. */
+.add-btn-circle {
+    box-sizing: border-box !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+    padding-left: 16px !important;
+    padding-right: 0 !important;
+    margin: 0 !important;
+}
+
+/*
+   HOVER ONLY:
+   Enlarge visually from the FIXED LEFT EDGE toward the RIGHT.
+   The row's actual layout width/padding/margin does not change.
+*/
+.container:has(.item-row:hover) .item-row:hover {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding-left: 16px !important;
+    padding-right: 0 !important;
+    transform-origin: left center !important;
+    transform: scale(1.26) !important;
+    z-index: 50 !important;
+}
+
+/* Nearby rows retain their normal geometry; only their visual scale changes. */
+@supports selector(.item-row:has(+ .item-row:hover)) {
+    .container:has(.item-row:hover) .item-row {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+    }
+
+    .container:has(.item-row:hover) .item-row:has(+ .item-row:hover),
+    .container:has(.item-row:hover) .item-row:hover + .item-row {
+        transform-origin: left center !important;
+    }
+
+    .container:has(.item-row:hover) .item-row:has(+ .item-row + .item-row:hover),
+    .container:has(.item-row:hover) .item-row:hover + .item-row + .item-row {
+        transform-origin: left center !important;
+    }
+}
+
+/* Never change padding/margin to create the hover enlargement. */
+.item-row:hover {
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+    padding-left: 16px !important;
+    padding-right: 0 !important;
+    margin: 0 !important;
+}
+
+/* The active/copy row remains tight when not hovered. */
+.item-row:has(.text-active) {
+    margin: 0 !important;
+    padding-top: 4px !important;
+    padding-bottom: 4px !important;
+    padding-left: 16px !important;
+    padding-right: 0 !important;
+}
+
+@media (max-width: 700px) {
+    .item-row {
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
+        padding-left: 16px !important;
+        padding-right: 0 !important;
+        margin: 0 !important;
+    }
+
+    .add-btn-circle {
+        padding-top: 4px !important;
+        padding-bottom: 4px !important;
+        padding-left: 16px !important;
+        padding-right: 0 !important;
+        margin: 0 !important;
+    }
+
+    .container:has(.item-row:hover) .item-row:hover {
+        transform-origin: left center !important;
+        transform: scale(1.26) !important;
+    }
+}
