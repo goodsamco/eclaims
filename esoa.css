@@ -3103,3 +3103,187 @@ body.copy-flash .item-row:has(.text-active) .text-content {
         min-height: 135px !important;
     }
 }
+
+
+/* ==========================================================================
+   FINAL LIST / DOT / MODAL REFINEMENT
+   ========================================================================== */
+
+.container {
+    padding-left: 24px !important;
+    padding-right: 0 !important;
+    overflow: visible !important;
+}
+
+.item-row {
+    width: calc(100% - 8px) !important;
+    min-height: 42px !important;
+    margin: 1px 0 !important;
+    padding: 5px 10px !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    box-shadow: none !important;
+    transform-origin: left center !important;
+    transition:
+        transform 360ms cubic-bezier(.12, 1.65, .28, 1),
+        opacity 280ms ease,
+        font-weight 220ms ease,
+        background-color 180ms ease !important;
+}
+
+.item-row:hover {
+    padding: 5px 10px !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: rgba(0, 0, 0, 0.035) !important;
+    transform: scale(1.40) !important;
+    z-index: 50 !important;
+}
+
+/* Permanent reserved lane for the active dot. */
+.item-row:has(.text-active)::before {
+    left: -18px !important;
+    top: 50% !important;
+    width: 6px !important;
+    height: 6px !important;
+    margin: 0 !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background: #000 !important;
+    transform: translateY(-50%) !important;
+    pointer-events: none !important;
+    z-index: 60 !important;
+}
+
+@supports selector(.item-row:has(+ .item-row:hover)) {
+    .container:has(.item-row:hover) .item-row {
+        transform: scale(1) !important;
+    }
+
+    .container:has(.item-row:hover) .item-row:has(+ .item-row:hover),
+    .container:has(.item-row:hover) .item-row:hover + .item-row {
+        transform: scale(1.20) !important;
+    }
+
+    .container:has(.item-row:hover) .item-row:has(+ .item-row + .item-row:hover),
+    .container:has(.item-row:hover) .item-row:hover + .item-row + .item-row {
+        transform: scale(1.09) !important;
+    }
+
+    .container:has(.item-row:hover) .item-row:has(+ .item-row + .item-row + .item-row:hover),
+    .container:has(.item-row:hover) .item-row:hover + .item-row + .item-row + .item-row {
+        transform: scale(1.03) !important;
+    }
+
+    .container:has(.item-row:hover) .item-row:hover {
+        transform: scale(1.40) !important;
+        opacity: 1 !important;
+    }
+}
+
+.add-btn-circle {
+    width: 34px !important;
+    height: 34px !important;
+    margin: 5px 0 10px 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 50% !important;
+    background: transparent !important;
+    color: #000 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: transform 220ms cubic-bezier(.12, 1.65, .28, 1) !important;
+}
+
+.add-btn-circle:hover {
+    background: rgba(0, 0, 0, 0.04) !important;
+    transform: scale(1.15) !important;
+}
+
+/* Modal list follows the same compact, borderless interaction language. */
+.modal-content {
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 28px !important;
+}
+
+#listContainer {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1px !important;
+    padding: 2px 0 !important;
+    overflow: visible !important;
+}
+
+.modal-content .list-item {
+    position: relative !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 8px 12px !important;
+    min-height: 40px !important;
+    display: flex !important;
+    align-items: center !important;
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    color: #000 !important;
+    transform-origin: left center !important;
+    transition:
+        transform 360ms cubic-bezier(.12, 1.65, .28, 1),
+        background-color 180ms ease,
+        font-weight 180ms ease !important;
+}
+
+.modal-content .list-item:hover {
+    border: 0 !important;
+    border-radius: 999px !important;
+    background: rgba(0, 0, 0, 0.035) !important;
+    color: #000 !important;
+    transform: scale(1.12) !important;
+    z-index: 20 !important;
+}
+
+.modal-content .list-item:focus,
+.modal-content .list-item:active {
+    border: 0 !important;
+    outline: none !important;
+    box-shadow: none !important;
+}
+
+.modal-content .list-item,
+.modal-content .list-item * {
+    text-align: left;
+}
+
+@media (max-width: 700px) {
+    .container {
+        padding-left: 20px !important;
+    }
+
+    .item-row {
+        min-height: 40px !important;
+        padding: 5px 8px !important;
+    }
+
+    .item-row:hover,
+    .container:has(.item-row:hover) .item-row:hover {
+        transform: scale(1.24) !important;
+    }
+
+    .container:has(.item-row:hover) .item-row:has(+ .item-row:hover),
+    .container:has(.item-row:hover) .item-row:hover + .item-row {
+        transform: scale(1.12) !important;
+    }
+
+    .container:has(.item-row:hover) .item-row:has(+ .item-row + .item-row:hover),
+    .container:has(.item-row:hover) .item-row:hover + .item-row + .item-row {
+        transform: scale(1.05) !important;
+    }
+
+    .item-row:has(.text-active)::before {
+        left: -15px !important;
+    }
+}
