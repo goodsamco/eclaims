@@ -2474,3 +2474,344 @@ h2 {
         animation-iteration-count: 1 !important;
     }
 }
+
+/* ==========================================================================\n   17. ULTRA-MINIMAL LIST / ELASTIC FOCUS / ACTIVE COPY ZONE\n   ========================================================================== */
+
+/* Main surface: completely open, no cards, no borders, no framing. */
+.container {
+    width: min(100%, 680px) !important;
+    max-width: 680px !important;
+    padding: 8px 0 42px !important;
+    margin: 0 !important;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible !important;
+}
+
+#highlighter {
+    display: none !important;
+}
+
+/* Remove category-card styling so every entry reads as one continuous list. */
+h2 {
+    display: none !important;
+}
+
+/* Every item starts from the same left edge. */
+.item-row {
+    position: relative;
+    z-index: 2;
+    width: 100%;
+    min-height: 48px;
+    margin: 0 !important;
+    padding: 10px 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    background: transparent !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    cursor: pointer;
+    opacity: 1;
+    transform: scale(1);
+    transform-origin: left center;
+    transition:
+        transform 300ms cubic-bezier(.16, 1.35, .35, 1),
+        font-weight 180ms ease,
+        opacity 220ms ease;
+}
+
+.item-row:hover {
+    z-index: 30;
+    background: transparent !important;
+    border: 0 !important;
+    padding: 10px 0 !important;
+    transform: scale(1.18) !important;
+}
+
+.text-content {
+    display: block;
+    color: #000 !important;
+    font-size: 0.96rem;
+    line-height: 1.25;
+    font-weight: 500;
+    text-align: left;
+    transform-origin: left center;
+    transition: font-weight 180ms ease;
+}
+
+.item-row:hover .text-content {
+    font-weight: 800;
+}
+
+/*
+   Elastic distance hierarchy.
+   Hover 4:
+   4 = largest
+   3 + 5 = bigger
+   2 + 6 = moderately raised
+   everything else = normal
+*/
+@supports selector(.item-row:has(+ .item-row:hover)) {
+    .container:has(.item-row:hover) .item-row {
+        opacity: 1;
+        transform: scale(1) !important;
+    }
+
+    /* One row away */
+    .container:has(.item-row:hover) .item-row:has(+ .item-row:hover),
+    .container:has(.item-row:hover) .item-row:hover + .item-row {
+        transform: scale(1.08) !important;
+    }
+
+    /* Two rows away */
+    .container:has(.item-row:hover) .item-row:has(+ .item-row + .item-row:hover),
+    .container:has(.item-row:hover) .item-row:hover + .item-row + .item-row {
+        transform: scale(1.04) !important;
+    }
+
+    /* Focus */
+    .container:has(.item-row:hover) .item-row:hover {
+        transform: scale(1.18) !important;
+        opacity: 1;
+    }
+
+    .container:has(.item-row:hover) .item-row:has(+ .item-row:hover) .text-content,
+    .container:has(.item-row:hover) .item-row:hover + .item-row .text-content {
+        font-weight: 650;
+    }
+
+    .container:has(.item-row:hover) .item-row:has(+ .item-row + .item-row:hover) .text-content,
+    .container:has(.item-row:hover) .item-row:hover + .item-row + .item-row .text-content {
+        font-weight: 580;
+    }
+}
+
+/* The focused/current entry gets only a tiny offset dot. */
+.item-row:has(.text-active)::before {
+    content: '';
+    position: absolute;
+    left: -18px;
+    top: 50%;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #000;
+    transform: translateY(-50%);
+}
+
+.text-active {
+    color: #000 !important;
+    text-shadow: none !important;
+    font-weight: 800 !important;
+}
+
+/* Plus controls become ordinary list entries, with no button treatment. */
+.add-btn-circle {
+    width: 100% !important;
+    height: 48px !important;
+    margin: 0 !important;
+    padding: 10px 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    background: transparent !important;
+    color: #000 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    opacity: 0.45;
+    transform: none !important;
+    cursor: pointer;
+    transition: opacity 180ms ease, transform 300ms cubic-bezier(.16, 1.35, .35, 1);
+}
+
+.add-btn-circle:hover {
+    background: transparent !important;
+    color: #000 !important;
+    opacity: 1;
+    transform: scale(1.08) !important;
+    transform-origin: left center;
+}
+
+.add-btn-circle svg {
+    width: 17px;
+    height: 17px;
+    margin: 0;
+}
+
+/* Copy feedback: preserve the script's temporary class, but only bold the list. */
+body.copy-flash {
+    background: #fff !important;
+    color: #000 !important;
+}
+
+body.copy-flash .item-row .text-content {
+    font-weight: 800 !important;
+}
+
+body.copy-flash .add-btn-circle {
+    font-weight: 800;
+}
+
+/* The copy area has no label. Its hover state is only a subtle bottom-up tint. */
+.bottom-zone {
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100% !important;
+    height: 25vh !important;
+    min-height: 150px !important;
+    padding: 0 !important;
+    display: block !important;
+    background: #fff !important;
+    border: 0 !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    cursor: pointer;
+    overflow: hidden;
+}
+
+.bottom-zone::before,
+.bottom-zone::after {
+    content: none !important;
+    display: none !important;
+}
+
+.bottom-zone:hover {
+    background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.13) 0%,
+        rgba(0, 0, 0, 0.07) 22%,
+        rgba(0, 0, 0, 0.025) 48%,
+        rgba(0, 0, 0, 0) 78%
+    ) !important;
+}
+
+.bottom-zone:active {
+    background: linear-gradient(
+        to top,
+        rgba(0, 0, 0, 0.18) 0%,
+        rgba(0, 0, 0, 0.08) 35%,
+        rgba(0, 0, 0, 0) 80%
+    ) !important;
+}
+
+/* Keep the existing button as the real click target, but make it visually disappear. */
+.btn-main-copy {
+    display: block !important;
+    position: absolute !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    background-image: none !important;
+    box-shadow: none !important;
+    color: transparent !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    text-shadow: none !important;
+    opacity: 0 !important;
+    filter: none !important;
+    transform: none !important;
+    animation: none !important;
+    cursor: pointer !important;
+    z-index: 5;
+}
+
+.btn-main-copy:hover,
+.btn-main-copy:focus,
+.btn-main-copy:active,
+.btn-main-copy.success-state {
+    background: transparent !important;
+    color: transparent !important;
+    box-shadow: none !important;
+    transform: none !important;
+    filter: none !important;
+}
+
+@media (max-width: 700px) {
+    body {
+        padding: 175px 16px 28vh;
+    }
+
+    .container {
+        padding: 4px 0 32px !important;
+    }
+
+    .item-row {
+        min-height: 46px;
+        padding: 9px 0 !important;
+    }
+
+    .item-row:hover {
+        transform: scale(1.08) !important;
+    }
+
+    .add-btn-circle {
+        height: 46px !important;
+    }
+
+    .item-row:has(.text-active)::before {
+        left: -13px;
+    }
+
+    .bottom-zone {
+        height: 28vh !important;
+        min-height: 135px !important;
+    }
+}
+
+/* ==========================================================================\n   18. BORDERLESS FINISH\n   ========================================================================== */
+.peer-wrapper-row,
+.top-nav,
+.chat-docking-panel,
+.container,
+.scroll-nav-btn,
+.profile-avatar-node,
+.peer-avatar-bubble,
+.group-chat-bubble,
+.modal-content,
+.modal-result,
+.native-emoji-matrix-panel,
+.standby-manual-trigger-btn,
+.expansion-trigger-node,
+.chat-header-bar,
+.chat-input-row,
+.input-group {
+    border: 0 !important;
+    box-shadow: none !important;
+}
+
+.peer-wrapper-row,
+.top-nav,
+.container,
+.chat-docking-panel {
+    background: transparent !important;
+}
+
+.scroll-nav-btn,
+.profile-avatar-node,
+.peer-avatar-bubble {
+    background: transparent !important;
+}
+
+.group-chat-bubble {
+    border: 0 !important;
+}
+
+.modal-content,
+.modal-result,
+.native-emoji-matrix-panel,
+.standby-manual-trigger-btn,
+.expansion-trigger-node {
+    border-radius: 0 !important;
+}
