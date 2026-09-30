@@ -1826,3 +1826,651 @@ body.standby-active .standby-center-profile {
     from { transform: translate(-50%, -50%) rotate(360deg); }
     to { transform: translate(-50%, -50%) rotate(0deg); }
 }
+
+/* ==========================================================================\n   16. MINIMAL MONOCHROME OVERRIDE\n   ========================================================================== */
+:root {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --primary: #000000;
+    --success: #000000;
+    --text-main: #000000;
+    --glass: rgba(0, 0, 0, 0.08);
+    --modal-bg: rgba(255, 255, 255, 0.98);
+    --surface-rgb: 255, 255, 255;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+html {
+    background: #ffffff;
+    color: #000000;
+}
+
+body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: 'Inter', sans-serif;
+    padding: 220px 24px 30vh;
+}
+
+body.copy-flash {
+    background: #000000 !important;
+    color: #ffffff !important;
+}
+
+::-webkit-scrollbar {
+    width: 6px;
+}
+
+::-webkit-scrollbar-track {
+    background: #ffffff;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #000000;
+    border-radius: 0;
+}
+
+/* ==========================================================================\n   PEER / TOP UI\n   ========================================================================== */
+.peer-wrapper-row,
+.top-nav,
+.chat-docking-panel,
+.container {
+    background: #ffffff !important;
+    border: 1px solid #000000 !important;
+    box-shadow: none !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+.peer-wrapper-row {
+    max-width: 720px;
+    height: 96px;
+    border-radius: 0;
+}
+
+.peer-active-hub {
+    border-radius: 0;
+}
+
+.peer-wrapper {
+    width: 78px;
+    height: 88px;
+}
+
+.peer-avatar-bubble,
+.group-chat-bubble {
+    width: 54px;
+    height: 54px;
+    border-radius: 0;
+}
+
+.peer-avatar-bubble {
+    border: 1px solid #000000;
+}
+
+.group-chat-bubble {
+    background: #000000;
+    color: #ffffff;
+    border: 1px solid #000000;
+}
+
+.peer-avatar-bubble:hover,
+.group-chat-bubble:hover {
+    border-color: #000000;
+    transform: scale(1.04);
+}
+
+.peer-name-hover {
+    color: #000000;
+    font-size: 0.62rem;
+    font-weight: 600;
+}
+
+.peer-notif-dot {
+    background: #000000;
+    border-color: #ffffff;
+    box-shadow: none;
+}
+
+.scroll-nav-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 0;
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #000000;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.scroll-nav-btn:hover {
+    background: #000000;
+    color: #ffffff;
+    border-color: #000000;
+}
+
+.top-nav {
+    top: 135px;
+    padding: 4px 8px;
+    gap: 4px;
+    border-radius: 0;
+}
+
+.top-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 0;
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid transparent;
+    backdrop-filter: none;
+}
+
+.top-btn:hover,
+.top-btn.active {
+    background: #000000 !important;
+    color: #ffffff !important;
+    transform: none;
+}
+
+.profile-avatar-node {
+    width: 42px;
+    height: 42px;
+    border-radius: 0;
+    background: #ffffff;
+    border: 1px solid #000000;
+    box-shadow: none;
+}
+
+.profile-avatar-node:hover {
+    transform: scale(1.03);
+}
+
+.name-string {
+    color: #000000;
+}
+
+/* ==========================================================================\n   MAIN LIST\n   ========================================================================== */
+.container {
+    width: min(100%, 680px);
+    max-width: 680px;
+    padding: 26px 28px 42px;
+    border-radius: 0;
+    overflow: visible;
+}
+
+#highlighter {
+    left: 0;
+    right: 0;
+    border: 1px solid #000000;
+    background: #f5f5f5;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+h2 {
+    color: #000000;
+    font-size: 0.62rem;
+    font-weight: 800;
+    letter-spacing: 0.18em;
+    margin: 38px 0 8px 0;
+    opacity: 0.45;
+}
+
+.item-row {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    width: 100%;
+    min-height: 48px;
+    padding: 10px 12px;
+    margin: 2px 0;
+    border-radius: 0;
+    border-left: 1px solid transparent;
+    cursor: pointer;
+    transform-origin: left center;
+    transition:
+        transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1),
+        padding-left 180ms ease,
+        background-color 180ms ease,
+        border-color 180ms ease,
+        opacity 180ms ease;
+}
+
+.item-row:hover {
+    background: #f2f2f2;
+    border-left-color: #000000;
+    transform: scale(1.12);
+    padding-left: 16px;
+    z-index: 20;
+}
+
+.text-content {
+    color: #000000;
+    font-size: 0.94rem;
+    font-weight: 500;
+    text-align: left;
+    transform-origin: left center;
+    transition: transform 180ms ease, font-weight 180ms ease;
+}
+
+.item-row:hover .text-content {
+    font-weight: 800;
+}
+
+.text-active {
+    color: #000000 !important;
+    text-shadow: none !important;
+    font-weight: 800;
+}
+
+/* Proximity hierarchy: the hovered row is largest, then progressively smaller nearby rows. */
+@supports selector(.item-row:has(+ .item-row)) {
+    .container:has(.item-row:hover) .item-row {
+        opacity: 0.72;
+        transform: scale(0.97);
+    }
+
+    .container:has(.item-row:hover) .item-row:has(~ .item-row:hover),
+    .container:has(.item-row:hover) .item-row:hover ~ .item-row {
+        opacity: 0.82;
+        transform: scale(0.985);
+    }
+
+    .container:has(.item-row:hover) .item-row:has(~ .item-row:hover) .text-content,
+    .container:has(.item-row:hover) .item-row:hover ~ .item-row .text-content {
+        font-weight: 600;
+    }
+
+    .container:has(.item-row:hover) .item-row:hover {
+        opacity: 1;
+        transform: scale(1.12);
+    }
+}
+
+/* Keep the interaction anchored to the left edge rather than expanding from center. */
+.item-row,
+.item-row:hover,
+.item-row .text-content,
+.item-row:hover .text-content {
+    transform-origin: left center;
+}
+
+.add-btn-circle {
+    width: auto;
+    height: auto;
+    margin: 8px 0 18px 12px;
+    padding: 4px 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    color: #000000;
+    opacity: 0.45;
+}
+
+.add-btn-circle:hover {
+    background: transparent;
+    color: #000000;
+    transform: none;
+    opacity: 1;
+}
+
+.add-btn-circle svg {
+    width: 16px;
+    height: 16px;
+}
+
+/* ==========================================================================\n   FULL-WIDTH COPY AREA\n   ========================================================================== */
+.bottom-zone {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 25vh;
+    min-height: 150px;
+    z-index: 2000;
+    display: flex;
+    align-items: flex-end;
+    justify-content: flex-start;
+    padding: 0 24px 28px;
+    background: #ffffff !important;
+    border-top: 1px solid #000000;
+    cursor: pointer;
+    transition: background-color 160ms ease, color 160ms ease;
+}
+
+.bottom-zone::before {
+    content: 'COPY';
+    display: block;
+    color: #000000;
+    font-size: clamp(2rem, 7vw, 5.5rem);
+    font-weight: 800;
+    line-height: 0.9;
+    letter-spacing: -0.055em;
+    transform-origin: left bottom;
+    transition: transform 180ms cubic-bezier(0.2, 0.8, 0.2, 1), letter-spacing 180ms ease;
+}
+
+.bottom-zone::after {
+    content: 'CLICK ANYWHERE IN THIS AREA';
+    position: absolute;
+    left: 26px;
+    top: 22px;
+    color: #000000;
+    font-size: 0.58rem;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    opacity: 0.42;
+}
+
+.bottom-zone:hover {
+    background: #f5f5f5 !important;
+}
+
+.bottom-zone:hover::before {
+    transform: scale(1.08);
+    letter-spacing: -0.04em;
+}
+
+.bottom-zone:active::before {
+    transform: scale(1.03);
+}
+
+/* The old visual button is removed. The parent .bottom-zone is now the copy target. */
+.btn-main-copy {
+    display: none !important;
+}
+
+/* ==========================================================================\n   CHAT\n   ========================================================================== */
+.chat-docking-panel {
+    border-radius: 0;
+    color: #000000;
+}
+
+.chat-header-bar {
+    background: #ffffff;
+    border-bottom: 1px solid #000000;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.chat-header-bar span,
+.chat-close-trigger {
+    color: #000000;
+}
+
+.chat-close-trigger {
+    width: 30px;
+    height: 30px;
+    border-radius: 0;
+    background: #ffffff;
+    border: 1px solid #000000;
+}
+
+.chat-close-trigger:hover {
+    background: #000000;
+    color: #ffffff;
+    transform: none;
+}
+
+.chat-scroller-view {
+    background: #ffffff;
+}
+
+.msg-author-tag,
+.msg-time-tag,
+.msg-bubble,
+.msg-ghost-reply-preview,
+.reply-track-contents p {
+    color: #000000;
+}
+
+.msg-bubble.incoming,
+.msg-bubble.outgoing {
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #000000;
+}
+
+.msg-bubble.outgoing {
+    font-weight: 600;
+}
+
+.msg-gc-avatar {
+    border-color: #000000;
+}
+
+.msg-reaction-container,
+.reaction-pill,
+.reaction-picker-tray {
+    box-shadow: none;
+}
+
+.reaction-picker-tray {
+    background: #ffffff;
+    border: 1px solid #000000;
+    border-radius: 0;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.reaction-count,
+.reply-track-contents span {
+    color: #000000;
+}
+
+.chat-input-row {
+    background: #ffffff;
+    border-top: 1px solid #000000;
+}
+
+.chat-input-row input,
+.chat-input-row textarea {
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #000000;
+    border-radius: 0;
+}
+
+.chat-input-row button {
+    background: #000000;
+    color: #ffffff;
+    border-radius: 0;
+}
+
+/* ==========================================================================\n   MODALS / LISTS\n   ========================================================================== */
+.modal-overlay {
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+}
+
+.modal-overlay.active {
+    background: rgba(255, 255, 255, 0.78);
+}
+
+.modal-content {
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #000000;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.modal-content h3,
+.input-group label,
+#finalDiscount {
+    color: #000000;
+}
+
+.list-item {
+    color: #000000;
+    background: #ffffff;
+    border: 1px solid #e5e5e5;
+    border-radius: 0;
+}
+
+.list-item:hover {
+    background: #f2f2f2;
+    border-color: #000000;
+    color: #000000;
+}
+
+.modal-content input {
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #000000;
+    border-radius: 0;
+}
+
+.modal-content input:focus {
+    border-color: #000000;
+}
+
+.modal-result {
+    background: #ffffff;
+    border: 1px solid #000000;
+    border-radius: 0;
+}
+
+.modal-copy-zone {
+    background: #000000;
+    color: #ffffff;
+    border-radius: 0;
+}
+
+.modal-copy-zone.success-state {
+    background: #000000;
+    color: #ffffff;
+}
+
+.modal-close-btn {
+    color: #000000;
+}
+
+/* ==========================================================================\n   STATUS / REACTION / UTILITY ELEMENTS\n   ========================================================================== */
+.peer-status-note,
+.profile-status-note-bubble {
+    background: #ffffff;
+    color: #000000;
+    border-color: #000000;
+    box-shadow: none;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.profile-note-action-trigger {
+    background: #000000;
+    color: #ffffff;
+    box-shadow: none;
+}
+
+.expansion-trigger-node {
+    background: #ffffff !important;
+    color: #000000;
+    border: 1px solid #000000 !important;
+}
+
+#chatReplyTrackIndicator {
+    background: #ffffff;
+    border-top-color: #000000;
+}
+
+.native-emoji-matrix-panel {
+    background: #ffffff;
+    border: 1px solid #000000;
+    border-radius: 0;
+    box-shadow: none;
+}
+
+.matrix-emoji-node:hover {
+    background: #f2f2f2;
+}
+
+/* ==========================================================================\n   STANDBY MODE\n   ========================================================================== */
+.standby-manual-trigger-btn {
+    background: #ffffff;
+    color: #000000;
+    border: 1px solid #000000;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+}
+
+.standby-manual-trigger-btn:hover {
+    background: #000000;
+    color: #ffffff;
+}
+
+#standby-overlay {
+    background: rgba(255, 255, 255, 0.72);
+}
+
+.standby-time-display,
+.standby-date-display,
+.standby-ambient-dot {
+    color: #000000;
+}
+
+.standby-ambient-dot {
+    background-color: #000000;
+    box-shadow: none;
+}
+
+.standby-node-slot.is-active .standby-ambient-dot,
+.standby-center-profile {
+    border-color: #000000;
+    box-shadow: none;
+}
+
+/* ==========================================================================\n   RESPONSIVE\n   ========================================================================== */
+@media (max-width: 700px) {
+    body {
+        padding: 175px 12px 28vh;
+    }
+
+    .peer-wrapper-row {
+        top: 12px;
+        height: 82px;
+        max-width: calc(100% - 24px);
+    }
+
+    .top-nav {
+        top: 105px;
+    }
+
+    .container {
+        padding: 20px 14px 34px;
+    }
+
+    .item-row:hover {
+        transform: scale(1.06);
+    }
+
+    .bottom-zone {
+        height: 28vh;
+        min-height: 135px;
+        padding: 0 16px 20px;
+    }
+
+    .bottom-zone::after {
+        left: 18px;
+        top: 16px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+    }
+}
