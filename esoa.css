@@ -3558,3 +3558,228 @@ body.copy-flash .add-btn-circle {
         transform: scale(1.26) !important;
     }
 }
+
+
+/* ======================================================================
+   USER REQUESTED FINAL UI TUNING
+   CSS ONLY — preserves the existing JS selection behavior.
+   ====================================================================== */
+
+/* 1. DOUBLE THE CURRENT LEFT OFFSET.
+      Current text/list offset is 16px; this moves the list to 32px. */
+.item-row,
+.add-btn-circle {
+    margin-left: 32px !important;
+    margin-right: 0 !important;
+    width: calc(100% - 32px) !important;
+    box-sizing: border-box !important;
+}
+
+/* Keep the text itself aligned cleanly after the new left margin. */
+.item-row {
+    padding-left: 16px !important;
+    padding-right: 0 !important;
+}
+
+.add-btn-circle {
+    padding-left: 16px !important;
+    padding-right: 0 !important;
+}
+
+/* 2. TIGHTER NORMAL LIST LINE SPACING. */
+.item-row {
+    padding-top: 2px !important;
+    padding-bottom: 2px !important;
+    line-height: 1rem !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+}
+
+.item-row .text-content {
+    font-size: 0.95rem !important;
+    line-height: 1rem !important;
+}
+
+/* 3. HOVERED ITEM: DOUBLE THE CURRENT FONT SIZE + EXPAND LINE HEIGHT.
+      The enlargement remains visual, so the surrounding list does not
+      permanently reflow. */
+.container:has(.item-row:hover) .item-row:hover {
+    margin-left: 32px !important;
+    margin-right: 0 !important;
+    width: calc(100% - 32px) !important;
+    padding-top: 5px !important;
+    padding-bottom: 5px !important;
+    padding-left: 16px !important;
+    padding-right: 0 !important;
+    line-height: 2rem !important;
+    transform-origin: left center !important;
+    transform: scale(1.26) !important;
+    z-index: 100 !important;
+}
+
+.container:has(.item-row:hover) .item-row:hover .text-content {
+    font-size: 1.9rem !important;
+    line-height: 2.1rem !important;
+    font-weight: 400 !important;
+}
+
+/* 4. KEEP THE LAST COPIED ITEM BOLD, EVEN AFTER FOCUS MOVES TO THE NEXT.
+      JS leaves .text-active on the last copied row, so this remains bold. */
+.item-row:has(.text-active) .text-content,
+body.copy-flash .item-row:has(.text-active) .text-content {
+    font-weight: 800 !important;
+}
+
+/* If the previously copied row is hovered, retain the doubled hover font
+   while preserving its bold state. */
+.container:has(.item-row:hover) .item-row:has(.text-active):hover .text-content {
+    font-size: 1.9rem !important;
+    line-height: 2.1rem !important;
+    font-weight: 800 !important;
+}
+
+/* 5. MOVE THE DOT TO THE NEXT ITEM AFTER SELECTION.
+      The old selected row stays bold, but its dot disappears.
+      The following row receives the visible dot. */
+.item-row::before {
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+.item-row:has(.text-active)::before {
+    opacity: 0 !important;
+    visibility: hidden !important;
+}
+
+.item-row:has(.text-active) + .item-row::before {
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Preserve the marker position after the doubled left margin. */
+.item-row::before,
+.item-row:has(.text-active)::before,
+.item-row:has(.text-active) + .item-row::before {
+    left: 2px !important;
+    right: auto !important;
+}
+
+/* If the selected item is immediately followed by a non-item heading,
+   the marker naturally remains hidden rather than jumping to a heading. */
+
+/* 6. SLOW THE NORMAL HOVER RETURN / BOUNCE TO 2X THE CURRENT SPEED.
+      Current list transition is 0.3s; normal rows now return over 0.6s. */
+.item-row {
+    transition:
+        transform 0.6s cubic-bezier(0.4, 0, 0.2, 1),
+        background-color 0.6s ease,
+        padding 0.6s ease,
+        margin 0.6s ease,
+        font-size 0.6s ease,
+        line-height 0.6s ease;
+}
+
+/* Active selection hover keeps the original 0.3s response speed. */
+.item-row:has(.text-active):hover {
+    transition:
+        transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+        background-color 0.3s ease,
+        padding 0.3s ease,
+        margin 0.3s ease,
+        font-size 0.3s ease,
+        line-height 0.3s ease;
+}
+
+/* 7. GC ICON: BLACK ON HOVER FOR MAXIMUM CONTRAST.
+      The GC itself remains a perfect circle. */
+.group-chat-bubble {
+    border-radius: 50% !important;
+    overflow: hidden !important;
+}
+
+.group-chat-bubble:hover {
+    background: #fff !important;
+    border-color: #fff !important;
+    color: #000 !important;
+}
+
+.group-chat-bubble:hover svg,
+.group-chat-bubble:hover i {
+    color: #000 !important;
+    stroke: #000 !important;
+}
+
+/* 8. KEEP NAV BUTTONS PERFECTLY CIRCULAR. */
+.scroll-nav-btn,
+.top-btn {
+    border-radius: 50% !important;
+    aspect-ratio: 1 / 1 !important;
+}
+
+.scroll-nav-btn {
+    width: 36px !important;
+    height: 36px !important;
+}
+
+.top-btn {
+    width: 38px !important;
+    height: 38px !important;
+    padding: 0 !important;
+}
+
+/* 9. KEEP PROFILE AVATAR PERFECTLY CIRCULAR. */
+.profile-avatar-node {
+    width: 48px !important;
+    height: 48px !important;
+    min-width: 48px !important;
+    min-height: 48px !important;
+    border-radius: 50% !important;
+    object-fit: cover !important;
+}
+
+/* 10. MOBILE/NARROW WINDOWS — same 2x left margin without horizontal
+       document movement. */
+@media (max-width: 700px) {
+    .item-row,
+    .add-btn-circle {
+        margin-left: 32px !important;
+        margin-right: 0 !important;
+        width: calc(100% - 32px) !important;
+        box-sizing: border-box !important;
+    }
+
+    .item-row {
+        padding-top: 2px !important;
+        padding-bottom: 2px !important;
+        padding-left: 16px !important;
+        padding-right: 0 !important;
+        line-height: 1rem !important;
+    }
+
+    .item-row .text-content {
+        font-size: 0.95rem !important;
+        line-height: 1rem !important;
+    }
+
+    .container:has(.item-row:hover) .item-row:hover {
+        margin-left: 32px !important;
+        width: calc(100% - 32px) !important;
+        padding-top: 5px !important;
+        padding-bottom: 5px !important;
+        padding-left: 16px !important;
+        padding-right: 0 !important;
+        transform-origin: left center !important;
+        transform: scale(1.26) !important;
+    }
+
+    .container:has(.item-row:hover) .item-row:hover .text-content {
+        font-size: 1.9rem !important;
+        line-height: 2.1rem !important;
+    }
+
+    .item-row:has(.text-active) + .item-row::before {
+        opacity: 1 !important;
+        visibility: visible !important;
+        left: 2px !important;
+    }
+}
