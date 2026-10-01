@@ -1464,7 +1464,8 @@ const extraItems = {
     lab: [
         "CHEMISTRY: TRIGLYCERIDES",
         "CHEMISTRY: HDL",
-        "CHEMISTRY: DIRECT LDL"
+        "CHEMISTRY: DIRECT LDL",
+        "MICROSCOPY: STOOL-FECT (STOOL CONCENTRATION)"
     ],
 
     supply: [
@@ -1478,6 +1479,7 @@ const extraItems = {
 
     others: [
         "HM-AMLODIPINE",
+        "HM-GLICLAZIDE",
         "HM-OMEPRAZOLE",
         "HM-COLCHICINE",
         "HM-SAMBONG",
