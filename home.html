@@ -1,444 +1,329 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>iOS Clinical Launchpad</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --primary: #00e676;
-            --primary-glow: rgba(0, 230, 118, 0.35);
-            --glass-bg: rgba(22, 24, 28, 0.55);
-            --glass-border: rgba(255, 255, 255, 0.12);
-            --text-main: #ffffff;
-            --text-sub: #a1a1aa;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Clinical Launchpad</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --primary:#00e676;
+  --primary-glow:rgba(0,230,118,.35);
+  --glass:rgba(255,255,255,.09);
+  --glass-border:rgba(255,255,255,.16);
+  --text:#fff;
+  --sub:#a1a1aa;
+  --spring:cubic-bezier(.34,1.56,.64,1);
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%}
+body{
+  background:#08090a;
+  background-image:
+    radial-gradient(circle at 15% 12%,rgba(0,230,118,.14),transparent 45%),
+    radial-gradient(circle at 88% 80%,rgba(0,162,255,.10),transparent 50%);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,sans-serif;
+  color:var(--text);
+  display:flex;justify-content:center;align-items:center;
+  overflow:hidden;
+}
+.phone-shell{
+  width:100%;max-width:410px;height:840px;max-height:96vh;
+  background:rgba(12,14,18,.7);
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:50px;
+  box-shadow:0 30px 80px rgba(0,0,0,.9),inset 0 0 0 1px rgba(255,255,255,.05);
+  backdrop-filter:blur(40px);-webkit-backdrop-filter:blur(40px);
+  padding:24px 20px 28px;
+  display:flex;flex-direction:column;position:relative;overflow:hidden;
+}
+.top-bar{display:flex;justify-content:flex-end;z-index:5}
+.avatar{
+  width:42px;height:42px;border-radius:50%;object-fit:cover;cursor:pointer;
+  border:2px solid var(--primary);box-shadow:0 0 12px var(--primary-glow);
+  transition:transform .4s var(--spring);
+}
+.avatar:active{transform:scale(.85)}
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            -webkit-tap-highlight-color: transparent;
-        }
+/* Hero */
+.hero{
+  text-align:center;margin-top:6px;
+  transition:transform .7s var(--spring),opacity .4s ease,max-height .7s var(--spring);
+  max-height:150px;
+}
+.clock{
+  font-family:'Poppins',sans-serif;font-size:3.8rem;font-weight:700;letter-spacing:-1.5px;line-height:1;
+  background:linear-gradient(180deg,#fff 30%,rgba(255,255,255,.55) 100%);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+}
+.greet{margin-top:10px;font-family:'Poppins',sans-serif;font-size:1.3rem;font-weight:700}
+.greet-sub{font-size:.8rem;color:var(--sub);margin-top:2px}
+.shell.open .hero{}
+.phone-shell.open .hero{transform:scale(.7) translateY(-14px);max-height:96px;opacity:.55}
+.phone-shell.open .greet,.phone-shell.open .greet-sub{display:none}
 
-        body {
-            background-color: #08090a;
-            background-image: 
-                radial-gradient(circle at 15% 15%, rgba(0, 230, 118, 0.12), transparent 45%),
-                radial-gradient(circle at 85% 75%, rgba(0, 162, 255, 0.08), transparent 50%);
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            overflow: hidden;
-        }
+/* Stage area */
+.stage-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
 
-        /* Phone Container Frame */
-        .phone-shell {
-            width: 100%;
-            max-width: 410px;
-            height: 840px;
-            max-height: 94vh;
-            background: rgba(12, 14, 18, 0.7);
-            border-radius: 50px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.9), inset 0 0 0 1px rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(40px);
-            -webkit-backdrop-filter: blur(40px);
-            padding: 24px 20px;
-            display: flex;
-            flex-direction: column;
-            position: relative;
-            perspective: 1000px;
-            justify-content: space-between;
-        }
+/* The folder that morphs into the grid */
+.stage{
+  position:relative;
+  background:var(--glass);
+  border:1px solid var(--glass-border);
+  backdrop-filter:blur(30px);-webkit-backdrop-filter:blur(30px);
+  box-shadow:0 24px 60px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.12);
+  cursor:pointer;
+  transition:width .65s var(--spring),height .65s var(--spring),border-radius .65s var(--spring),transform .35s var(--spring);
+  transform:scale(0);
+}
+.stage.ready{transform:scale(1);transition:width .65s var(--spring),height .65s var(--spring),border-radius .65s var(--spring),transform .9s var(--spring)}
+.stage:not(.is-open):active{transform:scale(.9)}
+.stage.is-open{cursor:default}
 
-        /* Top Header Area */
-        .top-bar {
-            display: flex;
-            justify-content: flex-end;
-            align-items: center;
-            z-index: 10;
-        }
+.folder-title{
+  position:absolute;left:0;right:0;top:0;height:54px;
+  display:flex;align-items:center;justify-content:center;
+  font-family:'Poppins',sans-serif;font-weight:600;font-size:1.05rem;letter-spacing:-.2px;
+  opacity:0;transform:translateY(-8px);
+  transition:opacity .3s ease,transform .5s var(--spring);pointer-events:none;
+}
+.stage.is-open .folder-title{opacity:1;transform:none;transition-delay:.15s}
 
-        .profile-avatar-node {
-            width: 42px;
-            height: 42px;
-            border-radius: 50%;
-            border: 2px solid var(--primary);
-            object-fit: cover;
-            cursor: pointer;
-            box-shadow: 0 0 12px var(--primary-glow);
-            transition: transform 0.2s ease;
-        }
+.close-btn{
+  position:absolute;right:14px;top:12px;width:30px;height:30px;border-radius:50%;
+  background:rgba(255,255,255,.12);border:none;color:#fff;font-size:15px;line-height:1;
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  opacity:0;transform:scale(.4);pointer-events:none;
+  transition:opacity .3s ease,transform .5s var(--spring);
+}
+.stage.is-open .close-btn{opacity:1;transform:scale(1);pointer-events:auto;transition-delay:.2s}
+.close-btn:active{transform:scale(.85)}
 
-        .profile-avatar-node:active {
-            transform: scale(0.92);
-        }
+/* Tiles live inside the stage and are positioned by JS for both states */
+.tile{
+  position:absolute;display:block;text-decoration:none;color:var(--text);
+  transition:left .65s var(--spring),top .65s var(--spring),width .65s var(--spring),height .65s var(--spring);
+  pointer-events:none;
+}
+.stage.is-open .tile{pointer-events:auto}
+.icon{
+  position:absolute;inset:0;border-radius:23%;
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 8px 18px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.35),inset 0 -6px 12px rgba(0,0,0,.18);
+  transition:transform .45s var(--spring),box-shadow .3s ease;
+  overflow:hidden;
+}
+.icon::after{ /* glossy sheen */
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(160deg,rgba(255,255,255,.28) 0%,rgba(255,255,255,0) 45%);
+  pointer-events:none;
+}
+.icon img{width:52%;height:52%;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35));transition:transform .45s var(--spring)}
+.tile:active .icon{transform:scale(.84)}
+.stage.is-open .tile:hover .icon img{transform:scale(1.1) rotate(-4deg)}
+.label{
+  position:absolute;top:100%;left:50%;transform:translateX(-50%) translateY(-4px);
+  margin-top:8px;width:120px;text-align:center;
+  font-size:.74rem;font-weight:500;letter-spacing:-.1px;color:rgba(255,255,255,.92);
+  opacity:0;transition:opacity .25s ease,transform .5s var(--spring);
+}
+.stage.is-open .label{opacity:1;transform:translateX(-50%);transition-delay:.25s}
 
-        /* Center Hero Area: Big Clock & Greetings */
-        .hero-center {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-align: center;
-            margin-top: -20px;
-        }
+.stage-caption{
+  margin-top:14px;font-size:.85rem;font-weight:500;color:rgba(255,255,255,.85);
+  transition:opacity .25s ease,transform .4s var(--spring);
+}
+.phone-shell.open .stage-caption{opacity:0;transform:translateY(-8px);pointer-events:none}
 
-        .big-clock {
-            font-family: 'Poppins', sans-serif;
-            font-size: 3.8rem;
-            font-weight: 700;
-            letter-spacing: -1.5px;
-            line-height: 1;
-            background: linear-gradient(180deg, #ffffff 30%, rgba(255,255,255,0.6) 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            margin-bottom: 12px;
-            text-shadow: 0 10px 20px rgba(0,0,0,0.5);
-        }
-
-        .greeting-section {
-            opacity: 0;
-            transform: translateY(10px);
-            transition: opacity 0.5s ease, transform 0.5s ease;
-        }
-
-        .greeting-section.loaded {
-            opacity: 1;
-            transform: translateY(0);
-        }
-
-        .greeting-text {
-            font-size: 1.5rem;
-            font-weight: 700;
-            font-family: 'Poppins', sans-serif;
-            color: var(--text-main);
-        }
-
-        .sub-greeting {
-            font-size: 0.8rem;
-            color: var(--text-sub);
-            margin-top: 2px;
-        }
-
-        /* Bottom Container Setup */
-        .bottom-area {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            width: 100%;
-        }
-
-        /* iOS Dock Wrapper */
-        .dock-container {
-            background: rgba(22, 24, 28, 0.65);
-            border: 1px solid var(--glass-border);
-            border-radius: 32px;
-            padding: 12px 10px;
-            backdrop-filter: blur(25px);
-            -webkit-backdrop-filter: blur(25px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.8);
-            display: flex;
-            justify-content: space-around;
-            align-items: center;
-        }
-
-        /* App Tile Base Mechanics */
-        .app-item {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            text-decoration: none;
-            color: var(--text-main);
-            opacity: 0;
-            transform: scale(2.5) translateY(-80px);
-            filter: blur(10px);
-            pointer-events: none;
-        }
-
-        /* Triggered Entrance Class */
-        .app-item.fly-in {
-            animation: iosDockFlyIn 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-            pointer-events: auto;
-        }
-
-        .app-tile {
-            width: 52px;
-            height: 52px;
-            border-radius: 16px;
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            overflow: hidden;
-            box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
-            transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
-        }
-
-        .app-tile img {
-            width: 26px;
-            height: 26px;
-            object-fit: contain;
-            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4));
-        }
-
-        .app-item:not(.disabled):active .app-tile {
-            transform: scale(0.88);
-            border-color: var(--primary);
-            box-shadow: 0 0 16px var(--primary-glow);
-        }
-
-        .app-label {
-            font-size: 0.65rem;
-            font-weight: 500;
-            margin-top: 5px;
-            letter-spacing: -0.2px;
-            color: rgba(255, 255, 255, 0.85);
-            text-align: center;
-            white-space: nowrap;
-        }
-
-        /* Inactive Apps Section */
-        .disabled-grid {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            opacity: 0.4;
-        }
-
-        .app-item.disabled {
-            cursor: not-allowed;
-            pointer-events: none;
-        }
-
-        .app-item.disabled .app-tile {
-            background: rgba(255, 255, 255, 0.02);
-            border-color: rgba(255, 255, 255, 0.05);
-            box-shadow: none;
-        }
-
-        .app-item.disabled .app-tile img {
-            filter: grayscale(100%);
-        }
-
-        /* Dock Fly-in Keyframe */
-        @keyframes iosDockFlyIn {
-            0% {
-                opacity: 0;
-                transform: scale(2.5) translateY(-80px);
-                filter: blur(10px);
-            }
-            100% {
-                opacity: 1;
-                transform: scale(1) translateY(0);
-                filter: blur(0);
-            }
-        }
-    </style>
+/* Per-icon colours (iOS-style gradients) */
+.c-esoa{background:linear-gradient(145deg,#34e89e,#0f9b5e)}
+.c-icd{background:linear-gradient(145deg,#4facfe,#2563eb)}
+.c-cf4{background:linear-gradient(145deg,#ff9a5a,#f0531c)}
+.c-pay{background:linear-gradient(145deg,#c084fc,#7c3aed)}
+.c-dental{background:linear-gradient(145deg,#5ee7ff,#0ea5c6)}
+.c-surg{background:linear-gradient(145deg,#ff6b81,#d6204a)}
+.c-opr{background:linear-gradient(145deg,#ffd45e,#f59e0b)}
+.c-csf{background:linear-gradient(145deg,#a3e635,#4d9a0b)}
+</style>
 </head>
 <body>
 
 <script>
-    // Unauthenticated User Guard
-    const activeUserId = localStorage.getItem("userId");
-    if (!activeUserId) {
-        window.location.href = "login.html";
-    }
+  // Unauthenticated user guard
+  if (!localStorage.getItem("userId")) window.location.href = "login.html";
 </script>
 
-<div class="phone-shell">
-    <!-- Top Bar -->
-    <div class="top-bar">
-        <img id="userDisplayAvatar" class="profile-avatar-node" src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix" alt="User Avatar" onclick="window.location.href='customization.html'">
+<div class="phone-shell" id="shell">
+  <div class="top-bar">
+    <img id="userDisplayAvatar" class="avatar" src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix" alt="User Avatar" onclick="window.location.href='customization.html'">
+  </div>
+
+  <div class="hero" id="hero">
+    <div class="clock" id="liveClock">00:00</div>
+    <div class="greet">Hello, <span id="userDisplayName">User</span></div>
+    <div class="greet-sub">Welcome back to your workspace</div>
+  </div>
+
+  <div class="stage-wrap">
+    <div class="stage" id="stage" role="button" aria-label="Open Clinical Suite">
+      <div class="folder-title">Clinical Suite</div>
+      <button class="close-btn" id="closeBtn" aria-label="Close">✕</button>
+      <!-- tiles injected by JS -->
     </div>
-
-    <!-- Centered Big Clock and Greetings -->
-    <div class="hero-center">
-        <div class="big-clock" id="liveClock">00:00</div>
-        <div class="greeting-section" id="greetingBox">
-            <div class="greeting-text">Hello, <span id="userDisplayName">User</span></div>
-            <div class="sub-greeting">Welcome back to your workspace</div>
-        </div>
-    </div>
-
-    <!-- Bottom Aligned Section -->
-    <div class="bottom-area">
-        <!-- Disabled Modules Row -->
-        <div class="disabled-grid">
-            <div class="app-item disabled fly-in" style="animation-delay: 0.05s;">
-                <div class="app-tile">
-                    <img src="https://api.iconify.design/lucide:user-check.svg?color=%23ffffff" alt="Senior">
-                </div>
-            </div>
-            <div class="app-item disabled fly-in" style="animation-delay: 0.1s;">
-                <div class="app-tile">
-                    <img src="https://api.iconify.design/lucide:bar-chart-3.svg?color=%23ffffff" alt="Analytics">
-                </div>
-            </div>
-            <div class="app-item disabled fly-in" style="animation-delay: 0.15s;">
-                <div class="app-tile">
-                    <img src="https://api.iconify.design/lucide:folder-heart.svg?color=%23ffffff" alt="Records">
-                </div>
-            </div>
-        </div>
-
-        <!-- Main iOS Bottom Dock -->
-        <div class="dock-container">
-            <!-- 1. eSOA -->
-            <a href="esoa.html" class="app-item" id="app1">
-                <div class="app-tile">
-                    <img src="https://api.iconify.design/lucide:receipt.svg?color=%2300e676" alt="eSOA">
-                </div>
-                <span class="app-label">eSOA</span>
-            </a>
-
-            <!-- 2. ICD-10 -->
-            <a href="icd10.html" class="app-item" id="app2">
-                <div class="app-tile">
-                    <img src="https://api.iconify.design/lucide:stethoscope.svg?color=%2300e676" alt="ICD-10">
-                </div>
-                <span class="app-label">ICD-10</span>
-            </a>
-
-            <!-- 3. CF4 -->
-            <a href="cf4.html" class="app-item" id="app3">
-                <div class="app-tile">
-                    <img src="https://api.iconify.design/lucide:credit-card.svg?color=%2300e676" alt="CF4">
-                </div>
-                <span class="app-label">CF4</span>
-            </a>
-
-            <!-- 4. Profile -->
-            <a href="customization.html" class="app-item" id="app4">
-                <div class="app-tile">
-                    <img src="https://api.iconify.design/lucide:user.svg?color=%2300e676" alt="Profile">
-                </div>
-                <span class="app-label">Profile</span>
-            </a>
-
-            <!-- 5. Payslip -->
-            <a href="payslip.html" class="app-item" id="app5">
-                <div class="app-tile">
-                    <img src="https://api.iconify.design/lucide:wallet.svg?color=%2300e676" alt="Payslip">
-                </div>
-                <span class="app-label">Payslip</span>
-            </a>
-        </div>
-    </div>
+    <div class="stage-caption">Clinical Suite</div>
+  </div>
 </div>
 
-<!-- Firebase & Data Binding -->
 <script type="module" src="esoa.js"></script>
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    let db;
-    let rtdb;
-    let userDocRef;
-    let appsTriggered = false;
+/* ---------- Apps (edit hrefs here) ---------- */
+const ic = (name, set = 'lucide') => `https://api.iconify.design/${set}:${name}.svg?color=%23ffffff`;
+const APPS = [
+  { label:'eSOA',               href:'esoa.html',     cls:'c-esoa',   icon: ic('receipt') },
+  { label:'ICD-10',             href:'icd10.html',    cls:'c-icd',    icon: ic('stethoscope') },
+  { label:'CF4',                href:'cf4.html',      cls:'c-cf4',    icon: ic('credit-card') },
+  { label:'Payslip',            href:'payslip.html',  cls:'c-pay',    icon: ic('wallet') },
+  { label:'Dental',             href:'dental.html',   cls:'c-dental', icon: ic('tooth','mdi') },
+  { label:'Surgery',            href:'surgery.html',  cls:'c-surg',   icon: ic('medical-bag','mdi') },
+  { label:'CF4 & OPR Form',     href:'cf4-opr.html',  cls:'c-opr',    icon: ic('file-text') },
+  { label:'CSF & CF5 Form',     href:'csf-cf5.html',  cls:'c-csf',    icon: ic('clipboard-list') },
+];
 
-    const userId = localStorage.getItem("userId");
+/* ---------- Morphing folder <-> grid ---------- */
+const shell = document.getElementById('shell');
+const stage = document.getElementById('stage');
+const closeBtn = document.getElementById('closeBtn');
+let isOpen = false;
 
-    const premium3dAssets = {
-        'avatar-m1': 'https://global.discourse-cdn.com/monzo/original/3X/8/6/866e6d84e8c756b19050fbe2ca0932858118614c.jpg',
-        'avatar-f1': 'https://i.pinimg.com/474x/0e/d0/0d/0ed00d2ea51a4a714536d9b5d103827d.jpg'
-    };
+const tiles = APPS.map(a => {
+  const el = document.createElement('a');
+  el.className = 'tile';
+  el.href = a.href;
+  el.innerHTML = `<div class="icon ${a.cls}"><img src="${a.icon}" alt="${a.label}"></div><span class="label">${a.label}</span>`;
+  stage.appendChild(el);
+  return el;
+});
 
-    try {
-        const firebaseConfig = {
-            apiKey: "AIzaSyDaeNQF4qmW0vvwxUPp_NztnT0hoLzm1BQ",
-            authDomain: "svls-289ee.firebaseapp.com",
-            databaseURL: "https://svls-289ee-default-rtdb.firebaseio.com",
-            projectId: "svls-289ee",
-            storageBucket: "svls-289ee.firebasestorage.app",
-            messagingSenderId: "500705386198",
-            appId: "1:500705386198:web:96f189662bc2aa99cf7377",
-            measurementId: "G-5TNBMQ2HN5"
-        };
-        const app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        rtdb = getDatabase(app);
-    } catch(e) {
-        console.warn("RTDB environment connection local fallback initiated.");
+// rows of 3 / 3 / 2, each row centered
+const ROWS = [[0,1,2],[3,4,5],[6,7]];
+
+function layout() {
+  const inner = shell.clientWidth - 40;
+  const openW = Math.min(366, inner);
+  const cell = openW / 3;
+  const size = Math.min(92, cell - 22);          // big icons
+  const rowH = size + 46;                         // icon + label + breathing room
+  const openH = 62 + rowH * 3 + 8;
+
+  const closedW = 168, pad = 18, gap = 8;
+  const mini = (closedW - pad * 2 - gap * 2) / 3;
+
+  stage.style.width  = (isOpen ? openW : closedW) + 'px';
+  stage.style.height = (isOpen ? openH : closedW) + 'px';
+  stage.style.borderRadius = isOpen ? '40px' : '40px';
+
+  ROWS.forEach((row, r) => {
+    row.forEach((idx, c) => {
+      const t = tiles[idx];
+      let x, y, s;
+      if (isOpen) {
+        const rowW = row.length * cell;
+        const startX = (openW - rowW) / 2;
+        x = startX + c * cell + (cell - size) / 2;
+        y = 62 + r * rowH;
+        s = size;
+      } else {
+        const rowW = row.length * mini + (row.length - 1) * gap;
+        x = (closedW - rowW) / 2 + c * (mini + gap);
+        y = pad + r * (mini + gap);
+        s = mini;
+      }
+      t.style.left = x + 'px';
+      t.style.top = y + 'px';
+      t.style.width = s + 'px';
+      t.style.height = s + 'px';
+      t.style.transitionDelay = (idx * 28) + 'ms';
+    });
+  });
+}
+
+function setOpen(v) {
+  isOpen = v;
+  stage.classList.toggle('is-open', v);
+  shell.classList.toggle('open', v);
+  layout();
+}
+
+stage.addEventListener('click', e => { if (!isOpen) setOpen(true); });
+closeBtn.addEventListener('click', e => { e.stopPropagation(); setOpen(false); });
+shell.addEventListener('click', e => {
+  if (isOpen && !stage.contains(e.target) && !e.target.closest('.avatar')) setOpen(false);
+});
+window.addEventListener('resize', layout);
+
+layout();
+requestAnimationFrame(() => requestAnimationFrame(() => {
+  stage.classList.add('ready');
+  // little bounce-open hint after the folder pops in
+  setTimeout(() => { if (!isOpen) setOpen(true); }, 900);
+}));
+
+/* ---------- Firebase ---------- */
+let db, rtdb;
+const userId = localStorage.getItem("userId");
+const premium3dAssets = {
+  'avatar-m1':'https://global.discourse-cdn.com/monzo/original/3X/8/6/866e6d84e8c756b19050fbe2ca0932858118614c.jpg',
+  'avatar-f1':'https://i.pinimg.com/474x/0e/d0/0d/0ed00d2ea51a4a714536d9b5d103827d.jpg'
+};
+
+try {
+  const app = initializeApp({
+    apiKey:"AIzaSyDaeNQF4qmW0vvwxUPp_NztnT0hoLzm1BQ",
+    authDomain:"svls-289ee.firebaseapp.com",
+    databaseURL:"https://svls-289ee-default-rtdb.firebaseio.com",
+    projectId:"svls-289ee",
+    storageBucket:"svls-289ee.firebasestorage.app",
+    messagingSenderId:"500705386198",
+    appId:"1:500705386198:web:96f189662bc2aa99cf7377",
+    measurementId:"G-5TNBMQ2HN5"
+  });
+  db = getFirestore(app);
+  rtdb = getDatabase(app);
+} catch (e) {
+  console.warn("Firebase init failed, using local fallback.");
+}
+
+if (userId && db) {
+  onSnapshot(doc(db, "accounts", userId), snap => {
+    if (!snap.exists()) return;
+    const d = snap.data();
+    const name = d.customName || "Operator";
+    const avatarRaw = d.avatarUrl || "avatar-m1";
+
+    document.getElementById('userDisplayName').innerText = name.split(' ')[0];
+    document.getElementById('userDisplayAvatar').src = premium3dAssets[avatarRaw] || avatarRaw;
+    if (d.bgValue) document.body.style.backgroundColor = d.bgValue;
+    if (d.btnValue) document.documentElement.style.setProperty('--primary', d.btnValue);
+
+    if (rtdb) {
+      set(ref(rtdb, 'presence/' + userId), { uid:userId, name, avatar:avatarRaw, timestamp:Date.now() });
     }
+  });
+}
 
-    // Function to trigger apps fly-in animation into dock
-    function triggerAppsAnimation() {
-        if (appsTriggered) return;
-        appsTriggered = true;
-
-        document.getElementById('greetingBox').classList.add('loaded');
-
-        const activeApps = [
-            document.getElementById('app1'),
-            document.getElementById('app2'),
-            document.getElementById('app3'),
-            document.getElementById('app4'),
-            document.getElementById('app5')
-        ];
-
-        activeApps.forEach((appEl, index) => {
-            if(appEl) {
-                appEl.style.animationDelay = `${index * 0.08}s`;
-                appEl.classList.add('fly-in');
-            }
-        });
-    }
-
-    // Real-Time Firebase User Observer
-    if (userId && db) {
-        userDocRef = doc(db, "accounts", userId);
-        onSnapshot(userDocRef, (snapshot) => {
-            if (snapshot.exists()) {
-                const data = snapshot.data();
-                const currentUserName = data.customName || "Operator";
-                const currentUserAvatarRaw = data.avatarUrl || "avatar-m1";
-
-                document.getElementById('userDisplayName').innerText = currentUserName.split(' ')[0];
-                document.getElementById('userDisplayAvatar').src = premium3dAssets[currentUserAvatarRaw] || currentUserAvatarRaw;
-
-                if (data.bgValue) document.body.style.backgroundColor = data.bgValue;
-                if (data.btnValue) document.documentElement.style.setProperty('--primary', data.btnValue);
-
-                if (rtdb) {
-                    set(ref(rtdb, 'presence/' + userId), {
-                        uid: userId, 
-                        name: currentUserName, 
-                        avatar: currentUserAvatarRaw, 
-                        timestamp: Date.now()
-                    });
-                }
-
-                // Trigger apps animation once user profile is fetched
-                triggerAppsAnimation();
-            }
-        });
-    }
-
-    // Fallback timer to ensure animation triggers if DB response is slow
-    setTimeout(triggerAppsAnimation, 1200);
-
-    // Live Clock Engine
-    function updateClock() {
-        const now = new Date();
-        let hours = now.getHours();
-        let minutes = now.getMinutes();
-        hours = hours % 12;
-        hours = hours ? hours : 12;
-        minutes = minutes < 10 ? '0' + minutes : minutes;
-        document.getElementById('liveClock').innerText = `${hours}:${minutes}`;
-    }
-    updateClock();
-    setInterval(updateClock, 1000);
+/* ---------- Clock ---------- */
+function updateClock() {
+  const now = new Date();
+  let h = now.getHours() % 12 || 12;
+  let m = now.getMinutes();
+  document.getElementById('liveClock').innerText = `${h}:${m < 10 ? '0' + m : m}`;
+}
+updateClock();
+setInterval(updateClock, 1000);
 </script>
-
 </body>
 </html>
