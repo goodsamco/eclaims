@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Clinical Launchpad</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700\&family=Poppins:wght@600;700\&display=swap" rel="stylesheet">
 <style>
 :root{
   --primary:#00e676;
@@ -44,7 +44,6 @@ body{
   transition:transform .4s var(--spring);
 }
 .avatar:active{transform:scale(.85)}
-
 /* Hero */
 .hero{
   text-align:center;margin-top:6px;
@@ -61,10 +60,8 @@ body{
 .shell.open .hero{}
 .phone-shell.open .hero{transform:scale(.7) translateY(-14px);max-height:96px;opacity:.55}
 .phone-shell.open .greet,.phone-shell.open .greet-sub{display:none}
-
 /* Stage area */
 .stage-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}
-
 /* The folder that morphs into the grid */
 .stage{
   position:relative;
@@ -79,7 +76,6 @@ body{
 .stage.ready{transform:scale(1);transition:width .65s var(--spring),height .65s var(--spring),border-radius .65s var(--spring),transform .9s var(--spring)}
 .stage:not(.is-open):active{transform:scale(.9)}
 .stage.is-open{cursor:default}
-
 .folder-title{
   position:absolute;left:0;right:0;top:0;height:54px;
   display:flex;align-items:center;justify-content:center;
@@ -88,7 +84,6 @@ body{
   transition:opacity .3s ease,transform .5s var(--spring);pointer-events:none;
 }
 .stage.is-open .folder-title{opacity:1;transform:none;transition-delay:.15s}
-
 .close-btn{
   position:absolute;right:14px;top:12px;width:30px;height:30px;border-radius:50%;
   background:rgba(255,255,255,.12);border:none;color:#fff;font-size:15px;line-height:1;
@@ -98,7 +93,6 @@ body{
 }
 .stage.is-open .close-btn{opacity:1;transform:scale(1);pointer-events:auto;transition-delay:.2s}
 .close-btn:active{transform:scale(.85)}
-
 /* Tiles live inside the stage and are positioned by JS for both states */
 .tile{
   position:absolute;display:block;text-decoration:none;color:var(--text);
@@ -128,13 +122,11 @@ body{
   opacity:0;transition:opacity .25s ease,transform .5s var(--spring);
 }
 .stage.is-open .label{opacity:1;transform:translateX(-50%);transition-delay:.25s}
-
 .stage-caption{
   margin-top:14px;font-size:.85rem;font-weight:500;color:rgba(255,255,255,.85);
   transition:opacity .25s ease,transform .4s var(--spring);
 }
 .phone-shell.open .stage-caption{opacity:0;transform:translateY(-8px);pointer-events:none}
-
 /* Per-icon colours (iOS-style gradients) */
 .c-esoa{background:linear-gradient(145deg,#34e89e,#0f9b5e)}
 .c-icd{background:linear-gradient(145deg,#4facfe,#2563eb)}
@@ -147,23 +139,19 @@ body{
 </style>
 </head>
 <body>
-
 <script>
   // Unauthenticated user guard
   if (!localStorage.getItem("userId")) window.location.href = "login.html";
 </script>
-
 <div class="phone-shell" id="shell">
   <div class="top-bar">
     <img id="userDisplayAvatar" class="avatar" src="https://api.dicebear.com/7.x/notionists/svg?seed=Felix" alt="User Avatar" onclick="window.location.href='customization.html'">
   </div>
-
   <div class="hero" id="hero">
     <div class="clock" id="liveClock">00:00</div>
     <div class="greet">Hello, <span id="userDisplayName">User</span></div>
     <div class="greet-sub">Welcome back to your workspace</div>
   </div>
-
   <div class="stage-wrap">
     <div class="stage" id="stage" role="button" aria-label="Open Clinical Suite">
       <div class="folder-title">Clinical Suite</div>
@@ -173,32 +161,28 @@ body{
     <div class="stage-caption">Clinical Suite</div>
   </div>
 </div>
-
-<script type="module" src="esoa.js"></script>
+<script type="module" src="https://goodsamco.github.io/eclaims/esoa.js"></script>
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-
+import { initializeApp } from "https\://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot } from "https\://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getDatabase, ref, set } from "https\://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 /* ---------- Apps (edit hrefs here) ---------- */
-const ic = (name, set = 'lucide') => `https://api.iconify.design/${set}:${name}.svg?color=%23ffffff`;
+const ic = (name, set = 'lucide') => `https\://api.iconify.design/${set}:${name}.svg?color=%23ffffff`;
 const APPS = [
   { label:'eSOA',               href:'esoa.html',     cls:'c-esoa',   icon: ic('receipt') },
   { label:'ICD-10',             href:'icd10.html',    cls:'c-icd',    icon: ic('stethoscope') },
   { label:'CF4',                href:'cf4.html',      cls:'c-cf4',    icon: ic('credit-card') },
-  { label:'Payslip',            href:'payslip.html',  cls:'c-pay',    icon: ic('wallet') },
   { label:'Dental',             href:'dental.html',   cls:'c-dental', icon: ic('tooth','mdi') },
-  { label:'Surgery',            href:'surgery.html',  cls:'c-surg',   icon: ic('medical-bag','mdi') },
   { label:'CF4 & OPR Form',     href:'cf4-opr.html',  cls:'c-opr',    icon: ic('file-text') },
-  { label:'CSF & CF5 Form',     href:'CSF_Encoder_MLANG_GOOD_SAMARITAN_HOSPITAL_CO.html',  cls:'c-csf',    icon: ic('clipboard-list') },
+  { label:'CSF & CF5 Form',     href:'CSF_Encoder_MLANG_GOOD_SAMARITAN_HOSPITAL_CO.html', cls:'c-csf', icon: ic('clipboard-list') },
+  { label:'Payslip',            href:'payslip.html',  cls:'c-pay',    icon: ic('wallet') },
+  { label:'Finance',            href:'finance.html',  cls:'c-opr',    icon: ic('wallet') },
 ];
-
 /* ---------- Morphing folder <-> grid ---------- */
 const shell = document.getElementById('shell');
 const stage = document.getElementById('stage');
 const closeBtn = document.getElementById('closeBtn');
 let isOpen = false;
-
 const tiles = APPS.map(a => {
   const el = document.createElement('a');
   el.className = 'tile';
@@ -207,10 +191,8 @@ const tiles = APPS.map(a => {
   stage.appendChild(el);
   return el;
 });
-
 // rows of 3 / 3 / 2, each row centered
 const ROWS = [[0,1,2],[3,4,5],[6,7]];
-
 function layout() {
   const inner = shell.clientWidth - 40;
   const openW = Math.min(366, inner);
@@ -218,14 +200,11 @@ function layout() {
   const size = Math.min(92, cell - 22);          // big icons
   const rowH = size + 46;                         // icon + label + breathing room
   const openH = 62 + rowH * 3 + 8;
-
   const closedW = 168, pad = 18, gap = 8;
   const mini = (closedW - pad * 2 - gap * 2) / 3;
-
   stage.style.width  = (isOpen ? openW : closedW) + 'px';
   stage.style.height = (isOpen ? openH : closedW) + 'px';
   stage.style.borderRadius = isOpen ? '40px' : '40px';
-
   ROWS.forEach((row, r) => {
     row.forEach((idx, c) => {
       const t = tiles[idx];
@@ -250,41 +229,36 @@ function layout() {
     });
   });
 }
-
 function setOpen(v) {
   isOpen = v;
   stage.classList.toggle('is-open', v);
   shell.classList.toggle('open', v);
   layout();
 }
-
 stage.addEventListener('click', e => { if (!isOpen) setOpen(true); });
 closeBtn.addEventListener('click', e => { e.stopPropagation(); setOpen(false); });
 shell.addEventListener('click', e => {
   if (isOpen && !stage.contains(e.target) && !e.target.closest('.avatar')) setOpen(false);
 });
 window.addEventListener('resize', layout);
-
 layout();
 requestAnimationFrame(() => requestAnimationFrame(() => {
   stage.classList.add('ready');
   // little bounce-open hint after the folder pops in
   setTimeout(() => { if (!isOpen) setOpen(true); }, 900);
 }));
-
 /* ---------- Firebase ---------- */
 let db, rtdb;
 const userId = localStorage.getItem("userId");
 const premium3dAssets = {
-  'avatar-m1':'https://global.discourse-cdn.com/monzo/original/3X/8/6/866e6d84e8c756b19050fbe2ca0932858118614c.jpg',
-  'avatar-f1':'https://i.pinimg.com/474x/0e/d0/0d/0ed00d2ea51a4a714536d9b5d103827d.jpg'
+  'avatar-m1':'https\://global.discourse-cdn.com/monzo/original/3X/8/6/866e6d84e8c756b19050fbe2ca0932858118614c.jpg',
+  'avatar-f1':'https\://i.pinimg.com/474x/0e/d0/0d/0ed00d2ea51a4a714536d9b5d103827d.jpg'
 };
-
 try {
   const app = initializeApp({
     apiKey:"AIzaSyDaeNQF4qmW0vvwxUPp_NztnT0hoLzm1BQ",
     authDomain:"svls-289ee.firebaseapp.com",
-    databaseURL:"https://svls-289ee-default-rtdb.firebaseio.com",
+    databaseURL:"https\://svls-289ee-default-rtdb.firebaseio.com",
     projectId:"svls-289ee",
     storageBucket:"svls-289ee.firebasestorage.app",
     messagingSenderId:"500705386198",
@@ -296,25 +270,21 @@ try {
 } catch (e) {
   console.warn("Firebase init failed, using local fallback.");
 }
-
 if (userId && db) {
   onSnapshot(doc(db, "accounts", userId), snap => {
     if (!snap.exists()) return;
     const d = snap.data();
     const name = d.customName || "Operator";
     const avatarRaw = d.avatarUrl || "avatar-m1";
-
     document.getElementById('userDisplayName').innerText = name.split(' ')[0];
     document.getElementById('userDisplayAvatar').src = premium3dAssets[avatarRaw] || avatarRaw;
     if (d.bgValue) document.body.style.backgroundColor = d.bgValue;
     if (d.btnValue) document.documentElement.style.setProperty('--primary', d.btnValue);
-
     if (rtdb) {
       set(ref(rtdb, 'presence/' + userId), { uid:userId, name, avatar:avatarRaw, timestamp:Date.now() });
     }
   });
 }
-
 /* ---------- Clock ---------- */
 function updateClock() {
   const now = new Date();
