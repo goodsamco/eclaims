@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Finance</title>
+<style>
+:root{--bg:#0B0D10;--sf:#12151A;--el:#181C22;--bd:#232831;--tx:#F2F4F7;--mu:#9AA3AF;--inc:#34D399;--exp:#F87171;--wr:#FBBF24;--ac:#60A5FA}
+@media(prefers-color-scheme:light){:root{--bg:#F6F7F9;--sf:#fff;--el:#fff;--bd:#E4E7EC;--tx:#101828;--mu:#475467;--inc:#067647;--exp:#B42318;--wr:#B54708;--ac:#1D4ED8}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.4 Inter,system-ui,sans-serif;padding-bottom:calc(84px + env(safe-area-inset-bottom,0px))}
+main{max-width:1200px;margin:0 auto;padding:16px;padding-top:calc(16px + env(safe-area-inset-top,0px))}
+.card{background:var(--sf);border:1px solid var(--bd);border-radius:16px;padding:16px;margin-bottom:12px}
+.grid{display:grid;gap:12px}@media(min-width:1024px){.grid{grid-template-columns:1fr 1fr}}
+.lbl{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--mu)}
+.hero{font-size:48px;font-weight:700;text-align:center;font-variant-numeric:tabular-nums;margin:6px 0}
+.num{font-variant-numeric:tabular-nums}.inc{color:var(--inc)}.exp{color:var(--exp)}.wr{color:var(--wr)}.mu{color:var(--mu);font-size:13px}
+.row{display:flex;justify-content:space-between;gap:8px;padding:8px 0;border-top:1px solid var(--bd);align-items:center}
+.row:first-child{border-top:0}
+button,.btn{min-height:44px;border-radius:12px;border:1px solid var(--bd);background:var(--el);color:var(--tx);padding:0 14px;font:inherit;cursor:pointer}
+button.p{background:var(--ac);color:#fff;border-color:var(--ac)}button:disabled{opacity:.5}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.chip{min-height:36px;border-radius:999px;padding:0 12px}.chip.on{background:var(--ac);color:#fff;border-color:var(--ac)}
+input,select,textarea{width:100%;min-height:44px;border-radius:12px;border:1px solid var(--bd);background:var(--el);color:var(--tx);padding:8px 12px;font:inherit;margin:4px 0 10px}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:var(--sf);border-top:1px solid var(--bd);padding-bottom:env(safe-area-inset-bottom,0px);height:calc(64px + env(safe-area-inset-bottom,0px))}
+nav a{flex:1;text-align:center;color:var(--mu);text-decoration:none;font-size:12px;padding-top:10px}nav a.on{color:var(--ac);font-weight:700}nav b{display:block;font-size:20px}
+#fab{position:fixed;right:16px;bottom:calc(80px + env(safe-area-inset-bottom,0px));width:56px;height:56px;border-radius:50%;font-size:28px;padding:0}
+.bar{height:12px;border-radius:6px;background:var(--bd);display:flex;overflow:hidden}.bar i{display:block;height:100%}
+.modal{position:fixed;inset:0;background:#0009;display:flex;align-items:flex-end;justify-content:center;z-index:9}
+.modal>div{background:var(--sf);width:100%;max-width:520px;max-height:90vh;overflow:auto;border-radius:16px 16px 0 0;padding:16px}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}.cal button{min-height:54px;padding:2px;font-size:12px;border-radius:8px}
+.cal .sch{border-style:dashed}.cal .today{outline:2px solid var(--ac)}.cal .sel{outline:2px solid var(--tx)}
+#snack{position:fixed;left:16px;right:16px;bottom:calc(150px + env(safe-area-inset-bottom,0px));background:var(--el);border:1px solid var(--bd);border-radius:12px;padding:12px;display:none;z-index:10}
+.badge{font-size:11px;border:1px dashed var(--wr);color:var(--wr);border-radius:6px;padding:1px 6px}
+@media(prefers-reduced-motion:no-preference){button{transition:background .15s}}
+</style></head><body>
+<main id="view" aria-live="polite"></main>
+<button id="fab" class="p" data-act="add" aria-label="Add transaction">+</button>
+<div id="snack" role="status"></div>
+<nav aria-label="Main"><a href="#/home" data-r="home"><b>₱</b>Home</a><a href="#/calendar" data-r="calendar"><b>▦</b>Calendar</a><a href="#/search" data-r="search"><b>⌕</b>Search</a><a href="#/settings" data-r="settings"><b>⚙</b>Settings</a></nav>
+
+<!-- ============ DOMAIN: pure functions (also executed by Node tests) ============ -->
+<script id="domain">
+const PAD=n=>String(n).padStart(2,'0');
+const ymd=d=>`${d.getFullYear()}-${PAD(d.getMonth()+1)}-${PAD(d.getDate())}`;
+const parseYmd=s=>{const[a,b,c]=s.split('-').map(Number);return new Date(a,b-1,c)};
+const addDays=(s,n)=>{const d=parseYmd(s);d.setDate(d.getDate()+n);return ymd(d)};
+const mins=t=>{if(!t||t==='-')return 0;const p=t.split(':');return parseInt(p[0])*60+parseInt(p[1])};  // payslip: timeStringToMinutes
+const DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
+const fmt=c=>new Intl.NumberFormat('en-PH',{style:'currency',currency:'PHP'}).format(c/100);
+const toCents=s=>{const v=parseFloat(s);return isFinite(v)?Math.round(v*100):NaN};
+function keyFromDocId(uid,id){if(!id.startsWith(uid+'_'))return null;const s=id.slice(uid.length+1);return DATE_RE.test(s)?s:null}
+// payslip: activeDatesArray construction in period loader (same Date arithmetic, incl. overflow behaviour)
+function periodDates(key){const[y,m,d]=key.split('-').map(Number);let s,e;
+ if(d===15){s=new Date(y,m-2,29);e=new Date(y,m-1,13)}else{s=new Date(y,m-1,14);e=new Date(y,m-1,28)}
+ const out=[];for(const c=new Date(s);c<=e;c.setDate(c.getDate()+1))out.push(ymd(c));return out}
+// payslip: missingSettingsFields
+function settingsMissing(d){const m=[];if(!d)return['ALL FIELDS'];const t=v=>(v||'').trim();
+ if(!t(d.lastName))m.push('LAST NAME');if(!t(d.firstName))m.push('FIRST NAME');if(!t(d.emailAddress))m.push('ID NO.');
+ if(!(parseFloat(d.dailyRate)>0))m.push('DAILY RATE');if(!t(d.position))m.push('POSITION');if(!t(d.department))m.push('DEPARTMENT');
+ if(!Array.isArray(d.dutyDays)||!d.dutyDays.length)m.push('SCHEDULE OF DUTIES');if(!d.timeIn)m.push('TIME IN');if(!d.timeOut)m.push('TIME OUT');return m}
+// Port of payslip recomputeGlobalFinancials (no 460 fallback). Float math; centavos once at the end.
+function computePayslip(s,key,r){r=r||{};const rate=parseFloat(s.dailyRate),mr=rate/8/60;
+ const si=s.timeIn||'08:00',so=s.timeOut||'17:00',tl=r.timelineBuffer||{};let basic=0,ot=0,pen=0,days=0;
+ for(const d of periodDates(key)){const x=tl[d];if(!x||!x.filled)continue;days++;basic+=rate;
+  const late=Math.max(0,mins(x.in1)-mins(si)),fo=mins(x.out2||x.out1);let ut=0;
+  if(fo<mins(so)){ut=mins(so)-fo;if(s.hasLunchBreak!==false){if(fo<=720)ut-=60;else if(fo<780)ut-=780-fo}}
+  pen+=(late+ut)*mr;
+  if(x.hasOT&&x.inOT&&x.outOT&&mins(x.outOT)>mins(x.inOT))ot+=(mins(x.outOT)-mins(x.inOT))*mr}
+ const n=v=>parseFloat(v)||0,dp=n(r.inputDoublePay),rb=n(r.inputReimbursements),sss=n(r.inputSSS),ph=n(r.inputPHIC),hd=n(r.inputHDMF),ad=n(r.inputAdvances);
+ const gross=basic+ot+dp+rb,ded=sss+ph+hd+pen+ad,c=v=>Math.round(v*100);
+ return{basic:c(basic),overtime:c(ot),incentives:{doublePay:c(dp),reimbursements:c(rb),total:c(dp+rb)},gross:c(gross),
+  deductions:{sss:c(sss),phic:c(ph),hdmf:c(hd),penalty:c(pen),advances:c(ad),total:c(ded)},net:c(gross-ded),daysWorked:days}}
+const live=t=>!t.deletedAt;
+function delta(t){if(t.kind==='income')return t.amountCentavos;if(t.kind==='expense')return -t.amountCentavos;return t.dir==='out'?-t.amountCentavos:t.amountCentavos}
+// balance of all accounts just before `before` (exclusive); posted only; honours each account's as-of date
+function balanceAt(accts,txs,before){let b=0;for(const a of accts){if(a.asOf&&a.asOf>before)continue;b+=a.startCentavos||0;
+ for(const t of txs)if(live(t)&&t.status==='posted'&&t.accountId===a.id&&t.date>=(a.asOf||'')&&t.date<before)b+=delta(t)}return b}
+const balanceNow=(a,t)=>balanceAt(a,t,'9999-12-31');
+function totals(txs,from,to){const r={income:0,expense:0,byClass:{},byCat:{}};
+ for(const t of txs){if(!live(t)||t.status!=='posted'||t.date<from||t.date>to)continue;
+  if(t.kind==='income'){r.income+=t.amountCentavos;const k=t.incomeClass||'other';r.byClass[k]=(r.byClass[k]||0)+t.amountCentavos}
+  else if(t.kind==='expense'){r.expense+=t.amountCentavos;r.byCat[t.categoryId||'none']=(r.byCat[t.categoryId||'none']||0)+t.amountCentavos}}return r}
+// Home split: single salary record shown as Total Salary (net - incentives) + Incentives
+function incomeSplit(txs,from,to){let salary=0,inc=0,other=0;
+ for(const t of txs){if(!live(t)||t.status!=='posted'||t.kind!=='income'||t.date<from||t.date>to)continue;
+  if(t.incomeClass==='salary'){const i=Math.min(t.amountCentavos,(t.breakdown&&t.breakdown.incentives)||0);inc+=i;salary+=t.amountCentavos-i}
+  else if(t.incomeClass==='incentive'||t.incomeClass==='reimbursement')inc+=t.amountCentavos;else other+=t.amountCentavos}
+ return{salary,incentives:inc,other,total:salary+inc+other}}
+const statusFor=(date,today)=>date>today?'scheduled':'posted';
+const dueState=(t,today)=>t.status!=='scheduled'?null:t.date<today?'overdue':t.date===today?'due':'upcoming';
+const applyMarkPaid=(t,today)=>t.status==='posted'?null:{...t,status:'posted',postedDate:today};  // idempotent
+function budget15(o){const base=o.balance+(o.countIn?o.schedIn:0)-o.reserve,spendable=base-o.schedOut;
+ const pct=base>0?o.schedOut/base*100:(o.schedOut>0?999:0);
+ return{spendable,daily:Math.max(0,Math.floor(spendable/o.days)),pct,status:pct>100?'Exceeded':pct>=70?'Caution':'Safe'}}
+function heatLevels(vals){const nz=vals.filter(v=>v>0).sort((a,b)=>a-b);if(!nz.length)return vals.map(()=>0);
+ if(nz[0]===nz[nz.length-1])return vals.map(v=>v>0?2:0);
+ const q=p=>nz[Math.min(nz.length-1,Math.floor(p*(nz.length-1)+.5))],q1=q(.25),q3=q(.75);
+ return vals.map(v=>v<=0?0:v<=q1?1:v<=q3?2:3)}
+function occurrences(rule,from,to){const out=[],s=parseYmd(rule.start),f=rule.frequency,iv=rule.interval||1;
+ for(let i=0;i<5000;i++){let d;
+  if(f==='monthly'||f==='yearly'){const f1=new Date(s.getFullYear(),s.getMonth()+i*iv*(f==='yearly'?12:1),1);
+   const dim=new Date(f1.getFullYear(),f1.getMonth()+1,0).getDate();d=new Date(f1.getFullYear(),f1.getMonth(),Math.min(s.getDate(),dim))}
+  else d=new Date(s.getFullYear(),s.getMonth(),s.getDate()+i*iv*(f==='daily'?1:7));
+  const k=ymd(d);if(k>to||(rule.end&&k>rule.end))break;if(k>=from)out.push({id:`${rule.id}_${k}`,date:k})}return out}
+const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+</script>
+
+<script type="module">
+import{initializeApp}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import{getAuth}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import{initializeFirestore,persistentLocalCache,persistentMultipleTabManager,getFirestore,doc,getDoc,setDoc,updateDoc,deleteDoc,collection,query,where,getDocs,onSnapshot,writeBatch,runTransaction,serverTimestamp,documentId}from"https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+// ---------- config ----------
+const firebaseConfig={apiKey:"AIzaSyDaeNQF4qmW0vvwxUPp_NztnT0hoLzm1BQ",authDomain:"svls-289ee.firebaseapp.com",databaseURL:"https://svls-289ee-default-rtdb.firebaseio.com",projectId:"svls-289ee",storageBucket:"svls-289ee.firebasestorage.app",messagingSenderId:"500705386198",appId:"1:500705386198:web:96f189662bc2aa99cf7377",measurementId:"G-5TNBMQ2HN5"};
+const PAYSLIP_URL="payslip.html",SV=1;
+const app=initializeApp(firebaseConfig);let persist=true,db;
+try{db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})})}catch(e){persist=false;db=getFirestore(app)}
+const authUser=getAuth(app).currentUser;
+const getOwnerId=()=>(authUser&&authUser.uid)||localStorage.getItem("userId");   // switch to Auth = config change
+const uid=getOwnerId();if(!uid){location.href="login.html";throw new Error("no userId")}
+// ---------- db access layer (every path built from uid) ----------
+const P=(...s)=>doc(db,"expense_users",uid,...s),C=n=>collection(db,"expense_users",uid,n);
+const errMsg=(e,what)=>({"permission-denied":`No permission to read/write ${what}. Check Firestore rules.`,unavailable:"You're offline, so changes will sync when you're back.","failed-precondition":`Missing index for ${what}: ${e.message}`,"resource-exhausted":"Firestore quota exceeded."}[e.code]||e.message);
+// ---------- state ----------
+const today=()=>ymd(new Date());const n0=new Date();
+const S={accts:[],cats:[],txs:[],links:{},set:{reserve:0,countIn:false,monthly:0},profile:{},salary:null,period:"month",cal:{y:n0.getFullYear(),m:n0.getMonth(),mode:"exp",sel:null},q:{text:"",type:"all",cat:""},sync:"Syncing…",loaded:{}};
+const DEF=[["food","Food"],["transport","Transport"],["bills","Bills"],["shopping","Shopping"],["health","Health"],["fun","Leisure"],["savings","Savings"],["other","Other"]];
+const PAL=["#0072B2","#E69F00","#009E73","#CC79A7","#56B4E9","#D55E00","#F0E442","#999","#882255","#44AA99","#DDCC77","#332288"];
+const col=id=>PAL[[...id].reduce((a,c)=>a+c.charCodeAt(0),0)%12];
+const catName=id=>(S.cats.find(c=>c.id===id)||{}).name||"Uncategorized";
+const catUsed=()=>S.cats.filter(c=>!c.archived);
+// ---------- listeners ----------
+const meta=s=>{S.sync=!navigator.onLine?`Offline${s.metadata.hasPendingWrites?" (pending)":""}`:s.metadata.hasPendingWrites?"Syncing…":"Synced"};
+const listen=(n,fn)=>onSnapshot(C(n),{includeMetadataChanges:true},s=>{fn(s.docs.map(d=>({id:d.id,...d.data()})));S.loaded[n]=1;meta(s);render()},e=>{S.err=errMsg(e,"expense_users/"+n);render()});
+listen("transactions",v=>S.txs=v);listen("accounts",v=>S.accts=v);
+listen("categories",v=>{S.cats=v;if(!v.length&&!S.seeded){S.seeded=1;const b=writeBatch(db);DEF.forEach(([k,name],i)=>b.set(P("categories","cat_"+k),{name,color:PAL[i],archived:false,schemaVersion:SV,userId:uid},{merge:true}));b.commit().catch(()=>{})}});
+listen("salary_links",v=>{S.links=Object.fromEntries(v.map(x=>[x.id,x]))});
+onSnapshot(P("settings","main"),s=>{if(s.exists()){S.set={...S.set,...s.data()}}render()});
+window.addEventListener("online",render);window.addEventListener("offline",render);
+async function loadProfile(){try{const a=await getDoc(doc(db,"accounts",uid));if(a.exists()){S.profile=a.data();if(S.profile.btnValue)document.documentElement.style.setProperty("--ac",S.profile.btnValue)}}catch(e){S.profile.err=errMsg(e,"accounts")}render()}
+async function loadSalary(){const o={settings:null,missing:[],periods:[],err:null};
+ try{const ss=await getDoc(doc(db,"salary_settings",uid));o.settings=ss.exists()?ss.data():null;o.missing=settingsMissing(o.settings);
+  const qs=await getDocs(query(collection(db,"salary_transactions"),where(documentId(),">=",uid+"_"),where(documentId(),"<",uid+"_\uf8ff")));
+  qs.forEach(d=>{const k=keyFromDocId(uid,d.id);if(k)o.periods.push({key:k,rec:d.data()})});
+  o.periods.sort((a,b)=>b.key.localeCompare(a.key));
+  for(const p of o.periods)p.calc=o.missing.length?null:computePayslip(o.settings,p.key,p.rec)}
+ catch(e){o.err=errMsg(e,"salary_settings / salary_transactions")}S.salary=o;render()}
+loadProfile();loadSalary();
+// ---------- actions ----------
+const snack=(msg,undo)=>{const s=document.getElementById("snack");s.innerHTML=esc(msg)+(undo?' <button id="undo">Undo</button>':"");s.style.display="block";if(undo)document.getElementById("undo").onclick=()=>{undo();s.style.display="none"};clearTimeout(snack.t);snack.t=setTimeout(()=>s.style.display="none",6000)};
+const modal=h=>{closeModal();const m=document.createElement("div");m.className="modal";m.id="modal";m.innerHTML=`<div role="dialog">${h}</div>`;m.onclick=e=>{if(e.target===m)closeModal()};document.body.appendChild(m)};
+const closeModal=()=>{const m=document.getElementById("modal");if(m)m.remove()};
+const opt=(arr,sel)=>arr.map(([v,l])=>`<option value="${esc(v)}"${v===sel?" selected":""}>${esc(l)}</option>`).join("");
+function txForm(date,kind){const ac=S.accts.filter(a=>!a.archived).map(a=>[a.id,a.name]);
+ modal(`<h3>Add transaction</h3><label class="lbl">Type</label><select id="f_kind">${opt([["expense","Expense"],["income","Income"],["transfer","Transfer"]],kind||"expense")}</select>
+ <label class="lbl">Amount (₱)</label><input id="f_amt" inputmode="decimal" placeholder="0.00" autofocus>
+ <label class="lbl">Title</label><input id="f_title"><label class="lbl">Category</label><select id="f_cat">${opt(catUsed().map(c=>[c.id,c.name]),"")}</select>
+ <label class="lbl">Account (transfer: from)</label><select id="f_acc">${opt(ac,"")}</select><label class="lbl">Transfer to</label><select id="f_to">${opt(ac,"")}</select>
+ <label class="lbl">Date</label><input id="f_date" type="date" value="${date||today()}"><span id="f_badge" class="badge" hidden>Will be recorded as Scheduled</span>
+ <label class="lbl">Notes</label><textarea id="f_notes"></textarea><label><input id="f_rep" type="checkbox" style="width:auto;min-height:0"> Repeat monthly (scheduled, 90-day horizon)</label>
+ <div id="f_err" class="exp"></div><div class="row"><button data-act="closeModal">Cancel</button><button class="p" id="f_save" data-act="saveTx">Save</button></div>`);
+ const d=document.getElementById("f_date"),b=document.getElementById("f_badge");d.oninput=()=>b.hidden=d.value<=today();d.oninput()}
+const v=id=>document.getElementById(id).value;
+async function saveTx(){const btn=document.getElementById("f_save"),er=document.getElementById("f_err");er.textContent="";
+ const kind=v("f_kind"),amt=toCents(v("f_amt")),date=v("f_date");
+ if(!(amt>0))return er.textContent="Enter an amount above 0.";if(!S.accts.length)return er.textContent="Add an account first (Home → starting balance).";if(!DATE_RE.test(date))return er.textContent="Pick a date.";
+ if(kind==="transfer"&&v("f_acc")===v("f_to"))return er.textContent="Pick two different accounts.";
+ btn.disabled=true;const base={schemaVersion:SV,userId:uid,title:v("f_title")||(kind==="transfer"?"Transfer":"Untitled"),amountCentavos:amt,date,notes:v("f_notes"),source:"manual",deletedAt:null,createdAt:serverTimestamp(),updatedAt:serverTimestamp()};
+ try{const b=writeBatch(db);
+  if(kind==="transfer"){const g=doc(C("transactions")).id,st=statusFor(date,today());
+   b.set(doc(C("transactions")),{...base,kind:"transfer",dir:"out",accountId:v("f_acc"),transferGroupId:g,status:st});b.set(doc(C("transactions")),{...base,kind:"transfer",dir:"in",accountId:v("f_to"),transferGroupId:g,status:st})}
+  else if(document.getElementById("f_rep").checked){const rr=doc(C("recurring_rules")),rule={id:rr.id,frequency:"monthly",interval:1,start:date};
+   b.set(rr,{...rule,kind,title:base.title,amountCentavos:amt,categoryId:v("f_cat"),accountId:v("f_acc"),schemaVersion:SV,userId:uid});
+   for(const o of occurrences(rule,date,addDays(today(),90)))b.set(P("transactions",o.id),{...base,kind,categoryId:v("f_cat"),accountId:v("f_acc"),date:o.date,status:"scheduled",source:"recurring",recurringRuleId:rr.id,occurrenceKey:o.id},{merge:true})}
+  else b.set(doc(C("transactions")),{...base,kind,categoryId:v("f_cat"),accountId:v("f_acc"),status:statusFor(date,today()),incomeClass:kind==="income"?"other":undefined});
+  await b.commit();closeModal();snack("Saved.")}
+ catch(e){er.textContent="Couldn't save. "+errMsg(e,"transactions");btn.disabled=false}}
+const markPaid=async id=>{try{await runTransaction(db,async tr=>{const r=P("transactions",id),s=await tr.get(r);if(!s.exists())return;const n=applyMarkPaid(s.data(),today());if(n)tr.update(r,{status:"posted",postedDate:n.postedDate,updatedAt:serverTimestamp()})});snack("Marked as paid.")}catch(e){snack(errMsg(e,"transactions"))}};
+const softDel=async id=>{try{await updateDoc(P("transactions",id),{deletedAt:Date.now()});snack("Deleted.",()=>updateDoc(P("transactions",id),{deletedAt:null}))}catch(e){snack(errMsg(e,"transactions"))}};
+async function confirmSalary(key){const p=S.salary.periods.find(x=>x.key===key);if(!S.accts.length)return snack("Add an account first.");
+ const amt=toCents(v("amt_"+key)),date=v("dt_"+key);if(!(amt>0))return snack("Enter the amount received.");
+ const bd={basic:p.calc.basic,overtime:p.calc.overtime,incentives:p.calc.incentives.total,deductions:p.calc.deductions.total,net:p.calc.net};
+ try{await runTransaction(db,async tr=>{const r=P("transactions","salary_"+key),s=await tr.get(r);if(s.exists()&&s.data().status==="posted"&&!s.data().deletedAt)return;   // idempotent
+  tr.set(r,{schemaVersion:SV,userId:uid,kind:"income",status:"posted",title:"Salary "+key,amountCentavos:amt,accountId:S.accts[0].id,date,postedDate:date,incomeClass:"salary",source:"salary_sync",sourceId:uid,periodId:key,breakdown:bd,deletedAt:null,createdAt:serverTimestamp(),updatedAt:serverTimestamp()});
+  tr.set(P("salary_links",key),{status:"confirmed",confirmedAmountCentavos:amt,payslipNetAtConfirm:p.calc.net,payslipUpdatedAtAtConfirm:p.rec.updatedAt||null,receivedDate:date,schemaVersion:SV,userId:uid})});snack("Salary recorded.")}
+ catch(e){snack(errMsg(e,"salary link"))}}
+const applyChange=async key=>{const p=S.salary.periods.find(x=>x.key===key),bd={basic:p.calc.basic,overtime:p.calc.overtime,incentives:p.calc.incentives.total,deductions:p.calc.deductions.total,net:p.calc.net};
+ try{await runTransaction(db,async tr=>{const r=P("transactions","salary_"+key),l=P("salary_links",key),s=await tr.get(r);if(!s.exists())return;
+  tr.update(r,{amountCentavos:p.calc.net,breakdown:bd,notes:(s.data().notes||"")+` [${today()} payslip update: ${fmt(s.data().amountCentavos)} → ${fmt(p.calc.net)}]`});tr.update(l,{payslipNetAtConfirm:p.calc.net,confirmedAmountCentavos:p.calc.net})});snack("Applied.")}catch(e){snack(errMsg(e,"salary"))}};
+const keepChange=key=>setDoc(P("salary_links",key),{payslipNetAtConfirm:S.salary.periods.find(x=>x.key===key).calc.net},{merge:true});
+async function saveAcct(){const a=toCents(v("a_amt"));if(!v("a_name")||isNaN(a))return snack("Name and starting balance required.");
+ try{await setDoc(doc(C("accounts")),{name:v("a_name"),startCentavos:a,asOf:v("a_date")||today(),archived:false,schemaVersion:SV,userId:uid});closeModal();snack("Account added.")}catch(e){snack(errMsg(e,"accounts"))}}
+const saveBudget=()=>setDoc(P("settings","main"),{reserve:toCents(v("b_res"))||0,monthly:toCents(v("b_mon"))||0,countIn:document.getElementById("b_in").checked,schemaVersion:SV,userId:uid},{merge:true}).then(()=>snack("Saved."));
+async function diag(){const r=[],t=async(n,f)=>{try{await f();r.push([n,"pass"])}catch(e){r.push([n,e.code==="permission-denied"?`permission-denied on ${n}: check Firestore rules`:"fail: "+(e.code||e.message)])}};
+ await t("accounts/"+uid,()=>getDoc(doc(db,"accounts",uid)));await t("salary_settings/"+uid,()=>getDoc(doc(db,"salary_settings",uid)));
+ await t("salary_transactions (range)",()=>getDocs(query(collection(db,"salary_transactions"),where(documentId(),">=",uid+"_"),where(documentId(),"<",uid+"_\uf8ff"))));
+ await t("expense_users/…/settings/_ping write+read+delete",async()=>{const p=P("settings","_ping");await setDoc(p,{t:Date.now()});await getDoc(p);await deleteDoc(p)});
+ r.push(["offline persistence",persist?"enabled":"unavailable"]);S.diag=r;render()}
+async function wipe(){if(v("w_txt")!=="DELETE")return snack("Type DELETE to confirm.");
+ for(const n of["transactions","accounts","categories","recurring_rules","salary_links","settings"]){const s=await getDocs(C(n));for(const d of s.docs)await deleteDoc(d.ref)}snack("Finance data deleted.")}
+const dl=(name,txt,type)=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([txt],{type}));a.download=name;a.click()};
+// ---------- views ----------
+const money=(c,cls="")=>`<span class="num ${cls}">${fmt(c)}</span>`;
+function range(){const t=parseYmd(today());let f,e;
+ if(S.period==="month"){f=ymd(new Date(t.getFullYear(),t.getMonth(),1));e=ymd(new Date(t.getFullYear(),t.getMonth()+1,0))}
+ else if(S.period==="last"){f=ymd(new Date(t.getFullYear(),t.getMonth()-1,1));e=ymd(new Date(t.getFullYear(),t.getMonth(),0))}
+ else{f=addDays(today(),-14);e=today()}return[f,e]}
+function salaryCard(){const s=S.salary;if(!s)return`<div class="card mu">Loading salary…</div>`;
+ if(s.err)return`<div class="card exp">${esc(s.err)}</div>`;
+ if(s.missing.length)return`<div class="card"><div class="lbl">Salary</div>Salary settings incomplete (${s.missing.join(", ")}). <a href="${PAYSLIP_URL}" style="color:var(--ac)">Open payslip</a></div>`;
+ const pend=s.periods.filter(p=>p.calc&&p.calc.daysWorked>0&&!S.links[p.key]),chg=s.periods.filter(p=>p.calc&&S.links[p.key]&&S.links[p.key].status==="confirmed"&&S.links[p.key].payslipNetAtConfirm!==p.calc.net);
+ if(!S.loaded.salary_links)return"";let h="";
+ if(pend.length)h+=`<div class="card"><div class="lbl">Salary to confirm</div>${pend.map(p=>{const w=periodDates(p.key);return`<div class="row" style="flex-wrap:wrap"><div>${w[0]} → ${w[w.length-1]}<br><b>${fmt(p.calc.net)}</b> <span class="mu">${p.calc.daysWorked} days</span></div>
+  <div><input id="amt_${p.key}" value="${(p.calc.net/100).toFixed(2)}" inputmode="decimal" style="width:110px"><input id="dt_${p.key}" type="date" value="${p.key}" style="width:150px"><button class="p" data-act="confirm" data-k="${p.key}">Confirm received</button> <button data-act="notyet">Not yet</button></div></div>`}).join("")}</div>`;
+ if(chg.length)h+=`<div class="card wr">${chg.map(p=>`<div class="row"><span>Payslip changed (${p.key}): ${fmt(S.links[p.key].payslipNetAtConfirm)} → ${fmt(p.calc.net)}</span><span><button data-act="apply" data-k="${p.key}">Apply update</button> <button data-act="keep" data-k="${p.key}">Keep</button></span></div>`).join("")}</div>`;return h}
+function txRow(t){const du=dueState(t,today()),cls=t.kind==="income"?"inc":t.kind==="expense"?"exp":"";
+ return`<div class="row"><div><b>${esc(t.title)}</b> ${t.status==="scheduled"?`<span class="badge">${du==="overdue"?"Overdue":du==="due"?"Due":"Scheduled"}</span>`:""}<div class="mu">${t.date} · ${esc(t.kind==="transfer"?"Transfer":catName(t.categoryId))}</div></div>
+ <div style="text-align:right">${money(t.amountCentavos,cls)}<div>${t.status==="scheduled"?`<button class="chip" data-act="paid" data-id="${t.id}">Mark paid</button>`:""}<button class="chip" data-act="del" data-id="${t.id}" aria-label="Delete">✕</button></div></div></div>`}
+function home(){const[f,e]=range(),bal=balanceNow(S.accts,S.txs),tot=totals(S.txs,f,e),sp=incomeSplit(S.txs,f,e),car=balanceAt(S.accts,S.txs,f);
+ const len=(parseYmd(e)-parseYmd(f))/864e5+1,pf=addDays(f,-len),pe=addDays(f,-1),prev=totals(S.txs,pf,pe).expense,avail=car+tot.income;
+ const w0=today(),w1=addDays(w0,14),sch=S.txs.filter(t=>live(t)&&t.status==="scheduled"&&t.date>=w0&&t.date<=w1),so=sch.filter(t=>t.kind==="expense").reduce((a,t)=>a+t.amountCentavos,0),si=sch.filter(t=>t.kind==="income").reduce((a,t)=>a+t.amountCentavos,0);
+ const b=budget15({balance:bal,schedOut:so,schedIn:si,countIn:S.set.countIn,reserve:S.set.reserve||0,days:15}),cats=Object.entries(tot.byCat).sort((a,b)=>b[1]-a[1]),top=cats.slice(0,6),oth=cats.slice(6).reduce((a,c)=>a+c[1],0);
+ const spentPct=avail>0?Math.min(100,tot.expense/avail*100):0;
+ const recent=S.txs.filter(live).sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+ return`<div class="row"><div><div class="lbl">${esc(S.profile.customName||S.profile.username||localStorage.getItem("userName")||"")}</div></div><span class="mu">${esc(S.sync)}</span></div>
+ <div class="chips">${[["month","This Month"],["last","Last Month"],["15d","Last 15 Days"]].map(([k,l])=>`<button class="chip ${S.period===k?"on":""}" data-act="period" data-k="${k}">${l}</button>`).join("")}</div>
+ ${S.err?`<div class="card exp">${esc(S.err)}</div>`:""}
+ ${S.loaded.accounts&&!S.accts.length?`<div class="card"><b>Set your starting balance</b><p class="mu">Add an account to begin.</p><button class="p" data-act="acct">Add account</button></div>`:""}
+ ${salaryCard()}
+ <div class="grid"><div><div class="card"><div class="lbl" style="text-align:center">Current balance</div><div class="hero ${bal<0?"exp":""}">${fmt(bal)}</div>${bal<0?'<div class="exp" style="text-align:center">Overdrawn</div>':""}<div class="mu" style="text-align:center">${fmt(so)} scheduled out · ${fmt(si)} expected in</div></div>
+ <div class="card"><div class="lbl">Income</div><div class="row"><span>Total Salary</span><a href="#/search?type=income">${money(sp.salary)}</a></div><div class="row"><span>Incentives</span>${money(sp.incentives)}</div><div class="row"><span>Other</span>${money(sp.other)}</div><div class="row"><b>Total Income</b><b>${money(sp.total,"inc")}</b></div>
+ <div class="row mu"><span>Carried over from previous periods – not counted as income</span>${money(car)}</div></div>
+ <div class="card"><div class="lbl">Expenses</div><div style="font-size:28px" class="num exp">${fmt(tot.expense)}</div><div class="mu">${prev?`${tot.expense>=prev?"▲":"▼"} ${Math.abs(Math.round((tot.expense-prev)/prev*100))}% vs previous period`:"No previous-period data"}</div><a href="#/search?type=expense">View all</a></div></div>
+ <div><div class="card"><div class="lbl">Available vs spent <span title="Available = carried over + income received">ⓘ</span></div>${avail<=0||tot.expense>avail?`<div class="exp">Overspent by ${fmt(Math.max(0,tot.expense-Math.max(avail,0)))}</div>`:`<div class="bar"><i style="width:${spentPct}%;background:var(--exp)"></i><i style="width:${100-spentPct}%;background:var(--inc);opacity:.6"></i></div><div class="mu">Spent ${spentPct.toFixed(0)}% · Remaining ${(100-spentPct).toFixed(0)}% of ${fmt(avail)}</div>`}
+ ${S.set.monthly?`<div class="mu">Monthly budget used: ${Math.round(tot.expense/S.set.monthly*100)}%</div>`:""}</div>
+ <div class="card"><div class="lbl">15-day budget · <span class="${b.status==="Safe"?"inc":b.status==="Caution"?"wr":"exp"}">${b.status}</span></div><div class="num" style="font-size:24px">${fmt(b.spendable)}</div><div class="mu">${fmt(b.daily)} left to spend per day · reserve ${fmt(S.set.reserve||0)}</div>${sch.map(t=>`<div class="row"><span>${esc(t.title)} <span class="mu">${t.date}</span></span>${money(t.amountCentavos)}</div>`).join("")}</div>
+ <div class="card"><div class="lbl">Categories</div>${top.length?top.concat(oth?[["other_","Other",oth]]:[]).map(c=>{const a=c[2]||c[1],id=c[0];return`<a href="#/search?type=expense&cat=${esc(id)}" style="color:inherit;text-decoration:none"><div class="row"><span><span style="display:inline-block;width:10px;height:10px;background:${col(id)}"></span> ${esc(c[2]?"Other":catName(id))}</span><span>${money(a)} <span class="mu">${Math.round(a/tot.expense*100)}%</span></span></div></a>`}).join(""):'<div class="mu">No expenses in this period. Tap + to add one.</div>'}</div>
+ <div class="card"><div class="lbl">Recent</div>${recent.length?recent.map(txRow).join(""):'<div class="mu">Nothing yet.</div>'}<a href="#/search">See all</a></div></div></div>`}
+function calendar(){const{y,m,mode}=S.cal,first=new Date(y,m,1),dim=new Date(y,m+1,0).getDate(),k=mode==="exp"?"expense":"income",pre=`${y}-${PAD(m+1)}-`;
+ const day=Array.from({length:dim},(_,i)=>{const d=pre+PAD(i+1);const L=S.txs.filter(t=>live(t)&&t.kind===k&&t.date===d);return{d,v:L.filter(t=>t.status==="posted").reduce((a,t)=>a+t.amountCentavos,0),sch:L.some(t=>t.status==="scheduled")}});
+ const lv=heatLevels(day.map(x=>x.v)),A=[0,.28,.5,.75],c=mode==="exp"?"248,113,113":"52,211,153",vals=day.map(x=>x.v).filter(x=>x>0);
+ let cells="".padEnd(first.getDay()*0,"");for(let i=0;i<first.getDay();i++)cells+="<span></span>";
+ day.forEach((x,i)=>{cells+=`<button class="${x.sch?"sch":""} ${x.d===today()?"today":""} ${S.cal.sel===x.d?"sel":""}" style="background:${lv[i]?`rgba(${c},${A[lv[i]]})`:"var(--el)"}" data-act="calsel" data-d="${x.d}" aria-label="${x.d}: ${fmt(x.v)}">${i+1}<br>${x.v?(x.v>=1e5?(x.v/1e5).toFixed(1)+"k":Math.round(x.v/100)):""}</button>`});
+ const tot=totals(S.txs,pre+"01",pre+PAD(dim)),hi=day.reduce((a,x)=>x.v>a.v?x:a,{v:0,d:"—"}),elapsed=Math.min(dim,Math.max(1,(pre+"01"<=today()?(pre+PAD(dim)<today()?dim:parseYmd(today()).getDate()):1)));
+ const sel=S.cal.sel,sl=sel?S.txs.filter(t=>live(t)&&t.date===sel):[];
+ return`<div class="row"><button data-act="calprev">‹</button><b>${first.toLocaleDateString("en-PH",{month:"long",year:"numeric"})}</b><button data-act="calnext">›</button></div>
+ <div class="chips"><button class="chip ${mode==="inc"?"on":""}" data-act="calmode" data-k="inc">Income</button><button class="chip ${mode==="exp"?"on":""}" data-act="calmode" data-k="exp">Expenses</button></div>
+ <div class="cal">${["S","M","T","W","T","F","S"].map(d=>`<span class="mu" style="text-align:center">${d}</span>`).join("")}${cells}</div>
+ <div class="mu">${vals.length?`Legend: ${fmt(Math.min(...vals))} – ${fmt(Math.max(...vals))} · dashed = scheduled`:"No data this month"}</div>
+ <div class="card"><div class="row"><span>Income</span>${money(tot.income,"inc")}</div><div class="row"><span>Expenses</span>${money(tot.expense,"exp")}</div><div class="row"><span>Net cash flow</span>${money(tot.income-tot.expense)}</div><div class="row"><span>Highest ${mode==="exp"?"spending":"income"} day</span><span>${hi.d} ${hi.v?fmt(hi.v):""}</span></div><div class="row"><span>Avg daily spending</span>${money(Math.round(tot.expense/elapsed))}</div></div>
+ ${sel?`<div class="card"><div class="lbl">${sel}</div>${sl.map(txRow).join("")||'<div class="mu">No transactions.</div>'}<button class="p" data-act="adddate" data-d="${sel}">Add for this date</button></div>`:""}`}
+function parseQ(){const q=new URLSearchParams((location.hash.split("?")[1]||""));if(q.has("type"))S.q.type=q.get("type");if(q.has("cat"))S.q.cat=q.get("cat")}
+function search(){const q=S.q,tx=S.txs.filter(live).filter(t=>q.type==="all"||(q.type==="income"&&t.kind==="income"&&t.status==="posted")||(q.type==="expense"&&t.kind==="expense"&&t.status==="posted")||(q.type==="scheduled"&&t.status==="scheduled")||(q.type==="transfer"&&t.kind==="transfer")).filter(t=>!q.cat||t.categoryId===q.cat).filter(t=>!q.text||[t.title,t.merchant,t.notes,catName(t.categoryId)].join(" ").toLowerCase().includes(q.text.toLowerCase())).sort((a,b)=>b.date.localeCompare(a.date));
+ const T=totals(tx,"0000","9999"),shown=tx.slice(0,S.shown||30);
+ return`<input id="q" placeholder="Search title, merchant, category, notes" value="${esc(q.text)}"><div class="chips">${["all","income","expense","scheduled","transfer"].map(k=>`<button class="chip ${q.type===k?"on":""}" data-act="qtype" data-k="${k}">${k[0].toUpperCase()+k.slice(1)}</button>`).join("")}${q.cat?`<button class="chip on" data-act="qcat">${esc(catName(q.cat))} ✕</button>`:""}</div>
+ <div class="card mu">${tx.length} results · income ${fmt(T.income)} · expenses ${fmt(T.expense)}</div><div class="card">${shown.length?shown.map(txRow).join(""):'<div class="mu">No matching transactions.</div>'}${tx.length>shown.length?'<button data-act="more">Load more</button>':""}</div>`}
+function settings(){const s=S.salary||{},ac=S.accts;
+ return`<div class="card"><div class="lbl">Profile & salary</div><div>${esc(S.profile.customName||S.profile.username||"—")}</div><div class="mu">${!s.settings?"Salary settings not found":s.missing&&s.missing.length?"Incomplete: "+s.missing.join(", "):"Salary settings complete"}</div><a href="${PAYSLIP_URL}" style="color:var(--ac)">Open payslip</a></div>
+ <div class="card"><div class="lbl">Accounts</div>${ac.map(a=>`<div class="row"><span>${esc(a.name)} <span class="mu">as of ${a.asOf}</span></span>${money(a.startCentavos||0)}</div>`).join("")||'<div class="mu">None yet.</div>'}<button data-act="acct">Add account</button></div>
+ <div class="card"><div class="lbl">Budgets</div><label>15-day reserve (₱)</label><input id="b_res" value="${(S.set.reserve||0)/100}"><label>Monthly budget (₱, 0 = none)</label><input id="b_mon" value="${(S.set.monthly||0)/100}"><label><input id="b_in" type="checkbox" style="width:auto;min-height:0" ${S.set.countIn?"checked":""}> Count expected income in 15-day budget</label><button class="p" data-act="saveBudget">Save</button></div>
+ <div class="card"><div class="lbl">Data & privacy</div><p class="mu">${authUser?"Signed in with Firebase Auth.":"Data protection is limited until sign-in is upgraded: this app identifies you by a stored user ID, not authentication."}</p>
+ <button data-act="diag">Run connection diagnostics</button> <button data-act="export">Export JSON</button> <button data-act="refreshSalary">Refresh payslip data</button>
+ ${(S.diag||[]).map(([n,r])=>`<div class="row"><span>${esc(n)}</span><span class="${r==="pass"||r==="enabled"?"inc":"exp"}">${esc(r)}</span></div>`).join("")}
+ <hr><input id="w_txt" placeholder="Type DELETE to erase finance data"><button data-act="wipe" class="exp">Delete my finance data</button></div>`}
+const ROUTES={home,calendar,search,settings};
+function render(){const r=(location.hash.replace(/^#\//,"").split(/[/?]/)[0])||"home",k=ROUTES[r]?r:"home";if(k==="search")parseQ();
+ const el=document.getElementById("view"),act=document.activeElement,keep=act&&act.id==="q"?act.selectionStart:null;
+ if(!S.loaded.transactions&&!S.err){el.innerHTML='<div class="card mu">Loading…</div>'}else el.innerHTML=ROUTES[k]();
+ document.querySelectorAll("nav a").forEach(a=>a.classList.toggle("on",a.dataset.r===k));
+ if(keep!==null){const q=document.getElementById("q");q.focus();q.setSelectionRange(keep,keep)}}
+window.addEventListener("hashchange",()=>{render();scrollTo(0,0)});
+document.addEventListener("input",e=>{if(e.target.id==="q"){clearTimeout(render.t);render.t=setTimeout(()=>{S.q.text=e.target.value;render()},200)}});
+document.addEventListener("click",e=>{const a=e.target.closest("[data-act]");if(!a)return;const d=a.dataset;
+ ({add:()=>txForm(),adddate:()=>txForm(d.d),closeModal,saveTx,paid:()=>markPaid(d.id),del:()=>softDel(d.id),confirm:()=>confirmSalary(d.k),notyet:()=>snack("OK, it stays pending."),apply:()=>applyChange(d.k),keep:()=>keepChange(d.k),
+  period:()=>{S.period=d.k;render()},calprev:()=>{S.cal.m--;if(S.cal.m<0){S.cal.m=11;S.cal.y--}render()},calnext:()=>{S.cal.m++;if(S.cal.m>11){S.cal.m=0;S.cal.y++}render()},calmode:()=>{S.cal.mode=d.k;render()},calsel:()=>{S.cal.sel=d.d;render()},
+  qtype:()=>{S.q.type=d.k;render()},qcat:()=>{S.q.cat="";location.hash="#/search"},more:()=>{S.shown=(S.shown||30)+30;render()},
+  acct:()=>modal(`<h3>Add account</h3><input id="a_name" placeholder="Cash, Bank, GCash, Maya"><input id="a_amt" inputmode="decimal" placeholder="Starting balance"><input id="a_date" type="date" value="${today()}"><div class="row"><button data-act="closeModal">Cancel</button><button class="p" data-act="saveAcct">Save</button></div>`),
+  saveAcct,saveBudget,diag,wipe,refreshSalary:loadSalary,
+  export:()=>dl("finance_export.json",JSON.stringify({accounts:S.accts,categories:S.cats,transactions:S.txs},null,1),"application/json")}[a.dataset.act]||(()=>{}))()});
+render();
+</script></body></html>
