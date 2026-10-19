@@ -37,7 +37,14 @@ body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-ser
 .result{display:none;flex:1;min-height:0;width:100%;flex-direction:column;gap:14px;padding-top:16px}
 .app.done .stage{display:none}
 .app.done .result{display:flex}
-.card{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding:12px 4px}
+.card{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding:18px 6px 22px 4px;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 16px,#000 calc(100% - 22px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 16px,#000 calc(100% - 22px),transparent 100%)}
+/* modern scrollbar: slim, rounded, tinted with the accent, brighter on hover */
+.card,.sgi,.hp{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--accent,var(--good)) 28%,transparent) transparent}
+.card:hover,.sgi:hover{scrollbar-color:color-mix(in srgb,var(--accent,var(--good)) 60%,transparent) transparent}
+.card::-webkit-scrollbar,.sgi::-webkit-scrollbar{width:8px}
+.card::-webkit-scrollbar-track,.sgi::-webkit-scrollbar-track{background:transparent;margin:18px 0}
+.card::-webkit-scrollbar-thumb,.sgi::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--accent,var(--good)) 28%,transparent);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
+.card::-webkit-scrollbar-thumb:hover,.sgi::-webkit-scrollbar-thumb:hover{background:color-mix(in srgb,var(--accent,var(--good)) 65%,transparent);background-clip:padding-box}
 #txt{position:relative;margin:auto 0;text-align:left;font:600 1.15rem/1.6 Poppins,sans-serif;letter-spacing:.3px;word-break:break-word}
 .w{display:inline-block;animation:rev .45s ease-out both}
 @keyframes rev{from{filter:blur(12px);opacity:0;transform:translateY(4px)}to{filter:blur(0);opacity:1;transform:none}}
@@ -82,15 +89,26 @@ body.desk .hz{display:block}
 .swipe{align-self:center;display:flex;align-items:center;gap:6px;padding:6px 12px;border:0;border-radius:999px;background:none;color:var(--muted);font:400 .72rem Inter,sans-serif;cursor:pointer}
 .swipe svg{width:14px;height:14px;transition:transform .3s}
 .swipe.on svg{transform:rotate(180deg)}
-.sg{max-height:0;opacity:0;overflow:hidden;transition:max-height .45s ease,opacity .3s}
-.sg.open{max-height:40vh;opacity:1;overflow-y:auto}
-.sgc{display:block;width:100%;text-align:left;padding:12px 14px;margin-top:8px;border:1px solid var(--line);border-radius:20px;background:var(--panel);color:var(--text);cursor:pointer;animation:rise .5s ease-out both}
+.sg{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;transition:grid-template-rows .6s cubic-bezier(.22,1,.36,1),opacity .4s ease,visibility 0s .6s}
+.sgi{min-height:0;max-height:38vh;overflow-y:auto;padding:10px 6px 30px 0;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 12px,#000 calc(100% - 30px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 12px,#000 calc(100% - 30px),transparent 100%);overscroll-behavior:contain}
+.sg.open{grid-template-rows:1fr;opacity:1;visibility:visible;transition:grid-template-rows .6s cubic-bezier(.22,1,.36,1),opacity .4s ease,visibility 0s}
+.sgw{display:grid;grid-template-rows:1fr;animation:grow .65s cubic-bezier(.22,1,.36,1) both}
+.sgw>div{min-height:0;overflow:hidden;padding:4px 0}
+@keyframes grow{from{grid-template-rows:0fr;opacity:0}to{grid-template-rows:1fr;opacity:1}}
+.sgm{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.sgm small{margin:0!important}
+.src{display:inline-flex;align-items:center;gap:6px;max-width:62%;padding:2px 9px;border-radius:999px;background:color-mix(in srgb,var(--accent,var(--good)) 12%,transparent);color:var(--accent,var(--good));font:400 .64rem/1.5 Inter,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sgs{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 4px 2px;color:var(--muted);font:400 .74rem Inter,sans-serif;animation:rise .5s ease-out both}
+.sgs i{width:7px;height:7px;border-radius:50%;background:var(--accent,var(--good));animation:pulse .8s ease-in-out infinite alternate}
+.sgc{display:block;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:20px;background:var(--panel);color:var(--text);cursor:pointer;animation:rise .6s cubic-bezier(.22,1,.36,1) both;transition:border-color .2s,background .2s}
+.sgc:hover{border-color:color-mix(in srgb,var(--accent,var(--good)) 45%,transparent)}
+.sgc:focus-visible{outline:2px solid var(--accent,var(--good));outline-offset:-2px}
 .sgc small{display:block;margin-bottom:4px;color:var(--muted);font:400 .7rem Inter,sans-serif}
 .sgt{font:600 .9rem/1.5 Poppins,sans-serif;word-break:break-word}
 .sgt .w.chg{color:var(--accent)}
 .sgn{color:var(--muted);font-size:.8rem;padding:10px 4px}
 @keyframes rise{from{opacity:0;transform:translateY(16px);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
-@media (prefers-reduced-motion:reduce){.w{animation:none}}
+@media (prefers-reduced-motion:reduce){.w,.sgc,.sgw{animation:none}.sg,.sg.open{transition:none}}
 </style>
 </head>
 <body>
@@ -115,7 +133,7 @@ body.desk .hz{display:block}
   <section class="result">
     <div class="card" id="card"><div id="txt"></div><textarea id="ed" rows="1" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Edit text"></textarea></div>
     <button class="swipe" id="swipe" aria-label="Show suggestions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg><span>Swipe up for suggestions</span></button>
-    <div class="sg" id="sg"></div>
+    <div class="sg" id="sg"><div class="sgi" id="sgi"></div></div>
     <div class="row">
       <button class="btn main" id="bCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span>Copy</span></button>
       <button class="btn" id="bReset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg>Reset</button>
@@ -356,22 +374,7 @@ async function cloudVersion(text) {   // LanguageTool public API: free, no key, 
     .sort((a, b) => b.offset - a.offset).forEach(m => { out = out.slice(0, m.offset) + m.replacements[0].value + out.slice(m.offset + m.length); });
   return clean(fix(out.toUpperCase()));
 }
-let sgData = null;
-function renderSg(items, note) {
-  sg.textContent = '';
-  const orig = dictated.split(' ');
-  items.forEach((it, ci) => {
-    const c = document.createElement('button'); c.className = 'sgc'; c.style.animationDelay = (ci * 140) + 'ms';
-    const h = document.createElement('small'); h.textContent = it.label; c.appendChild(h);
-    const body = document.createElement('div'); body.className = 'sgt'; const words = it.text.split(' '), ch = diffNew(orig, words);
-    words.forEach((w, i) => { const sp = document.createElement('span'); sp.className = 'w' + (ch.has(i) ? ' chg' : ''); sp.style.animationDelay = (ci * 140 + 120 + i * 30) + 'ms'; sp.textContent = w; body.appendChild(sp); if (i < words.length - 1) body.appendChild(document.createTextNode(' ')); });
-    c.appendChild(body);
-    c.addEventListener('click', () => { dictated = it.text; closeSg(); renderResult(false); });
-    sg.appendChild(c);
-  });
-  if (!items.length || note) { const n = document.createElement('div'); n.className = 'sgn'; n.textContent = note || 'No changes suggested. The wording looks fine.'; sg.appendChild(n); }
-}
-const REWRITE = t => 'Rewrite this dictated clinical history as 3 different complete versions. Keep every fact, number and unit of time exactly as given and do not add or remove medical information. Version 1 is clear and simple, version 2 is formal clinical style, version 3 is shorter. Use plain words with no punctuation. Output exactly 3 lines, one version per line, nothing else.\n\n' + t;
+const REWRITE = t => 'Here is a dictated clinical history that may contain misheard or misspelled words:\n\n' + t + '\n\nWrite 3 close variants of this exact phrase. Keep the same sentence structure, the same word order and almost all of the same words. Only change a few individual words: fix misheard or misspelled words, fix grammar, or swap a word for a nearby standard clinical word. Never reorder, merge, add or drop clauses. Keep every number and unit of time exactly as given. Variant 1 changes the fewest words, variant 2 changes a few more, variant 3 uses a different nearby word choice. Plain words with no punctuation. Output exactly 3 lines, one variant per line, nothing else.';
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 async function deviceRewrite(text) {   // Chrome's on-device model when present: private, nothing leaves the device
   const LM = self.LanguageModel; if (!LM) return null;
@@ -384,47 +387,74 @@ async function cloudRewrite(text) {    // free Pollinations text API, no key
   const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 15000);
   try {
     const r = await fetch('https://text.pollinations.ai/openai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctl.signal, body: JSON.stringify({ model: 'openai', private: true, messages: [{ role: 'user', content: REWRITE(text) }] }) });
-    if (!r.ok) throw new Error('ai'); const j = await r.json(); return j.choices[0].message.content;
+    if (!r.ok) throw new Error('ai'); const j = await r.json(); return { text: j.choices[0].message.content, model: j.model || 'openai' };
   } finally { clearTimeout(tm); }
 }
+/* a version only counts if it stays close to what was said: same length, same order, only a few words changed */
+function isClose(src, v) {
+  const a = src.split(' '), b = v.split(' ');
+  return Math.abs(a.length - b.length) <= Math.max(2, Math.round(a.length * .25)) && diffNew(a, b).size <= Math.max(3, Math.ceil(b.length * .4));
+}
 async function aiRewrite(src) {
-  let out = null;
-  try { out = await withTimeout(deviceRewrite(src), 25000); } catch (e) {}
-  if (!out && USE_CLOUD) out = await withTimeout(cloudRewrite(src), 16000);
+  let out = null, source = '';
+  try { out = await withTimeout(deviceRewrite(src), 25000); if (out) source = 'Gemini Nano · on-device (Chrome)'; } catch (e) {}
+  if (!out && USE_CLOUD) { const r = await withTimeout(cloudRewrite(src), 16000); out = r.text; source = 'Pollinations · ' + r.model; }
   if (!out) return [];
-  const nums = src.match(/\d+/g) || [], labels = ['Clearer', 'Formal clinical', 'Concise'], res = [];
-  out.split('\n').map(l => fix(clean(l.replace(/^\s*(version\s*\d+\s*[:.\-]?|\d+[.)]|[-*•])\s*/i, '')))).filter(Boolean).forEach(v => {
-    if (res.length < 3 && v !== src && nums.every(n => new RegExp('\\b' + n + '\\b').test(v))) res.push([labels[res.length], v]);   // never drop a number
+  const nums = src.match(/\d+/g) || [], labels = ['Light correction', 'Wording alternative', 'Another close variant'], res = [];
+  out.split('\n').map(l => fix(clean(l.replace(/^\s*(version\s*\d+\s*[:.\-]?|variant\s*\d+\s*[:.\-]?|\d+[.)]|[-*•])\s*/i, '')))).filter(Boolean).forEach(v => {
+    if (res.length < 3 && v !== src && isClose(src, v) && nums.every(n => new RegExp('\\b' + n + '\\b').test(v))) res.push({ label: labels[res.length], text: v, source });   // never drop a number
   });
   return res;
 }
 const EXPAND = [['MEDS', 'MEDICATIONS'], ['PTA', 'PRIOR TO ADMISSION'], ['HTN', 'HYPERTENSION'], ['DM', 'DIABETES MELLITUS'], ['SOB', 'SHORTNESS OF BREATH'], ['BP', 'BLOOD PRESSURE'], ['OPD', 'OUTPATIENT DEPARTMENT'], ['LPM', 'LITERS PER MINUTE']];
 const ABBR = [['PRIOR TO ADMISSION', 'PTA'], ['SHORTNESS OF BREATH', 'SOB'], ['BLOOD PRESSURE', 'BP'], ['HYPERTENSION', 'HTN'], ['OUTPATIENT DEPARTMENT', 'OPD'], ['LITERS PER MINUTE', 'LPM']];
 const swap = (t, pairs) => pairs.reduce((x, [a, b]) => x.replace(new RegExp('\\b' + a + '\\b', 'g'), b), t);
+
+/* ---- stacked reveal: each version appears as soon as its source finishes ---- */
+const sgi = $('sgi');
+let sgData = null;
+const sgStatus = document.createElement('div'); sgStatus.className = 'sgs'; sgStatus.innerHTML = '<i></i><span></span>';
+function makeCard(src, it) {
+  const wrap = document.createElement('div'); wrap.className = 'sgw'; const inner = document.createElement('div');
+  const c = document.createElement('button'); c.className = 'sgc';
+  const m = document.createElement('div'); m.className = 'sgm';
+  const h = document.createElement('small'); h.textContent = it.label;
+  const sc = document.createElement('span'); sc.className = 'src'; sc.textContent = it.source; sc.title = it.source;
+  m.append(h, sc); c.appendChild(m);
+  const body = document.createElement('div'); body.className = 'sgt'; const words = it.text.split(' '), ch = diffNew(src.split(' '), words);
+  words.forEach((w, i) => { const sp = document.createElement('span'); sp.className = 'w' + (ch.has(i) ? ' chg' : ''); sp.style.animationDelay = (200 + i * 28) + 'ms'; sp.textContent = w; body.appendChild(sp); if (i < words.length - 1) body.appendChild(document.createTextNode(' ')); });
+  c.appendChild(body);
+  c.addEventListener('click', () => { dictated = it.text; closeSg(); renderResult(false); });
+  inner.appendChild(c); wrap.appendChild(inner); return wrap;
+}
 async function openSg() {
   if (state !== 'done' || !dictated) return;
   sg.classList.add('open'); $('swipe').classList.add('on');
   if (sgData && sgData.src === dictated) return;
-  const src = dictated, words = src.split(' '); sgData = { src };
-  sg.textContent = ''; const l = document.createElement('div'); l.className = 'sgn'; l.textContent = 'Preparing versions…'; sg.appendChild(l);
-  const ai = [], rest = []; let note = '';
-  const add = (arr, label, text) => { if (text && text !== src && ![...ai, ...rest].some(x => x.text === text)) arr.push({ label, text }); };
-  await Promise.all([
-    aiRewrite(src).then(v => v.forEach(([lb, t]) => add(ai, lb, t))).catch(() => {}),
-    USE_CLOUD && words.length >= 3 ? cloudVersion(src).then(c => add(rest, 'Grammar check', c)).catch(() => { note = 'Online grammar check unavailable.'; }) : Promise.resolve()
-  ]);
-  add(rest, 'Quick fixes', localVersion(words)); add(rest, 'Expanded terms', swap(src, EXPAND)); add(rest, 'Abbreviated', swap(src, ABBR));
-  if (dictated !== src || state !== 'done') return;
-  const items = ai.concat(rest);
-  if (!items.length) { sgData = null; note = note || 'No alternative version available right now. Swipe up again to retry.'; }
-  renderSg(items, note);
+  const src = dictated, words = src.split(' '), job = sgData = { src, count: 0, pending: 0 }, seen = new Set([src]);
+  sgi.textContent = ''; sgi.scrollTop = 0; sgStatus.lastChild.textContent = 'Preparing versions…'; sgi.appendChild(sgStatus);
+  const add = it => {
+    if (sgData !== job || dictated !== src || state !== 'done' || !it.text || seen.has(it.text)) return;
+    seen.add(it.text); job.count++; sgi.insertBefore(makeCard(src, it), sgStatus); sgStatus.lastChild.textContent = 'Others still in progress…';
+  };
+  const settle = () => {
+    if (sgData !== job || job.pending > 0) return;
+    sgStatus.remove();
+    if (!job.count) { sgData = null; const n = document.createElement('div'); n.className = 'sgn'; n.textContent = 'No alternative version available right now. Swipe up again to retry.'; sgi.appendChild(n); }
+  };
+  const run = fn => { job.pending++; Promise.resolve().then(fn).catch(() => {}).finally(() => { job.pending--; settle(); }); };
+  run(() => aiRewrite(src).then(v => v.forEach(add)));
+  if (USE_CLOUD && words.length >= 3) run(() => cloudVersion(src).then(c => add({ label: 'Grammar correction', text: c, source: 'LanguageTool · rule-based grammar and spelling' })));
+  run(() => add({ label: 'Quick fixes', text: localVersion(words), source: 'Local rules · medical lexicon + Hunspell en_US' }));
+  run(() => add({ label: 'Expanded terms', text: swap(src, EXPAND), source: 'Local rules · clinical abbreviation list' }));
+  run(() => add({ label: 'Abbreviated', text: swap(src, ABBR), source: 'Local rules · clinical abbreviation list' }));
 }
-function closeSg() { sg.classList.remove('open'); $('swipe').classList.remove('on'); sgData = null; }
-function resetSg() { sg.classList.remove('open'); sg.textContent = ''; sgData = null; $('swipe').classList.remove('on'); $('txt').classList.remove('editing'); ed.blur(); }
+function closeSg() { sg.classList.remove('open'); $('swipe').classList.remove('on'); }
+function resetSg() { sg.classList.remove('open'); sgi.textContent = ''; sgData = null; $('swipe').classList.remove('on'); $('txt').classList.remove('editing'); ed.blur(); }
 $('swipe').addEventListener('click', () => { if (sg.classList.contains('open')) closeSg(); else openSg(); });
 let ty = null, tx = 0;
 const resultEl = document.querySelector('.result');
-resultEl.addEventListener('touchstart', e => { if (e.target.closest('#ed')) { ty = null; return; } ty = e.touches[0].clientY; tx = e.touches[0].clientX; }, { passive: true });
+resultEl.addEventListener('touchstart', e => { const sc = e.target.closest('.sgi,.card'); if (e.target.closest('#ed') || (sc && sc.scrollHeight > sc.clientHeight + 2)) { ty = null; return; } ty = e.touches[0].clientY; tx = e.touches[0].clientX; }, { passive: true });
 resultEl.addEventListener('touchend', e => {
   if (ty === null) return;
   const dy = e.changedTouches[0].clientY - ty, dx = Math.abs(e.changedTouches[0].clientX - tx); ty = null;
