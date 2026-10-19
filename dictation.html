@@ -27,7 +27,12 @@ body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-ser
 .orb{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}
 .orb canvas{width:100%;height:100%;display:block}
 .core{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--accent);pointer-events:none}
-.core svg{width:56px;height:56px}
+.core svg{width:56px;height:56px;animation:cin .35s cubic-bezier(.22,1,.36,1) both}
+.core svg.tall{height:84px}
+.core .chev{animation:nudge 1.1s ease-in-out infinite}
+.core .chev.b{animation-delay:.18s}
+@keyframes cin{from{opacity:0;transform:scale(.6);filter:blur(4px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes nudge{0%{opacity:0;transform:translateY(-5px)}50%{opacity:1}100%{opacity:0;transform:translateY(6px)}}
 .hint{font-size:.85rem;color:var(--muted);text-align:center;height:5.2em;max-width:30ch}
 .lt{width:100%;max-width:34ch;height:3.6rem;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 45%);mask-image:linear-gradient(transparent,#000 45%)}
 .lt span{font:400 .8rem/1.4 Inter,sans-serif;color:var(--muted);text-align:center;word-break:break-word;letter-spacing:.3px}
@@ -56,7 +61,6 @@ body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-ser
 .btn:active{transform:scale(.97)}
 .btn svg{width:18px;height:18px}
 .btn:focus-visible,.orb:focus-visible,.hb:focus-visible,.hi:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
-#mic{position:absolute;left:-9999px;top:0;width:1px;height:1px;opacity:0;font-size:16px}
 
 /* desktop history: invisible until the top-right corner is hovered */
 .hz{display:none;position:fixed;top:0;right:0;padding:14px 16px 0 40px;opacity:0;transition:opacity .25s;z-index:10}
@@ -125,7 +129,7 @@ body.desk .hz{display:block}
 .sgt .w.chg{color:var(--accent)}
 .sgn{color:var(--muted);font-size:.8rem;padding:10px 4px}
 @keyframes rise{from{opacity:0;transform:translateY(16px);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
-@media (prefers-reduced-motion:reduce){.w,.sgc,.sgw{animation:none}.sg,.sg.open{transition:none}}
+@media (prefers-reduced-motion:reduce){.w,.sgc,.sgw,.core svg,.core .chev{animation:none}.sg,.sg.open{transition:none}}
 </style>
 </head>
 <body>
@@ -160,7 +164,6 @@ body.desk .hz{display:block}
     </div>
   </section>
 
-  <textarea id="mic" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Dictation input"></textarea>
 </div>
 
 <script type="module">
@@ -169,7 +172,8 @@ import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasej
 import { getDatabase, ref, set, get, push, remove, update, onValue, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
 const $ = i => document.getElementById(i);
-const app = $('app'), orb = $('orb'), core = $('core'), hint = $('hint'), mic = $('mic');
+const app = $('app'), orb = $('orb'), core = $('core'), hint = $('hint');
+let coreHtml = null; const setCore = h => { if (h !== coreHtml) { coreHtml = h; core.innerHTML = h; } };   // only swaps (and animates) the icon when it actually changes
 const MIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
 
 /* ---------- identity: same user retrieval as the other pages ---------- */
@@ -199,8 +203,8 @@ try {
 
 const base = `dictation/${userId}`;
 let state = 'idle', link = 'off', dictated = '', finish = '', prevRemote = '';
-let liveText = '', keyMode = false, rec = null, committed = '', session = '', stopping = false;
-let paused = false, held = false, holdT = null, pausedValue = '';
+let liveText = '', rec = null, committed = '', session = '', stopping = false;
+let paused = false, held = false, holdT = null;
 let failed = false, startedAt = 0, quick = 0, locked = false, energy = 0, speaking = false;
 let offset = 0, dbOnline = true, offlineSince = 0, flaps = [], devices = {};
 
@@ -356,6 +360,7 @@ function openPop(m, el) {
 }
 const LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 function pulse(x) { energy = Math.min(1, energy + x); }
+const SWIPELOCK = '<svg class="tall" viewBox="0 0 24 36" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="8" width="14" height="10" rx="2"/><path d="M8 8V6a4 4 0 0 1 8 0v2"/><path class="chev" d="M7 23l5 5 5-5"/><path class="chev b" d="M7 29l5 5 5-5"/></svg>';   // lock + chevrons sliding down: swipe down to lock
 
 /* ---- edit the result: tap a plain word (or empty space) to type; underlined words open suggestions ---- */
 const ed = $('ed'), sg = $('sg'), USE_CLOUD = true;   // USE_CLOUD sends the text to the free LanguageTool API when you swipe up; set false to stay fully local
@@ -641,14 +646,14 @@ function paint() {
   orb.disabled = false; orb.setAttribute('aria-label', 'Start dictation'); hint.className = 'hint';
   if (state === 'done') return;
   const other = role === 'phone' ? 'desktop' : 'phone';
-  if (!userId) { core.innerHTML = role === 'phone' ? MIC : ''; hint.textContent = 'No account found. Sign in from your main app.'; hint.className = 'hint err'; orb.disabled = true; return; }
+  if (!userId) { setCore(role === 'phone' ? MIC : ''); hint.textContent = 'No account found. Sign in from your main app.'; hint.className = 'hint err'; orb.disabled = true; return; }
   if (role === 'phone') {
-    if (state === 'live') { core.innerHTML = locked ? LOCK : ''; hint.innerHTML = paused ? (locked ? '<strong>Paused and locked</strong>Swipe up to resume<br>Tap to finish' : '<strong>Paused</strong>Release to continue<br>Swipe down to lock') : failed ? '<strong>Mic stopped</strong>Tap to finish<br>Next session uses the keyboard mic' : '<strong>Listening</strong>Tap to finish' + (link !== 'on' ? '<br>Will sync when connected' : keyMode ? '<br>Use the keyboard mic' : ''); orb.setAttribute('aria-label', 'Finish dictation'); return; }
-    core.innerHTML = MIC;
+    if (state === 'live') { setCore(paused ? (locked ? LOCK : SWIPELOCK) : ''); hint.innerHTML = paused ? (locked ? '<strong>Paused and locked</strong>Swipe up to resume<br>Tap to finish' : '<strong>Paused</strong>Release to continue<br>Swipe down to lock') : failed ? '<strong>' + (SR ? 'Mic stopped' : 'Dictation not supported') + '</strong>Tap to finish' : '<strong>Listening</strong>Tap to finish' + (link !== 'on' ? '<br>Will sync when connected' : ''); orb.setAttribute('aria-label', 'Finish dictation'); return; }
+    setCore(MIC);
     if (link === 'on') hint.textContent = 'Tap to dictate';
     else { orb.disabled = true; if (link === 'weak') hint.textContent = 'Connection is unstable'; else { hint.textContent = 'Open this page on your ' + other + ' to connect'; hint.className = 'hint err'; } }
   } else {
-    orb.disabled = true; core.innerHTML = '';
+    orb.disabled = true; setCore('');
     if (state === 'live') hint.innerHTML = '<strong>Listening</strong>';
     else if (link === 'on') hint.textContent = 'Use your phone to dictate';
     else if (link === 'weak') hint.textContent = 'Connection is unstable';
@@ -730,8 +735,7 @@ function mergeResults(res) {
   }
   return segs.join(' ');
 }
-function liveTx(t) { liveText = fix(keyMode ? clean(t) : dedupe(clean(t))); $('lt').textContent = liveText; }
-function startKeys(seed) { keyMode = true; mic.value = seed ? seed + ' ' : ''; mic.focus(); paint(); }   // Gboard fallback
+function liveTx(t) { liveText = fix(dedupe(clean(t))); $('lt').textContent = liveText; }
 /* join text from a restarted recognizer without repeating what it already gave us */
 function joinText(a, b) {
   a = a.trim(); b = b.trim();
@@ -749,17 +753,9 @@ function dedupe(t) {
   return last ? w.slice(last).join(' ') : t;
 }
 
-/* ONE engine per session. It is chosen at the start and kept even if it fails.
-   Only the next session switches, and only if the native engine failed recently. */
-function pickEngine() {
-  if (!SR) return 'keys';
-  try { const f = JSON.parse(localStorage.getItem('dictFail') || 'null'); if (f && Date.now() - f.t < 30 * 60000) return 'keys'; } catch (x) {}
-  return 'native';
-}
 function killRec() { if (rec) { const r = rec; r.onresult = r.onend = r.onerror = null; try { r.abort(); } catch (x) {} rec = null; } }
 function failNative() {
   failed = true; stopping = true; killRec();
-  try { localStorage.setItem('dictFail', JSON.stringify({ e: 'native', t: Date.now() })); } catch (x) {}
   paint();
 }
 function startNative() {
@@ -777,16 +773,15 @@ function startNative() {
   startedAt = Date.now(); rec.start();
 }
 function startDictation() {
-  stopping = false; paused = false; failed = false; quick = 0; locked = false; energy = 0; speaking = false; keyMode = false; committed = ''; session = ''; mic.value = ''; liveTx('');
+  stopping = false; paused = false; failed = false; quick = 0; locked = false; energy = 0; speaking = false; committed = ''; session = ''; liveTx('');
   state = 'live'; pushSession('live');
-  if (pickEngine() === 'keys') { startKeys(''); return; }
+  if (!SR) { failNative(); return; }
   try { startNative(); } catch (e) { failNative(); }
   paint();
 }
-function toReady() { state = 'idle'; dictated = ''; finish = ''; liveText = ''; mic.value = ''; paint(); pushSession('idle'); }   // back to the ready screen, nothing to show
+function toReady() { state = 'idle'; dictated = ''; finish = ''; liveText = ''; paint(); pushSession('idle'); }   // back to the ready screen, nothing to show
 function finishDictation() {
   stopping = true; paused = false; locked = false; killRec();
-  mic.blur();
   if (!liveText.trim()) { toReady(); return; }   // no speech detected: back to ready, no empty result
   dictated = liveText; finish = clock(new Date()); showResult(); pushSession('done', dictated, finish);
 }
@@ -796,17 +791,10 @@ orb.addEventListener('click', () => {
   if (state === 'idle' && link === 'on') startDictation();
   else if (state === 'live') finishDictation();
 });
-mic.addEventListener('input', () => {
-  if (paused) { mic.value = pausedValue; return; }
-  const v = mic.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '').replace(/\s{2,}/g, ' ');
-  if (v !== mic.value) mic.value = v;
-  if (state === 'live' && keyMode) { liveTx(v); pulse(.3); }
-});
-
 /* ---------- hold the matrix to pause, release to continue, tap to finish ---------- */
 function pauseDict() {
   if (state !== 'live' || paused) return;
-  paused = true; held = true; pausedValue = mic.value;
+  paused = true; held = true;
   if (rec) { killRec(); committed = joinText(committed, session); session = ''; }
   if (navigator.vibrate) navigator.vibrate(20);
   paint();
@@ -814,7 +802,7 @@ function pauseDict() {
 function resumeDict() {
   if (!paused) return;
   paused = false; locked = false;
-  if (!keyMode && !failed) { stopping = false; try { startNative(); } catch (e) { failNative(); } }
+  if (!failed) { stopping = false; try { startNative(); } catch (e) { failNative(); } }
   paint();
 }
 let sy = 0, swiped = false;
@@ -842,7 +830,7 @@ $('bCopy').addEventListener('click', async () => {
   copyText(t, $('bCopy').querySelector('span'));
   if (role === 'desktop') logHistory(dictated, finish);
 });
-$('bReset').addEventListener('click', () => { state = 'idle'; dictated = ''; finish = ''; mic.value = ''; paint(); pushSession('idle'); });
+$('bReset').addEventListener('click', () => { state = 'idle'; dictated = ''; finish = ''; paint(); pushSession('idle'); });
 
 /* ---------- desktop copy history: keep 5, delete the rest ---------- */
 async function logHistory(text, fin) {
@@ -887,7 +875,8 @@ const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
 /* desktop: the matrix reacts to the cursor, with rings pulsing out from where it is */
 let str = 0, act = 0, hx = C, hy = C, hx2 = C, hy2 = C, tcx = C, tcy = C, ptx = C, pty = C, hIn = false, lastT = 0;
 const ez = (dt, tau) => 1 - Math.exp(-dt / tau);   // frame-rate independent easing: same silky feel at 60, 120 or 144 Hz
-dots.forEach(d => { d.hs = 0; d.ha = 0; d.hox = 0; d.hoy = 0; });
+dots.forEach(d => { d.hs = 0; d.ha = 0; d.hox = 0; d.hoy = 0; d.m = 0; });   // d.m: 0 = rest, 1 = active, eased per dot
+let gmix = 0, lkOff = 1, lkWeak = 0;
 document.addEventListener('pointermove', e => {
   if (role !== 'desktop') return;
   const r = cv.getBoundingClientRect(); if (!r.width) { hIn = false; return; }
@@ -897,7 +886,7 @@ document.addEventListener('pointermove', e => {
 document.documentElement.addEventListener('mouseleave', () => { hIn = false; });
 let idleDrawn = false;
 function draw(t) {
-  if (state === 'done') { if (!idleDrawn) { glow.style.opacity = .1; cx.clearRect(0, 0, S, S); idleDrawn = true; } setTimeout(() => requestAnimationFrame(draw), 250); return; }   // result screen: no per-frame work
+  if (state === 'done') { if (!idleDrawn) { glow.style.opacity = .1; cx.clearRect(0, 0, S, S); for (const d of dots) d.m = 0; gmix = 0; idleDrawn = true; } setTimeout(() => requestAnimationFrame(draw), 250); return; }   // result screen: no per-frame work
   idleDrawn = false;
   const dt = Math.min(48, t - lastT || 16); lastT = t;
   const col = getComputedStyle(app).getPropertyValue('--accent').trim() || '#4cff3b', live = state === 'live' && !paused;
@@ -918,17 +907,23 @@ function draw(t) {
   str += (sT - str) * ez(dt, sT > str ? 170 : 520);
   hx += (tcx - hx) * ez(dt, 150); hy += (tcy - hy) * ez(dt, 150);                // the effect trails the cursor with a delay,
   hx2 += (hx - hx2) * ez(dt, 110); hy2 += (hy - hy2) * ez(dt, 110);             // smoothed twice so it glides
-  glow.style.opacity = state === 'done' ? .1 : live ? Math.min(1, .2 + lvl * .9) : .15 + str * .12; glow.style.setProperty('--glow', col);
+  gmix += ((live ? 1 : 0) - gmix) * ez(dt, live ? 260 : 520);                       // glow morphs between rest and active too
+  lkOff += ((link === 'off' ? 1 : 0) - lkOff) * ez(dt, 300); lkWeak += ((link === 'weak' ? 1 : 0) - lkWeak) * ez(dt, 300);   // connection looks blend instead of snapping
+  const gRest = .15 + str * .12, gLive = Math.min(1, .2 + lvl * .9);
+  glow.style.opacity = gRest + (gLive - gRest) * gmix; glow.style.setProperty('--glow', col);
 
   cx.clearRect(0, 0, S, S); cx.fillStyle = col;
   for (const d of dots) {
-    let sz = 3.2, al = .3, off = 0;
-    if (live) {
+    const tm = live ? 1 : 0;   // rest <-> active morph: rings spread outward when dictation starts and collapse inward when it ends (also when it ends empty)
+    d.m += (tm - d.m) * ez(dt, reduce ? 60 : tm > d.m ? 90 + d.r * 1.6 : 120 + (300 - d.r) * 1.6);
+    if (Math.abs(tm - d.m) < .002) d.m = tm;
+    let sz = 3.2, al = .3 + .1 * lkOff + lkWeak * (-.05 + .3 * (Math.sin(t / 220 + d.a * 2) + 1) / 2), off = 0;
+    if (d.m > 0) {
+      const m = d.m * d.m * (3 - 2 * d.m);
       const w = reduce ? .5 : (Math.sin(t / 240 - d.r / 26 + Math.sin(d.a * 3 + t / 800) * 1.3) + 1) / 2;
       const amp = role === 'phone' ? Math.min(1, .15 + bnd[d.b] * 1.2 + lvl * .6) : .8, v = w * amp;
-      sz = 2.4 + v * 8; al = .2 + v * .8; off = v * (role === 'phone' ? 8 + lvl * 14 : 6);
-    } else if (link === 'off') al = .4;
-    else if (link === 'weak') al = .25 + .3 * (Math.sin(t / 220 + d.a * 2) + 1) / 2;
+      sz += (2.4 + v * 8 - sz) * m; al += (.2 + v * .8 - al) * m; off = v * (role === 'phone' ? 8 + lvl * 14 : 6) * m;
+    }
     let ox = d.c * off, oy = Math.sin(d.a) * off, tS = 0, tA = 0, tX = 0, tY = 0;
     if (str > .005) {   // dots near the cursor grow, brighten and ease away; rings travel outward while it moves and calm down when it stops
       const dx = d.x - hx2, dy = d.y - hy2, dist = Math.hypot(dx, dy), f = Math.exp(-(dist * dist) / 28800) * str;
