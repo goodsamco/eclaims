@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dictation</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050805;--panel:rgba(255,255,255,.06);--line:rgba(255,255,255,.12);--text:#fff;--muted:#9a9a9a;--good:hsl(111,100%,60%);--bad:#ff4d4d;--warn:#f0a000;--onaccent:#000;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;display:flex;justify-content:center;overflow:hidden}
+.app{--accent:var(--good);position:relative;z-index:1;width:100%;max-width:520px;height:100%;display:flex;flex-direction:column;align-items:center;padding:14px 20px 16px}
+.app.weak{--accent:var(--warn)}
+.app.off{--accent:var(--bad)}
+
+.conn{display:flex;align-items:center;gap:9px;padding:9px 16px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font:600 .8rem Inter,sans-serif}
+.light{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 25%,transparent),0 0 12px var(--accent)}
+.app.weak .light{animation:pulse .8s ease-in-out infinite alternate}
+@keyframes pulse{from{opacity:.35}to{opacity:1}}
+
+.stage{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.orb{position:relative;width:calc(100% + 40px);margin:0 -20px;height:min(52vh,360px);border:0;background:none;padding:0;cursor:pointer}
+body.desk .orb{width:min(70vw,340px);height:auto;aspect-ratio:1;margin:0;border-radius:50%}
+.orb[disabled]{cursor:default}
+.orb{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}
+.orb canvas{width:100%;height:100%;display:block}
+.core{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--accent);pointer-events:none}
+.core svg{width:56px;height:56px}
+.hint{font-size:.85rem;color:var(--muted);text-align:center;height:5.2em;max-width:30ch}
+.lt{width:100%;max-width:34ch;height:3.6rem;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 45%);mask-image:linear-gradient(transparent,#000 45%)}
+.lt span{font:400 .8rem/1.4 Inter,sans-serif;color:var(--muted);text-align:center;word-break:break-word;letter-spacing:.3px}
+.hint.err{color:var(--bad)}
+.hint strong{display:block;color:var(--accent);font-weight:600;font-size:1.05rem}
+
+.result{display:none;flex:1;min-height:0;width:100%;flex-direction:column;gap:14px;padding-top:16px}
+.app.done .stage{display:none}
+.app.done .result{display:flex}
+.card{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding:12px 4px}
+#txt{margin:auto 0;text-align:left;font:600 1.15rem/1.6 Poppins,sans-serif;letter-spacing:.3px;word-break:break-word}
+.w{display:inline-block;margin-right:.32em;animation:rev .45s ease-out both}
+@keyframes rev{from{filter:blur(12px);opacity:0;transform:translateY(4px)}to{filter:blur(0);opacity:1;transform:none}}
+.fin{display:block;margin-top:14px;color:var(--muted);font:400 .75rem Inter,sans-serif}
+.row{display:flex;gap:10px}
+.btn{flex:1;height:56px;border-radius:28px;border:1px solid var(--line);background:transparent;color:var(--text);font:600 .95rem Inter,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn.main{background:var(--accent);border-color:var(--accent);color:var(--onaccent)}
+.btn:active{transform:scale(.97)}
+.btn svg{width:18px;height:18px}
+.btn:focus-visible,.orb:focus-visible,.hb:focus-visible,.hi:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+#mic{position:absolute;left:-9999px;top:0;width:1px;height:1px;opacity:0;font-size:16px}
+
+/* desktop history: invisible until the top-right corner is hovered */
+.hz{display:none;position:fixed;top:0;right:0;padding:14px 16px 0 40px;opacity:0;transition:opacity .25s;z-index:10}
+body.desk .hz{display:block}
+.hz:hover,.hz:focus-within{opacity:1}
+.hb{width:40px;height:40px;margin-left:auto;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--accent);cursor:pointer}
+.hb svg{width:18px;height:18px}
+.hp{display:none;position:absolute;right:16px;top:54px;width:min(340px,86vw);padding:10px;border-radius:24px;background:rgba(13,13,13,.92);border:1px solid var(--line);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.hz:hover .hp,.hz:focus-within .hp{display:block}
+.hp h2{margin:4px 8px 8px;font:600 .75rem Inter,sans-serif;color:var(--muted)}
+.hi{display:block;width:100%;text-align:left;padding:10px 12px;border:0;border-radius:16px;background:none;color:var(--text);cursor:pointer;font:600 .8rem/1.4 Poppins,sans-serif}
+.hi:hover{background:var(--panel)}
+.hi span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.hi small{display:block;margin-top:2px;color:var(--muted);font:400 .7rem Inter,sans-serif}
+.empty{padding:10px 12px;color:var(--muted);font-size:.8rem}
+.w.u-bad,.w.u-warn{cursor:pointer;text-decoration:underline dashed;text-decoration-thickness:1px;text-underline-offset:6px}
+.w.u-bad{text-decoration-color:color-mix(in srgb,var(--bad) 65%,transparent)}
+.w.u-warn{text-decoration-color:color-mix(in srgb,var(--warn) 70%,transparent)}
+.ok{display:inline-block;width:.95rem;height:.95rem;margin-left:7px;vertical-align:-.2rem;color:var(--good)}
+.ok svg{width:100%;height:100%;display:block}
+.pop{position:fixed;z-index:30;min-width:170px;max-width:260px;padding:8px;border-radius:20px;background:rgba(18,18,18,.96);border:1px solid var(--line);box-shadow:0 12px 36px rgba(0,0,0,.6);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.pop[hidden]{display:none}
+.pop h3{margin:4px 8px 6px;font:400 .72rem/1.3 Inter,sans-serif;color:var(--muted)}
+.pop button{display:block;width:100%;text-align:left;padding:9px 12px;border:0;border-radius:14px;background:none;color:var(--text);font:600 .8rem Poppins,sans-serif;cursor:pointer}
+.pop button:hover,.pop button:focus-visible{background:var(--panel);outline:none}
+.pop button.keep{color:var(--muted);font:400 .75rem Inter,sans-serif}
+.glow{position:fixed;inset:0;pointer-events:none;z-index:0;filter:blur(26px);opacity:.15;background:radial-gradient(75% 30% at 50% 44%,color-mix(in srgb,var(--glow,var(--good)) 60%,transparent),transparent 72%),radial-gradient(40% 22% at 50% 44%,color-mix(in srgb,var(--glow,var(--good)) 45%,transparent),transparent 75%)}
+body.desk .glow{background:radial-gradient(36% 36% at 50% 44%,color-mix(in srgb,var(--glow,var(--good)) 50%,transparent),transparent 74%)}
+#ed{display:none;width:100%;margin:auto 0;padding:0;background:transparent;border:0;outline:0;resize:none;overflow:hidden;color:var(--text);caret-color:var(--accent);font:600 1.15rem/1.6 Poppins,sans-serif;letter-spacing:.3px}
+.swipe{align-self:center;display:flex;align-items:center;gap:6px;padding:6px 12px;border:0;border-radius:999px;background:none;color:var(--muted);font:400 .72rem Inter,sans-serif;cursor:pointer}
+.swipe svg{width:14px;height:14px;transition:transform .3s}
+.swipe.on svg{transform:rotate(180deg)}
+.sg{max-height:0;opacity:0;overflow:hidden;transition:max-height .45s ease,opacity .3s}
+.sg.open{max-height:40vh;opacity:1;overflow-y:auto}
+.sgc{display:block;width:100%;text-align:left;padding:12px 14px;margin-top:8px;border:1px solid var(--line);border-radius:20px;background:var(--panel);color:var(--text);cursor:pointer;animation:rise .5s ease-out both}
+.sgc small{display:block;margin-bottom:4px;color:var(--muted);font:400 .7rem Inter,sans-serif}
+.sgt{font:600 .9rem/1.5 Poppins,sans-serif;word-break:break-word}
+.sgt .w.chg{color:var(--accent)}
+.sgn{color:var(--muted);font-size:.8rem;padding:10px 4px}
+@keyframes rise{from{opacity:0;transform:translateY(16px);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
+@media (prefers-reduced-motion:reduce){.w{animation:none}}
+</style>
+</head>
+<body>
+<div class="glow" id="glow"></div>
+<div class="hz" id="hz">
+  <button class="hb" aria-label="Copy history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
+  <div class="hp"><h2>Last 5 copied</h2><div id="hl"></div></div>
+</div>
+
+<div class="app" id="app">
+  <div class="conn"><span class="light"></span><span id="connLbl">Disconnected</span></div>
+
+  <section class="stage">
+    <button class="orb" id="orb" aria-label="Start dictation">
+      <canvas id="mx" width="640" height="640"></canvas>
+      <div class="core" id="core"></div>
+    </button>
+    <div class="hint" id="hint"></div>
+    <div class="lt"><span id="lt"></span></div>
+  </section>
+
+  <section class="result">
+    <div class="card" id="card"><div id="txt"></div><textarea id="ed" rows="1" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Edit text"></textarea></div>
+    <button class="swipe" id="swipe" aria-label="Show suggestions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg><span>Swipe up for suggestions</span></button>
+    <div class="sg" id="sg"></div>
+    <div class="row">
+      <button class="btn main" id="bCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span>Copy</span></button>
+      <button class="btn" id="bReset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg>Reset</button>
+    </div>
+  </section>
+
+  <textarea id="mic" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Dictation input"></textarea>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getDatabase, ref, set, get, push, remove, update, onValue, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+const $ = i => document.getElementById(i);
+const app = $('app'), orb = $('orb'), core = $('core'), hint = $('hint'), mic = $('mic');
+const MIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+
+/* ---------- identity: same user retrieval as the other pages ---------- */
+const userId = localStorage.getItem("userId");
+const q = new URLSearchParams(location.search).get('role');   // ?role=phone or ?role=desktop to test on one machine
+const role = (q === 'phone' || q === 'desktop') ? q
+  : (matchMedia('(pointer:coarse)').matches || /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) ? 'phone' : 'desktop';
+const deviceId = sessionStorage.getItem('dictDevice') || (role + '_' + Math.random().toString(36).slice(2, 9));
+sessionStorage.setItem('dictDevice', deviceId);
+if (role === 'desktop') document.body.classList.add('desk');
+
+/* ---------- same database connection ---------- */
+let db, rtdb;
+try {
+  const app_ = initializeApp({
+    apiKey: "AIzaSyDaeNQF4qmW0vvwxUPp_NztnT0hoLzm1BQ",
+    authDomain: "svls-289ee.firebaseapp.com",
+    databaseURL: "https://svls-289ee-default-rtdb.firebaseio.com",
+    projectId: "svls-289ee",
+    storageBucket: "svls-289ee.firebasestorage.app",
+    messagingSenderId: "500705386198",
+    appId: "1:500705386198:web:96f189662bc2aa99cf7377",
+    measurementId: "G-5TNBMQ2HN5"
+  });
+  db = getFirestore(app_); rtdb = getDatabase(app_);
+} catch (e) { console.warn("Database unavailable."); }
+
+const base = `dictation/${userId}`;
+let state = 'idle', link = 'off', dictated = '', finish = '', prevRemote = '';
+let liveText = '', keyMode = false, rec = null, committed = '', session = '', stopping = false;
+let paused = false, held = false, holdT = null, pausedValue = '';
+let failed = false, startedAt = 0, quick = 0, locked = false, energy = 0, speaking = false;
+let offset = 0, dbOnline = true, offlineSince = 0, flaps = [], devices = {};
+
+/* ---------- helpers ---------- */
+const clean = s => s.toUpperCase().replace(/[^A-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+/* ---------- phrase fixes: turns common mishearings into your standard wording ---------- */
+const PHRASES = [
+  ['ONSET', ['IF ON SET', 'IF ONSET', 'ON SET']],
+  ['PRIOR TO ADMISSION', ['PRIOR TO A MISSION', 'PRIOR TO AD MISSION', 'PRIOR TO MISSION', 'PRIOR TO THE ADMISSION', 'PRIOR TO ADMISSIONS', 'PRIOR 2 ADMISSION', 'FOR TO ADMISSION', 'PLAYER TO ADMISSION', 'PRAYER TO ADMISSION', 'PRIER TO ADMISSION', 'PRYOR TO ADMISSION', 'PRIORS TO ADMISSION', 'PRIOR ADMISSION', 'PRIOR TWO ADMISSION', 'PRIOR TOO ADMISSION', 'PLAYER TO A MISSION']],
+  ['NO OTHER ASSOCIATED SYMPTOMS', ['NO OTHER ASSOCIATE SYMPTOMS', 'NO OTHER ASSOCIATED SYMPTOM', 'NO OTHER ASSOCIATING SYMPTOMS']],
+  ['ASSOCIATED WITH', ['ASSOCIATE WITH', 'ASSOCIATING WITH']],
+  ['NO MEDS TAKEN', ['NO MED TAKEN', 'NO MEDS TAKE', 'NO MEDICINE TAKEN']],
+  ['THUS THIS ADMISSION', ['THUS THE ADMISSION', 'THUS THIS A MISSION', 'THUS THIS AD MISSION', 'THIS THIS ADMISSION']],
+  ['PROMPTED THIS ADMISSION', ['PROMPT THIS ADMISSION', 'PROMPTED THE ADMISSION', 'PROMPTED THIS A MISSION', 'PROMPTED THIS AD MISSION', 'PROMPTING THIS ADMISSION']],
+  ['NO MEDS', ['NOMADS', 'NO MADS', 'NO MEADS', 'NOMEDS']]
+].map(([to, from]) => [new RegExp('\\b(?:' + from.join('|') + ')\\b', 'g'), to]);
+const NUMW = {ZERO:0,ONE:1,TWO:2,THREE:3,FOUR:4,FIVE:5,SIX:6,SEVEN:7,EIGHT:8,NINE:9,TEN:10,ELEVEN:11,TWELVE:12,THIRTEEN:13,FOURTEEN:14,FIFTEEN:15,SIXTEEN:16,SEVENTEEN:17,EIGHTEEN:18,NINETEEN:19,TWENTY:20,THIRTY:30,FORTY:40,FIFTY:50,SIXTY:60,SEVENTY:70,EIGHTY:80,NINETY:90};
+const NUMRE = new RegExp('\\b((?:TWENTY|THIRTY|FORTY|FIFTY|SIXTY|SEVENTY|EIGHTY|NINETY)(?: (?:ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE))?|' + Object.keys(NUMW).join('|') + ') (YEARS?|MONTHS?|WEEKS?|DAYS?|HOURS?)\\b', 'g');
+const numFix = t => t.replace(NUMRE, (m, n, u) => n.split(' ').reduce((a, w) => a + NUMW[w], 0) + ' ' + u);   // FIVE MONTHS -> 5 MONTHS
+const DUR = '\\d+ (?:YEARS?|MONTHS?|WEEKS?|DAYS?|HOURS?)';
+const DUPDUR = new RegExp('\\b(' + DUR + ')(?: \\1)+\\b', 'g');                                  // 3 YEARS 3 YEARS -> 3 YEARS
+const PRIORFIX = new RegExp('\\b(' + DUR + ') (?!PRIOR\\b)[A-Z]+ TO (?:A |THE )?ADMISSION\\b', 'g');  // any mishearing of PRIOR after a duration
+const fix = t => PHRASES.reduce((x, [re, to]) => x.replace(re, to), numFix(t)).replace(DUPDUR, '$1').replace(PRIORFIX, '$1 PRIOR TO ADMISSION');
+const two = n => String(n).padStart(2, '0');
+const clock = d => { let h = d.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return two(h) + ':' + two(d.getMinutes()) + ' ' + ap; };
+
+/* ---------- medical words + quiet review marks ---------- */
+const LEX = new Set(`ONSET DYSPNEA DIAPHORESIS TACHYCARDIA BRADYCARDIA TACHYPNEA HEMOPTYSIS HEMATEMESIS MELENA HEMATURIA DYSURIA POLYURIA POLYDIPSIA POLYPHAGIA PALPITATIONS SYNCOPE VERTIGO NAUSEA PRURITUS EDEMA ERYTHEMA CYANOSIS PALLOR JAUNDICE LETHARGY MALAISE ANOREXIA DYSPHAGIA ODYNOPHAGIA ORTHOPNEA PAROXYSMAL ARTHRALGIA MYALGIA PHOTOPHOBIA HEMIPARESIS HEMIPLEGIA PARESTHESIA AFEBRILE
+THORACIC LUMBAR CERVICAL SACRAL CLAVICLE SCAPULA HUMERUS FEMUR TIBIA FIBULA PATELLA METATARSAL INGUINAL SUPRAPUBIC RETROSTERNAL PRECORDIAL SUBCOSTAL EPIGASTRIC EPIGASTRIUM HYPOCHONDRIAC SUBCUTANEOUS
+HYPERTENSION HYPOTENSION MELLITUS PNEUMONIA BRONCHITIS COPD TUBERCULOSIS PTB CARDIOMYOPATHY MYOCARDIAL INFARCTION ANGINA ARRHYTHMIA FIBRILLATION CHF NEPHROLITHIASIS UROLITHIASIS CHOLELITHIASIS CHOLECYSTITIS APPENDICITIS GASTROENTERITIS GASTRITIS HEPATITIS CIRRHOSIS PYELONEPHRITIS CELLULITIS OSTEOARTHRITIS DENGUE LEPTOSPIROSIS TYPHOID SEPSIS CVA TIA ANEMIA THROMBOCYTOPENIA LEUKOCYTOSIS
+MEFENAMIC PARACETAMOL IBUPROFEN NAPROXEN DICLOFENAC CELECOXIB TRAMADOL AMOXICILLIN CEFTRIAXONE CEFUROXIME AZITHROMYCIN CIPROFLOXACIN LEVOFLOXACIN METRONIDAZOLE OMEPRAZOLE RANITIDINE METFORMIN GLIMEPIRIDE AMLODIPINE LOSARTAN ATENOLOL FUROSEMIDE SIMVASTATIN ATORVASTATIN CLOPIDOGREL SALBUTAMOL NEBULIZATION DEXAMETHASONE HYDROCORTISONE PREDNISONE LORATADINE CETIRIZINE
+ECG EKG TROPONIN CBC URINALYSIS XRAY RADIOGRAPH ULTRASOUND CT MRI CREATININE BUN SGPT SGOT HBA1C FBS RBS
+MG ML LPM BPM IV IM PO PRN BID TID QID HS STAT NGT FOLEY ER ICU OPD SPO2 O2 BP HR RR TEMP MEDS`.split(/\s+/));
+const ignored = new Set(); try { JSON.parse(localStorage.getItem('dictIgnore') || '[]').forEach(k => ignored.add(k)); } catch (e) {}
+let typo = null, dictReady = false, marksCache = [];
+
+/* general English dictionary (Typo.js + Hunspell en_US), loaded in the background; marks stay quiet until it is ready */
+function loadScript(urls) { return urls.reduce((p, u) => p.catch(() => new Promise((res, rej) => { const el = document.createElement('script'); el.src = u; el.onload = res; el.onerror = rej; document.head.appendChild(el); })), Promise.reject()); }
+async function loadDict() {
+  try {
+    await loadScript(['https://cdnjs.cloudflare.com/ajax/libs/typo-js/1.2.4/typo.min.js', 'https://cdn.jsdelivr.net/npm/typo-js@1.2.4/typo.js']);
+    for (const v of ['3.2.0', '4.0.0']) {
+      try {
+        const [aff, dic] = await Promise.all(['aff', 'dic'].map(x => fetch(`https://cdn.jsdelivr.net/npm/dictionary-en@${v}/index.${x}`).then(r => { if (!r.ok) throw 0; return r.text(); })));
+        typo = new Typo('en_US', aff, dic, { platform: 'any' }); dictReady = true;
+        if (state === 'done') renderResult(false);
+        return;
+      } catch (e) {}
+    }
+  } catch (e) { console.warn('Dictionary unavailable, spelling marks are off.'); }
+}
+setTimeout(loadDict, 2500);
+
+function known(w) {
+  if (/^\d+([A-Z]{0,3}|\/\d+)?$/.test(w) || w.length <= 2) return true;
+  if (LEX.has(w) || LEX.has(w.replace(/S$/, ''))) return true;
+  if (!dictReady) return true;
+  const l = w.toLowerCase();
+  return typo.check(l) || typo.check(l[0].toUpperCase() + l.slice(1));
+}
+function lev(a, b) { const d = Array.from({ length: a.length + 1 }, (_, i) => [i]); for (let j = 1; j <= b.length; j++) d[0][j] = j; for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); return d[a.length][b.length]; }
+function suggest(w) {
+  const r = [...LEX].filter(t => t.length > 3 && Math.abs(t.length - w.length) <= 2).map(t => [lev(t, w), t]).filter(x => x[0] <= 2).sort((a, b) => a[0] - b[0]).map(x => x[1]).slice(0, 3);
+  if (typo) { try { typo.suggest(w.toLowerCase(), 4).forEach(x => { const u = x.toUpperCase(); if (!r.includes(u)) r.push(u); }); } catch (e) {} }
+  return r.slice(0, 4);
+}
+
+const UNIT = /^(YEARS?|MONTHS?|WEEKS?|DAYS?|HOURS?)$/, NUM = /^\d+$/;
+const DANGLE = new Set('OF WITH TO AND OR THE A AN IN ON FOR BY AT FROM THAN BUT'.split(' '));
+const NONUM = new Set('A AN THE SEVERAL FEW MANY EVERY EACH PER LAST NEXT PAST THIS THAT THESE THOSE COUPLE'.split(' '));
+/* red = unknown spelling, orange = unclear or inconsistent wording */
+function analyze(words) {
+  const marks = [], n = words.length;
+  const add = m => { m.key = m.type + ':' + words.slice(m.s, m.e).join(' '); if (!ignored.has(m.key)) marks.push(m); };
+  const warn = (s, e, note, sugg) => add({ type: 'warn', s, e, note, sugg: sugg || [] });
+  const bad = words.map(w => !known(w));
+  for (let i = 0; i < n;) {
+    if (!bad[i]) { i++; continue; }
+    let j = i; while (j < n && bad[j]) j++;
+    if (j - i >= 3) warn(i, j, 'This part may be unclear', [{ label: 'Remove this part', text: '' }]);
+    else for (let k = i; k < j; k++) add({ type: 'bad', s: k, e: k + 1, sugg: suggest(words[k]).map(t => ({ label: t, text: t })) });
+    i = j;
+  }
+  for (let i = 0; i < n; i++) {
+    const w = words[i], nx = words[i + 1];
+    if (nx && w === nx && !NUM.test(w)) warn(i, i + 2, 'Repeated word', [{ label: 'Keep one "' + w + '"', text: w }]);
+    if (NUM.test(w) && nx && UNIT.test(nx)) {
+      const pl = /S$/.test(nx), one = +w === 1;
+      if (one && pl) warn(i, i + 2, 'Singular expected', [{ label: w + ' ' + nx.slice(0, -1), text: w + ' ' + nx.slice(0, -1) }]);
+      else if (!one && !pl) warn(i, i + 2, 'Plural expected', [{ label: w + ' ' + nx + 'S', text: w + ' ' + nx + 'S' }]);
+    }
+    if (UNIT.test(w) && /S$/.test(w) && !(i > 0 && (NUM.test(words[i - 1]) || NONUM.has(words[i - 1])))) warn(i, i + 1, 'Number missing before ' + w);
+    if (w === 'ASSOCIATED' && nx && !['WITH', 'SYMPTOMS', 'SIGNS', 'TO', 'FACTORS', 'FEATURES', 'COMPLAINTS'].includes(nx)) warn(i, i + 2, 'Did you mean ASSOCIATED WITH?', [{ label: 'ASSOCIATED WITH ' + nx, text: 'ASSOCIATED WITH ' + nx }]);
+  }
+  if (n > 1 && DANGLE.has(words[n - 1])) warn(n - 1, n, 'Sentence ends unfinished', [{ label: 'Remove "' + words[n - 1] + '"', text: '' }]);
+  return marks;
+}
+const CHECK = '<svg viewBox="0 0 24 24" role="img" aria-label="Clear"><circle cx="12" cy="12" r="12" fill="currentColor"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function renderResult(animate) {
+  const box = $('txt'); box.textContent = '';
+  const words = dictated ? dictated.split(' ') : [];
+  marksCache = analyze(words);
+  const wm = [];
+  marksCache.forEach((m, mi) => { if (m.type === 'warn') for (let k = m.s; k < m.e; k++) wm[k] = mi; });
+  marksCache.forEach((m, mi) => { if (m.type === 'bad') wm[m.s] = mi; });
+  words.forEach((w, i) => {
+    const sp = document.createElement('span'); sp.className = 'w'; sp.textContent = w;
+    if (animate) sp.style.animationDelay = (i * 45) + 'ms'; else sp.style.animation = 'none';
+    if (wm[i] !== undefined) { sp.dataset.m = wm[i]; sp.classList.add(marksCache[wm[i]].type === 'bad' ? 'u-bad' : 'u-warn'); }
+    box.appendChild(sp);
+  });
+  const f = document.createElement('span'); f.className = 'fin'; f.textContent = finish;
+  if (words.length && dictReady && !marksCache.length) { const ok = document.createElement('span'); ok.className = 'ok'; ok.innerHTML = CHECK; f.appendChild(ok); }
+  box.appendChild(f);
+}
+/* tap an underlined word for suggestions */
+const pop = document.createElement('div'); pop.className = 'pop'; pop.hidden = true; document.body.appendChild(pop);
+function applyFix(m, text) {
+  const w = dictated.split(' '); w.splice(m.s, m.e - m.s, ...(text ? text.split(' ') : []));
+  dictated = fix(w.join(' ').trim()); pop.hidden = true; renderResult(false);
+}
+function openPop(m, el) {
+  pop.textContent = '';
+  const h = document.createElement('h3'); h.textContent = m.type === 'bad' ? 'Possible spelling issue' : (m.note || 'Unclear wording'); pop.appendChild(h);
+  m.sugg.forEach(sg => { const b = document.createElement('button'); b.textContent = sg.label; b.addEventListener('click', () => applyFix(m, sg.text)); pop.appendChild(b); });
+  const k = document.createElement('button'); k.className = 'keep'; k.textContent = 'Keep as is';
+  k.addEventListener('click', () => { ignored.add(m.key); try { localStorage.setItem('dictIgnore', JSON.stringify([...ignored])); } catch (e) {} pop.hidden = true; renderResult(false); });
+  pop.appendChild(k); pop.hidden = false;
+  const r = el.getBoundingClientRect();
+  pop.style.left = Math.max(8, Math.min(innerWidth - pop.offsetWidth - 8, r.left)) + 'px';
+  pop.style.top = Math.max(8, Math.min(innerHeight - pop.offsetHeight - 8, r.bottom + 8)) + 'px';
+}
+const LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+function pulse(x) { energy = Math.min(1, energy + x); }
+
+/* ---- edit the result: tap a plain word (or empty space) to type; underlined words open suggestions ---- */
+const ed = $('ed'), sg = $('sg'), USE_CLOUD = true;   // USE_CLOUD sends the text to the free LanguageTool API when you swipe up; set false to stay fully local
+function sizeEd() { ed.style.height = 'auto'; ed.style.height = ed.scrollHeight + 'px'; }
+function startEdit(pos) {
+  pop.hidden = true; closeSg();
+  $('txt').style.display = 'none'; ed.style.display = 'block'; ed.value = dictated; sizeEd(); ed.focus();
+  const p = pos === undefined ? ed.value.length : pos; ed.setSelectionRange(p, p);
+}
+ed.addEventListener('input', () => {
+  const v = ed.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '').replace(/\s{2,}/g, ' ').replace(/^\s/, '');
+  if (v !== ed.value) { const c = Math.max(0, ed.selectionStart - (ed.value.length - v.length)); ed.value = v; ed.setSelectionRange(c, c); }
+  sizeEd();
+});
+ed.addEventListener('blur', () => { dictated = clean(ed.value); ed.style.display = 'none'; $('txt').style.display = ''; renderResult(false); });
+$('card').addEventListener('click', e => {
+  if (e.target === ed || state !== 'done') return;
+  const el = e.target.closest('.w[data-m]');
+  if (el) { openPop(marksCache[el.dataset.m], el); return; }
+  if (e.target.closest('.fin')) return;
+  const sp = e.target.closest('.w'); let pos;
+  if (sp) { const i = [...$('txt').querySelectorAll('.w')].indexOf(sp); pos = dictated.split(' ').slice(0, i + 1).join(' ').length; }
+  startEdit(pos);
+});
+
+/* ---- suggested versions of the whole phrase, below the original ---- */
+function diffNew(a, b) {   // words in b that are not part of the common sequence with a
+  const n = a.length, m = b.length, d = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) d[i][j] = a[i] === b[j] ? d[i + 1][j + 1] + 1 : Math.max(d[i + 1][j], d[i][j + 1]);
+  const keep = new Set(); let i = 0, j = 0;
+  while (i < n && j < m) { if (a[i] === b[j]) { keep.add(j); i++; j++; } else if (d[i + 1][j] >= d[i][j + 1]) i++; else j++; }
+  return new Set(b.map((_, k) => k).filter(k => !keep.has(k)));
+}
+function localVersion(words) {   // first suggestion of every local mark
+  const w = words.slice(), used = [];
+  analyze(words).filter(m => m.sugg && m.sugg.length && (m.sugg[0].text !== '' || m.note === 'Sentence ends unfinished')).sort((a, b) => b.s - a.s).forEach(m => {
+    if (used.some(u => m.s < u[1] && m.e > u[0])) return;
+    used.push([m.s, m.e]); const t = m.sugg[0].text; w.splice(m.s, m.e - m.s, ...(t ? t.split(' ') : []));
+  });
+  return clean(fix(w.join(' ')));
+}
+async function cloudVersion(text) {   // LanguageTool public API: free, no key, rule-based grammar and spelling
+  const lower = text.toLowerCase();
+  const r = await fetch('https://api.languagetool.org/v2/check', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ text: lower, language: 'en-US' }) });
+  if (!r.ok) throw new Error('lt');
+  const j = await r.json(); let out = lower;
+  j.matches.filter(m => m.replacements && m.replacements.length && !['typographical', 'whitespace', 'style'].includes(m.rule && m.rule.issueType))
+    .filter(m => !lower.slice(m.offset, m.offset + m.length).toUpperCase().split(' ').every(t => LEX.has(t) || LEX.has(t.replace(/S$/, '')) || NUM.test(t)))
+    .sort((a, b) => b.offset - a.offset).forEach(m => { out = out.slice(0, m.offset) + m.replacements[0].value + out.slice(m.offset + m.length); });
+  return clean(fix(out.toUpperCase()));
+}
+let sgData = null;
+function renderSg(items, note) {
+  sg.textContent = '';
+  const orig = dictated.split(' ');
+  items.forEach((it, ci) => {
+    const c = document.createElement('button'); c.className = 'sgc'; c.style.animationDelay = (ci * 140) + 'ms';
+    const h = document.createElement('small'); h.textContent = it.label; c.appendChild(h);
+    const body = document.createElement('div'); body.className = 'sgt'; const words = it.text.split(' '), ch = diffNew(orig, words);
+    words.forEach((w, i) => { const sp = document.createElement('span'); sp.className = 'w' + (ch.has(i) ? ' chg' : ''); sp.style.animationDelay = (ci * 140 + 120 + i * 30) + 'ms'; sp.textContent = w; body.appendChild(sp); });
+    c.appendChild(body);
+    c.addEventListener('click', () => { dictated = it.text; closeSg(); renderResult(false); });
+    sg.appendChild(c);
+  });
+  if (!items.length || note) { const n = document.createElement('div'); n.className = 'sgn'; n.textContent = note || 'No changes suggested. The wording looks fine.'; sg.appendChild(n); }
+}
+async function openSg() {
+  if (state !== 'done' || !dictated) return;
+  sg.classList.add('open'); $('swipe').classList.add('on');
+  if (sgData && sgData.src === dictated) return;
+  const src = dictated, words = src.split(' '); sgData = { src };
+  sg.textContent = ''; const l = document.createElement('div'); l.className = 'sgn'; l.textContent = 'Checking wording…'; sg.appendChild(l);
+  const items = [], loc = localVersion(words); let note = '';
+  if (loc !== src) items.push({ label: 'Quick fixes', text: loc });
+  if (USE_CLOUD && words.length >= 3) {
+    try { const c = await cloudVersion(src); if (c && c !== src && !items.some(x => x.text === c)) items.push({ label: 'Grammar check', text: c }); }
+    catch (e) { note = 'Online grammar check unavailable.'; }
+  }
+  if (dictated !== src || state !== 'done') return;
+  renderSg(items, note);
+}
+function closeSg() { sg.classList.remove('open'); $('swipe').classList.remove('on'); sgData = null; }
+function resetSg() { sg.classList.remove('open'); sg.textContent = ''; sgData = null; $('swipe').classList.remove('on'); ed.style.display = 'none'; $('txt').style.display = ''; }
+$('swipe').addEventListener('click', () => { if (sg.classList.contains('open')) closeSg(); else openSg(); });
+let ty = null, tx = 0;
+const resultEl = document.querySelector('.result');
+resultEl.addEventListener('touchstart', e => { if (e.target.closest('#ed')) { ty = null; return; } ty = e.touches[0].clientY; tx = e.touches[0].clientX; }, { passive: true });
+resultEl.addEventListener('touchend', e => {
+  if (ty === null) return;
+  const dy = e.changedTouches[0].clientY - ty, dx = Math.abs(e.changedTouches[0].clientX - tx); ty = null;
+  if (Math.abs(dy) < 60 || dx > 50) return;
+  if (dy < 0) openSg(); else closeSg();
+}, { passive: true });
+document.addEventListener('pointerdown', e => { if (!pop.hidden && !pop.contains(e.target) && !e.target.closest('.w[data-m]')) pop.hidden = true; });
+
+
+/* ---------- UI state ---------- */
+function paint() {
+  if (state !== 'live') $('lt').textContent = '';
+  if (state !== 'done') document.querySelectorAll('.pop').forEach(x => { x.hidden = true; });
+  if (state !== 'done') resetSg();
+  app.classList.toggle('off', link === 'off');
+  app.classList.toggle('weak', link === 'weak');
+  app.classList.toggle('done', state === 'done');
+  $('connLbl').textContent = link === 'off' ? 'Disconnected' : link === 'weak' ? 'Connecting' : 'Connected';
+  orb.disabled = false; orb.setAttribute('aria-label', 'Start dictation'); hint.className = 'hint';
+  if (state === 'done') return;
+  const other = role === 'phone' ? 'desktop' : 'phone';
+  if (!userId) { core.innerHTML = role === 'phone' ? MIC : ''; hint.textContent = 'No account found. Sign in from your main app.'; hint.className = 'hint err'; orb.disabled = true; return; }
+  if (role === 'phone') {
+    if (state === 'live') { core.innerHTML = locked ? LOCK : ''; hint.innerHTML = paused ? (locked ? '<strong>Paused and locked</strong>Swipe up to resume<br>Tap to finish' : '<strong>Paused</strong>Release to continue<br>Swipe down to lock') : failed ? '<strong>Mic stopped</strong>Tap to finish<br>Next session uses the keyboard mic' : '<strong>Listening</strong>Tap to finish' + (link !== 'on' ? '<br>Will sync when connected' : keyMode ? '<br>Use the keyboard mic' : ''); orb.setAttribute('aria-label', 'Finish dictation'); return; }
+    core.innerHTML = MIC;
+    if (link === 'on') hint.textContent = 'Tap to dictate';
+    else { orb.disabled = true; if (link === 'weak') hint.textContent = 'Connection is unstable'; else { hint.textContent = 'Open this page on your ' + other + ' to connect'; hint.className = 'hint err'; } }
+  } else {
+    orb.disabled = true; core.innerHTML = '';
+    if (state === 'live') hint.innerHTML = '<strong>Listening</strong>';
+    else if (link === 'on') hint.textContent = 'Use your phone to dictate';
+    else if (link === 'weak') hint.textContent = 'Connection is unstable';
+    else { hint.textContent = 'Open this page on your ' + other + ' to connect'; hint.className = 'hint err'; }
+  }
+}
+
+function showResult() { state = 'done'; renderResult(true); paint(); }
+
+/* ---------- connection: presence + heartbeat ---------- */
+function evaluate() {
+  const now = Date.now() + offset;
+  flaps = flaps.filter(t => Date.now() - t < 30000);
+  const fresh = r => Object.values(devices).filter(d => d && d.role === r && d.ts && now - d.ts < 45000);
+  const other = fresh(role === 'phone' ? 'desktop' : 'phone');
+  let l = 'off';
+  if (!dbOnline) l = (Date.now() - offlineSince < 60000) ? 'weak' : 'off';
+  else if (other.length) {
+    const age = Math.min(...other.map(x => now - x.ts));
+    l = (age > 20000 || flaps.length >= 4) ? 'weak' : 'on';
+  }
+  if (!userId) l = 'off';
+  if (l !== link) {
+    link = l;
+    
+    paint();
+  }
+}
+function pushSession(status, text = '', fin = '') {
+  if (rtdb && userId) set(ref(rtdb, base + '/session'), { status, text, finish: fin, by: deviceId, at: serverTimestamp() }).catch(() => {});
+}
+
+if (rtdb && userId) {
+  const me = ref(rtdb, `${base}/devices/${deviceId}`);
+  onValue(ref(rtdb, '.info/serverTimeOffset'), s => { offset = s.val() || 0; });
+  onValue(ref(rtdb, '.info/connected'), s => {
+    const on = !!s.val();
+    if (on !== dbOnline) { flaps.push(Date.now()); if (!on) offlineSince = Date.now(); }
+    dbOnline = on;
+    if (on) {
+      set(me, { role, ts: serverTimestamp() }); onDisconnect(me).remove();
+      if (role === 'phone') { if (state === 'live') pushSession('live'); else if (state === 'done') pushSession('done', dictated, finish); }
+    }
+    evaluate();
+  });
+  setInterval(() => { if (dbOnline) update(me, { ts: serverTimestamp() }).catch(() => {}); }, 4000);
+  onValue(ref(rtdb, base + '/devices'), s => { devices = s.val() || {}; evaluate(); });
+  setInterval(evaluate, 1000);
+
+  /* shared session: phone writes, desktop reads, either can reset */
+  onValue(ref(rtdb, base + '/session'), s => {
+    const v = s.val() || { status: 'idle' };
+    if (role === 'desktop') {
+      if (v.status === 'done') { const t = clean(v.text || ''); finish = String(v.finish || ''); if (prevRemote !== 'done') { dictated = t; showResult(); } else if (t !== dictated) { dictated = t; renderResult(false); } }
+      else { state = v.status === 'live' ? 'live' : 'idle'; paint(); }
+    } else if (v.status === 'idle' && state === 'done') { state = 'idle'; paint(); }
+    else if (v.status === 'done' && state === 'done') { const t = clean(v.text || ''); if (t !== dictated) { dictated = t; renderResult(false); } }
+    prevRemote = v.status;
+  });
+}
+
+/* ---------- account styling (same accounts doc) ---------- */
+if (userId && db) {
+  onSnapshot(doc(db, "accounts", userId), snap => {
+    if (snap.exists() && snap.data().btnValue) document.documentElement.style.setProperty('--good', snap.data().btnValue);
+  });
+}
+
+/* ---------- actions ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;   // native dictation when the browser has it
+/* Android Chrome repeats the growing sentence as separate results, so keep only the newest version of each */
+function mergeResults(res) {
+  const segs = [], fin = [];
+  for (let i = 0; i < res.length; i++) {
+    const t = res[i][0].transcript.trim(); if (!t) continue;
+    const n = segs.length - 1, a = t.toLowerCase() + ' ';
+    if (n >= 0 && (a.startsWith(segs[n].toLowerCase() + ' ') || (!fin[n] && segs[n].toLowerCase().split(' ')[0] === t.toLowerCase().split(' ')[0]))) { segs[n] = t; fin[n] = res[i].isFinal; }
+    else { segs.push(t); fin.push(res[i].isFinal); }
+  }
+  return segs.join(' ');
+}
+function liveTx(t) { liveText = fix(keyMode ? clean(t) : dedupe(clean(t))); $('lt').textContent = liveText; }
+function startKeys(seed) { keyMode = true; mic.value = seed ? seed + ' ' : ''; mic.focus(); paint(); }   // Gboard fallback
+/* join text from a restarted recognizer without repeating what it already gave us */
+function joinText(a, b) {
+  a = a.trim(); b = b.trim();
+  if (!a) return b; if (!b) return a;
+  const A = a.split(' '), B = b.split(' '), L = (x, y) => x.toLowerCase() === y.toLowerCase();
+  if (B.length >= A.length && A.every((w, i) => i === A.length - 1 ? B[i].toLowerCase().startsWith(w.toLowerCase()) : L(w, B[i]))) return b;   // b already contains a (last word may be unfinished)
+  for (let k = Math.min(A.length, B.length); k >= 3; k--) if (A.slice(-k).every((w, i) => L(w, B[i]))) return A.concat(B.slice(k)).join(' ');
+  return a + ' ' + b;
+}
+/* safety net: if the same opening reappears later, keep the newest, most complete version */
+function dedupe(t) {
+  const w = t.split(' '); if (w.length < 12) return t;
+  const h = w.slice(0, 5).join(' '); let last = 0;
+  for (let j = 5; j <= w.length - 5; j++) if (w.slice(j, j + 5).join(' ') === h) last = j;
+  return last ? w.slice(last).join(' ') : t;
+}
+
+/* ONE engine per session. It is chosen at the start and kept even if it fails.
+   Only the next session switches, and only if the native engine failed recently. */
+function pickEngine() {
+  if (!SR) return 'keys';
+  try { const f = JSON.parse(localStorage.getItem('dictFail') || 'null'); if (f && Date.now() - f.t < 30 * 60000) return 'keys'; } catch (x) {}
+  return 'native';
+}
+function killRec() { if (rec) { const r = rec; r.onresult = r.onend = r.onerror = null; try { r.abort(); } catch (x) {} rec = null; } }
+function failNative() {
+  failed = true; stopping = true; killRec();
+  try { localStorage.setItem('dictFail', JSON.stringify({ e: 'native', t: Date.now() })); } catch (x) {}
+  paint();
+}
+function startNative() {
+  killRec();                                            // never two recognizers at once
+  rec = new SR(); rec.lang = 'en-US'; rec.continuous = true; rec.interimResults = true;
+  rec.onresult = e => { const b = liveText.length; session = mergeResults(e.results); liveTx(joinText(committed, session)); pulse(.25 + Math.min(.5, Math.abs(liveText.length - b) * .04)); };
+  rec.onspeechstart = () => { speaking = true; }; rec.onspeechend = () => { speaking = false; };
+  rec.onerror = e => { if (e.error === 'no-speech' || e.error === 'aborted') return; failNative(); };
+  rec.onend = () => {
+    if (stopping || paused || state !== 'live') return;
+    if (Date.now() - startedAt < 400) { if (++quick >= 3) { failNative(); return; } } else quick = 0;
+    committed = joinText(committed, session); session = '';
+    try { startedAt = Date.now(); rec.start(); } catch (x) { failNative(); }
+  };
+  startedAt = Date.now(); rec.start();
+}
+function startDictation() {
+  stopping = false; paused = false; failed = false; quick = 0; locked = false; energy = 0; speaking = false; keyMode = false; committed = ''; session = ''; mic.value = ''; liveTx('');
+  state = 'live'; pushSession('live');
+  if (pickEngine() === 'keys') { startKeys(''); return; }
+  try { startNative(); } catch (e) { failNative(); }
+  paint();
+}
+function finishDictation() {
+  stopping = true; paused = false; locked = false; killRec();
+  mic.blur(); dictated = liveText; finish = clock(new Date()); showResult(); pushSession('done', dictated, finish);
+}
+orb.addEventListener('click', () => {
+  if (role !== 'phone' || !userId) return;
+  if (held) { held = false; return; }
+  if (state === 'idle' && link === 'on') startDictation();
+  else if (state === 'live') finishDictation();
+});
+mic.addEventListener('input', () => {
+  if (paused) { mic.value = pausedValue; return; }
+  const v = mic.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '').replace(/\s{2,}/g, ' ');
+  if (v !== mic.value) mic.value = v;
+  if (state === 'live' && keyMode) { liveTx(v); pulse(.3); }
+});
+
+/* ---------- hold the matrix to pause, release to continue, tap to finish ---------- */
+function pauseDict() {
+  if (state !== 'live' || paused) return;
+  paused = true; held = true; pausedValue = mic.value;
+  if (rec) { killRec(); committed = joinText(committed, session); session = ''; }
+  if (navigator.vibrate) navigator.vibrate(20);
+  paint();
+}
+function resumeDict() {
+  if (!paused) return;
+  paused = false; locked = false;
+  if (!keyMode && !failed) { stopping = false; try { startNative(); } catch (e) { failNative(); } }
+  paint();
+}
+let sy = 0, swiped = false;
+orb.addEventListener('pointerdown', e => {
+  if (role !== 'phone' || state !== 'live') return;
+  sy = e.clientY; swiped = false; held = false; clearTimeout(holdT);
+  if (!locked) holdT = setTimeout(pauseDict, 350);
+  try { orb.setPointerCapture(e.pointerId); } catch (x) {}
+});
+orb.addEventListener('pointermove', e => {
+  if (role !== 'phone' || state !== 'live' || swiped) return;
+  const dy = e.clientY - sy;
+  if (paused && !locked && dy > 45) { locked = true; swiped = true; held = true; if (navigator.vibrate) navigator.vibrate([15, 40, 15]); paint(); }
+  else if (locked && dy < -45) { swiped = true; held = true; resumeDict(); }
+});
+['pointerup', 'pointercancel'].forEach(n => orb.addEventListener(n, () => { clearTimeout(holdT); if (paused && !locked) resumeDict(); }));
+orb.addEventListener('contextmenu', e => e.preventDefault());
+
+async function copyText(t, btnSpan) {
+  try { await navigator.clipboard.writeText(t); } catch (e) {}
+  if (btnSpan) { const o = btnSpan.textContent; btnSpan.textContent = 'Copied'; setTimeout(() => { btnSpan.textContent = o; }, 1200); }
+}
+$('bCopy').addEventListener('click', async () => {
+  const t = dictated;
+  copyText(t, $('bCopy').querySelector('span'));
+  if (role === 'desktop') logHistory(dictated, finish);
+});
+$('bReset').addEventListener('click', () => { state = 'idle'; dictated = ''; finish = ''; mic.value = ''; paint(); pushSession('idle'); });
+
+/* ---------- desktop copy history: keep 5, delete the rest ---------- */
+async function logHistory(text, fin) {
+  if (!rtdb || !userId || !text) return;
+  try {
+    const h = ref(rtdb, base + '/history');
+    await push(h, { text, finish: fin, copiedAt: serverTimestamp() });
+    const snap = await get(h), items = [];
+    snap.forEach(c => { items.push({ k: c.key, t: c.val().copiedAt || Date.now() }); });
+    items.sort((a, b) => b.t - a.t);
+    items.slice(5).forEach(i => remove(ref(rtdb, `${base}/history/${i.k}`)));
+  } catch (e) { console.warn("History sync failed."); }
+}
+if (role === 'desktop' && rtdb && userId) {
+  onValue(ref(rtdb, base + '/history'), s => {
+    const list = [], box = $('hl'); box.textContent = '';
+    s.forEach(c => { list.push(c.val()); });
+    list.sort((a, b) => (b.copiedAt || 0) - (a.copiedAt || 0));
+    if (!list.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'Nothing copied yet'; box.appendChild(e); return; }
+    list.slice(0, 5).forEach(it => {
+      const b = document.createElement('button'); b.className = 'hi';
+      const sp = document.createElement('span'); sp.textContent = it.text || '';
+      const sm = document.createElement('small'); sm.textContent = it.copiedAt ? clock(new Date(it.copiedAt)) : '';
+      b.append(sp, sm);
+      b.addEventListener('click', () => { copyText(it.text || ''); sm.textContent = 'Copied'; setTimeout(() => { sm.textContent = it.copiedAt ? clock(new Date(it.copiedAt)) : ''; }, 1000); });
+      box.appendChild(b);
+    });
+  });
+}
+
+/* ---------- keyboard-safe layout ---------- */
+if (window.visualViewport) { const vv = window.visualViewport; const fit = () => { app.style.height = vv.height + 'px'; }; vv.addEventListener('resize', fit); fit(); }
+
+/* ---------- sound waves ---------- */
+const cv = $('mx'), cx = cv.getContext('2d'), glow = $('glow');
+const LAYERS = [
+  { f: 1.0, s: .0009, p: 0, b: 0, w: 3.4, a: .95 }, { f: 1.6, s: -.0012, p: 1.3, b: 0, w: 2.4, a: .75 },
+  { f: 2.3, s: .0015, p: 2.1, b: 1, w: 2.8, a: .9 }, { f: 3.1, s: -.0019, p: .7, b: 1, w: 1.8, a: .6 },
+  { f: 4.2, s: .0023, p: 3.0, b: 2, w: 2.0, a: .7 }, { f: 5.6, s: -.0028, p: 1.9, b: 2, w: 1.4, a: .5 },
+  { f: 7.5, s: .0033, p: 4.2, b: 2, w: 1.1, a: .38 }
+];
+let lvl = 0; const bnd = [0, 0, 0];
+const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+function fit() {
+  const r = window.devicePixelRatio || 1, w = cv.clientWidth, h = cv.clientHeight;
+  if (cv.width !== Math.round(w * r) || cv.height !== Math.round(h * r)) { cv.width = Math.round(w * r); cv.height = Math.round(h * r); }
+  cx.setTransform(r, 0, 0, r, 0, 0); return [w, h];
+}
+function draw(t) {
+  const [W, H] = fit(), circle = role === 'desktop', cy = H / 2, live = state === 'live' && !paused;
+  const col = getComputedStyle(app).getPropertyValue('--accent').trim() || '#4cff3b';
+  let tb = [0, 0, 0], target;
+  if (live) {
+    let e;
+    if (role === 'phone') { energy *= .93; e = Math.min(1, energy + (speaking ? .3 + .2 * Math.sin(t / 110) : 0) + .08); }
+    else { const v = .5 + .5 * Math.sin(t / 330) * Math.sin(t / 870 + 1); e = .2 + .8 * v * v; }   // desktop: simulated while the phone dictates
+    tb = [e * (.6 + .4 * Math.sin(t / 410)), e * (.7 + .3 * Math.sin(t / 260 + 2)), e * (.5 + .5 * Math.sin(t / 180 + 4))];
+    target = Math.min(1, (tb[0] + tb[1] + tb[2]) / 1.7);
+  } else target = .04 + .02 * Math.sin(t / 900);
+  if (link === 'off' && !live) target = .006;
+  lvl += (target - lvl) * (target > lvl ? .42 : .07);
+  for (let k = 0; k < 3; k++) bnd[k] += (tb[k] - bnd[k]) * (tb[k] > bnd[k] ? .45 : .1);
+  const done = state === 'done';
+  glow.style.opacity = done ? .1 : Math.min(1, .16 + lvl * .95); glow.style.setProperty('--glow', col);
+
+  cx.clearRect(0, 0, W, H); cx.save();
+  if (circle) {
+    cx.beginPath(); cx.arc(W / 2, H / 2, W / 2 - 3, 0, 6.2832); cx.clip();
+    const g = cx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W / 2);
+    g.addColorStop(0, col); g.addColorStop(1, 'transparent'); cx.globalAlpha = .06 + lvl * .22; cx.fillStyle = g; cx.fillRect(0, 0, W, H);
+  }
+  cx.globalCompositeOperation = 'lighter'; cx.lineJoin = 'round'; cx.lineCap = 'round';
+  const flick = link === 'weak' ? .55 + .45 * Math.sin(t / 140) : 1;
+  for (let i = 0; i < LAYERS.length; i++) {
+    const L = LAYERS[i], band = live ? bnd[L.b] : 0;
+    let amp = H * (.05 + lvl * .6 + band * 1.0) * (1 - i * .05); amp = Math.min(amp, H * .49); if (reduce) amp *= .4;
+    const top = [], bot = [];
+    for (let x = 0; x <= W; x += 3) {
+      const u = x / W, env = (circle ? .25 : .5) + (circle ? .75 : .5) * Math.pow(Math.sin(Math.PI * u), 1.3);
+      const ph = u * L.f * 6.2832 + L.p + t * L.s * 6.2832 + Math.sin(t / 1700 + i) * 1.6;
+      const y = (Math.sin(ph) * .55 + Math.sin(ph * 1.7 - t * .0009 + i) * .3 + Math.sin(ph * 2.9 + t * .0013) * .15) * amp * env;
+      top.push(cy + y); bot.push(cy - y);
+    }
+    for (let m = 0; m < 2; m++) {
+      const arr = m ? bot : top; cx.beginPath();
+      arr.forEach((y, k) => cx.lineTo(k * 3, y));
+      cx.strokeStyle = col; cx.globalAlpha = L.a * (m ? .4 : 1) * flick * (live ? 1 : .55); cx.lineWidth = L.w * (live ? 1 + lvl * .6 : 1);
+      cx.shadowColor = col; cx.shadowBlur = (i < 3 && live) ? 14 + lvl * 34 : 0; cx.stroke();
+    }
+    if (i < 2) {   // soft body between the two mirrored lines
+      cx.beginPath(); top.forEach((y, k) => cx.lineTo(k * 3, y)); for (let k = bot.length - 1; k >= 0; k--) cx.lineTo(k * 3, bot[k]);
+      cx.closePath(); cx.shadowBlur = 0; cx.globalAlpha = (.05 + lvl * .16) * flick; cx.fillStyle = col; cx.fill();
+    }
+  }
+  cx.restore();
+  if (circle) { cx.beginPath(); cx.arc(W / 2, H / 2, W / 2 - 3, 0, 6.2832); cx.strokeStyle = col; cx.globalAlpha = .25 + lvl * .6; cx.lineWidth = 2; cx.shadowColor = col; cx.shadowBlur = 8 + lvl * 24; cx.stroke(); }
+  cx.globalAlpha = 1; cx.shadowBlur = 0; requestAnimationFrame(draw);
+}
+paint(); requestAnimationFrame(draw);
+</script>
+</body>
+</html>
