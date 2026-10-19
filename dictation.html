@@ -81,10 +81,14 @@ body.desk .hz{display:block}
 .pop h3{margin:4px 8px 6px;font:400 .72rem/1.3 Inter,sans-serif;color:var(--muted)}
 .pop button{display:block;width:100%;text-align:left;padding:9px 12px;border:0;border-radius:14px;background:none;color:var(--text);font:600 .8rem Poppins,sans-serif;cursor:pointer}
 .pop button:hover,.pop button:focus-visible{background:var(--panel);outline:none}
-.pop button.keep{color:var(--muted);font:400 .75rem Inter,sans-serif}
+.pop button.keep{color:var(--muted);font:400 .8rem Inter,sans-serif}
+.pop .pn{margin:0 8px 6px;font:400 .7rem/1.3 Inter,sans-serif;color:var(--muted)}
+.pop .none{padding:6px 12px;font:400 .78rem Inter,sans-serif;color:var(--muted)}
+.pop .sep{height:1px;margin:6px 8px;background:var(--line)}
 .glow{position:fixed;inset:0;pointer-events:none;z-index:0;filter:blur(26px);opacity:.15;background:radial-gradient(circle 48vmin at 50% 44%,color-mix(in srgb,var(--glow,var(--good)) 55%,transparent),transparent 100%),radial-gradient(circle 24vmin at 50% 44%,color-mix(in srgb,var(--glow,var(--good)) 40%,transparent),transparent 100%)}
 #ed{position:absolute;left:0;top:0;width:100%;height:1.6em;visibility:hidden;margin:0;padding:0;background:transparent;border:0;outline:0;resize:none;overflow:hidden;white-space:pre-wrap;word-break:break-word;color:var(--text);caret-color:transparent;font:600 1.15rem/1.6 Poppins,sans-serif;letter-spacing:.3px}
-#txt.editing #words .w{visibility:hidden}
+#txt.editing #words{white-space:pre-wrap}
+#txt.editing #words .w{color:transparent;animation:none;pointer-events:none}   /* words stay invisible, only the dashed review marks remain under the typed text */
 #txt.editing #ed{visibility:visible;caret-color:var(--accent)}
 .swipe{align-self:center;display:flex;align-items:center;gap:6px;padding:6px 12px;border:0;border-radius:999px;background:none;color:var(--muted);font:400 .72rem Inter,sans-serif;cursor:pointer}
 .swipe svg{width:14px;height:14px;transition:transform .3s}
@@ -93,17 +97,13 @@ body.desk .hz{display:block}
 .sgi{min-height:0;max-height:38vh;overflow-y:auto;padding:10px 6px 30px 0;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 12px,#000 calc(100% - 30px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 12px,#000 calc(100% - 30px),transparent 100%);overscroll-behavior:contain}
 .sg.open{grid-template-rows:1fr;opacity:1;visibility:visible;transition:grid-template-rows .6s cubic-bezier(.22,1,.36,1),opacity .4s ease,visibility 0s}
 .sgw{display:grid;grid-template-rows:1fr;animation:grow .65s cubic-bezier(.22,1,.36,1) both}
-.sgw>div{min-height:0;overflow:hidden;padding:4px 0}
+.sgw>div{min-height:0;overflow:hidden}
 @keyframes grow{from{grid-template-rows:0fr;opacity:0}to{grid-template-rows:1fr;opacity:1}}
-.sgm{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
-.sgm small{margin:0!important}
-.src{display:inline-flex;align-items:center;gap:6px;max-width:62%;padding:2px 9px;border-radius:999px;background:color-mix(in srgb,var(--accent,var(--good)) 12%,transparent);color:var(--accent,var(--good));font:400 .64rem/1.5 Inter,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.src{margin-top:4px;color:var(--muted);font:400 .68rem/1.4 Inter,sans-serif;opacity:.8}
 .sgs{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 4px 2px;color:var(--muted);font:400 .74rem Inter,sans-serif;animation:rise .5s ease-out both}
 .sgs i{width:7px;height:7px;border-radius:50%;background:var(--accent,var(--good));animation:pulse .8s ease-in-out infinite alternate}
-.sgc{display:block;width:100%;text-align:left;padding:12px 14px;border:1px solid var(--line);border-radius:20px;background:var(--panel);color:var(--text);cursor:pointer;animation:rise .6s cubic-bezier(.22,1,.36,1) both;transition:border-color .2s,background .2s}
-.sgc:hover{border-color:color-mix(in srgb,var(--accent,var(--good)) 45%,transparent)}
-.sgc:focus-visible{outline:2px solid var(--accent,var(--good));outline-offset:-2px}
-.sgc small{display:block;margin-bottom:4px;color:var(--muted);font:400 .7rem Inter,sans-serif}
+.sgc{display:block;width:100%;text-align:left;padding:14px 2px 13px;margin:0;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;color:var(--text);cursor:pointer;animation:rise .6s cubic-bezier(.22,1,.36,1) both;}
+.sgc:focus-visible{outline:2px solid var(--accent,var(--good));outline-offset:-2px;border-radius:8px}
 .sgt{font:600 .9rem/1.5 Poppins,sans-serif;word-break:break-word}
 .sgt .w.chg{color:var(--accent)}
 .sgn{color:var(--muted);font-size:.8rem;padding:10px 4px}
@@ -132,7 +132,7 @@ body.desk .hz{display:block}
 
   <section class="result">
     <div class="card" id="card"><div id="txt"></div><textarea id="ed" rows="1" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Edit text"></textarea></div>
-    <button class="swipe" id="swipe" aria-label="Show suggestions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg><span>Swipe up for suggestions</span></button>
+    <button class="swipe" id="swipe" aria-label="See suggestions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg><span id="swipeLbl">See suggestions</span></button>
     <div class="sg" id="sg"><div class="sgi" id="sgi"></div></div>
     <div class="row">
       <button class="btn main" id="bCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span>Copy</span></button>
@@ -302,13 +302,16 @@ function renderResult(animate) {
 const pop = document.createElement('div'); pop.className = 'pop'; pop.hidden = true; document.body.appendChild(pop);
 function applyFix(m, text) {
   const w = dictated.split(' '); w.splice(m.s, m.e - m.s, ...(text ? text.split(' ') : []));
-  dictated = fix(w.join(' ').trim()); pop.hidden = true; renderResult(false);
+  dictated = fix(w.join(' ').trim()); pop.hidden = true; renderResult(false); syncText();
 }
 function openPop(m, el) {
   pop.textContent = '';
-  const h = document.createElement('h3'); h.textContent = m.type === 'bad' ? 'Possible spelling issue' : (m.note || 'Unclear wording'); pop.appendChild(h);
+  const h = document.createElement('h3'); h.textContent = 'Suggestions'; pop.appendChild(h);
+  if (m.note) { const n = document.createElement('p'); n.className = 'pn'; n.textContent = m.note; pop.appendChild(n); }
+  if (!m.sugg.length) { const n = document.createElement('div'); n.className = 'none'; n.textContent = 'No suggestions'; pop.appendChild(n); }
   m.sugg.forEach(sg => { const b = document.createElement('button'); b.textContent = sg.label; b.addEventListener('click', () => applyFix(m, sg.text)); pop.appendChild(b); });
-  const k = document.createElement('button'); k.className = 'keep'; k.textContent = 'Keep as is';
+  const sep = document.createElement('div'); sep.className = 'sep'; pop.appendChild(sep);
+  const k = document.createElement('button'); k.className = 'keep'; k.textContent = 'Keep';
   k.addEventListener('click', () => { ignored.add(m.key); try { localStorage.setItem('dictIgnore', JSON.stringify([...ignored])); } catch (e) {} pop.hidden = true; renderResult(false); });
   pop.appendChild(k); pop.hidden = false;
   const r = el.getBoundingClientRect();
@@ -325,19 +328,38 @@ function sizeEd() {   // the words block is only touched once the text outgrows 
   ed.style.height = '0px'; const need = ed.scrollHeight, h = need > edBase + 1 ? need : edBase;
   ed.style.height = h + 'px'; $('words').style.height = h > edBase ? h + 'px' : '';
 }
+function syncText() { if (state === 'done' && userId) pushSession('done', dictated, finish); }   // keeps phone and desktop showing the same result
+function paintUnder() {   // mirrors the typed text in the hidden layer so the dashed review marks stay visible while editing
+  const wrap = $('words'); if (!wrap || !$('txt').classList.contains('editing')) return;
+  const v = ed.value, toks = v.split(/(\s+)/), words = v.split(/\s+/).filter(Boolean), caret = ed.selectionStart;
+  let pos = 0, wi = -1, active = -1;
+  toks.forEach(t => { if (t && !/^\s+$/.test(t)) { wi++; if (caret >= pos && caret <= pos + t.length) active = wi; } pos += t.length; });
+  const marks = analyze(words).filter(m => !(m.type === 'bad' && m.s === active)), wm = [];   // the word being typed is not flagged yet
+  marks.forEach((m, mi) => { if (m.type === 'warn') for (let k = m.s; k < m.e; k++) wm[k] = mi; });
+  marks.forEach((m, mi) => { if (m.type === 'bad') wm[m.s] = mi; });
+  wrap.textContent = ''; let i = 0;
+  toks.forEach(t => {
+    if (!t) return;
+    if (/^\s+$/.test(t)) { wrap.appendChild(document.createTextNode(t)); return; }
+    const sp = document.createElement('span'); sp.className = 'w'; sp.textContent = t;
+    if (wm[i] !== undefined) sp.classList.add(marks[wm[i]].type === 'bad' ? 'u-bad' : 'u-warn');
+    wrap.appendChild(sp); i++;
+  });
+}
+document.addEventListener('selectionchange', () => { if (document.activeElement === ed) paintUnder(); });
 function startEdit(pos) {
   pop.hidden = true;
   const wr = $('words'); edBase = Math.max(wr.getBoundingClientRect().height, parseFloat(getComputedStyle(ed).lineHeight) || 29.44);   // exact fractional height, so nothing rounds and nudges the time
   ed.value = dictated; ed.style.height = edBase + 'px';
   $('txt').classList.add('editing'); ed.focus({ preventScroll: true });
-  const p = pos === undefined ? ed.value.length : pos; ed.setSelectionRange(p, p);
+  const p = pos === undefined ? ed.value.length : pos; ed.setSelectionRange(p, p); paintUnder();
 }
 ed.addEventListener('input', () => {
   const v = ed.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '').replace(/\s{2,}/g, ' ').replace(/^\s/, '');
   if (v !== ed.value) { const c = Math.max(0, ed.selectionStart - (ed.value.length - v.length)); ed.value = v; ed.setSelectionRange(c, c); }
-  sizeEd();
+  paintUnder(); sizeEd();
 });
-ed.addEventListener('blur', () => { const nt = clean(ed.value), changed = nt !== dictated; dictated = nt; renderResult(false); if (changed && sg.classList.contains('open')) { sgData = null; openSg(); } });
+ed.addEventListener('blur', () => { if (state !== 'done') return; const nt = clean(ed.value), changed = nt !== dictated; dictated = nt; renderResult(false); if (changed) { syncText(); if (sg.classList.contains('open')) { sgData = null; openSg(); } } });
 $('card').addEventListener('click', e => {
   if (e.target === ed || state !== 'done') return;
   const el = e.target.closest('.w[data-m]');
@@ -374,7 +396,11 @@ async function cloudVersion(text) {   // LanguageTool public API: free, no key, 
     .sort((a, b) => b.offset - a.offset).forEach(m => { out = out.slice(0, m.offset) + m.replacements[0].value + out.slice(m.offset + m.length); });
   return clean(fix(out.toUpperCase()));
 }
-const REWRITE = t => 'Here is a dictated clinical history that may contain misheard or misspelled words:\n\n' + t + '\n\nWrite 3 close variants of this exact phrase. Keep the same sentence structure, the same word order and almost all of the same words. Only change a few individual words: fix misheard or misspelled words, fix grammar, or swap a word for a nearby standard clinical word. Never reorder, merge, add or drop clauses. Keep every number and unit of time exactly as given. Variant 1 changes the fewest words, variant 2 changes a few more, variant 3 uses a different nearby word choice. Plain words with no punctuation. Output exactly 3 lines, one variant per line, nothing else.';
+const REWRITE = t => `The text below is a dictated History of Present Illness (HPI) for a patient who was admitted to the hospital. It was typed by speech recognition, so some words may be misheard or misspelled. An admission HPI normally covers: onset, duration in days, weeks or months prior to admission, character, location, severity, associated symptoms, aggravating or relieving factors, medications taken, and what prompted this admission.
+
+${t}
+
+Write 3 close variants of this exact HPI. Keep the same sentence structure, the same word order and almost all of the same words. Only change a few individual words: replace a misheard word with the medical term or standard HPI phrase it most likely was (for example onset, associated with, no other associated symptoms, prior to admission, no meds taken, prompted this admission), fix spelling, or fix grammar. If a word has no clear medical correction, leave it unchanged. Never add, remove or guess any symptom, diagnosis, drug name, dose, number or duration. Never reorder, merge, add or drop clauses, and give no advice or explanation. Variant 1 changes the fewest words, variant 2 changes a few more, variant 3 uses a different nearby word choice. Plain words with no punctuation. Output exactly 3 lines, one variant per line, nothing else.`;
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
 async function deviceRewrite(text) {   // Chrome's on-device model when present: private, nothing leaves the device
   const LM = self.LanguageModel; if (!LM) return null;
@@ -397,7 +423,7 @@ function isClose(src, v) {
 }
 async function aiRewrite(src) {
   let out = null, source = '';
-  try { out = await withTimeout(deviceRewrite(src), 25000); if (out) source = 'Gemini Nano · on-device (Chrome)'; } catch (e) {}
+  try { out = await withTimeout(deviceRewrite(src), 25000); if (out) source = 'Gemini · Nano, on-device in Chrome'; } catch (e) {}
   if (!out && USE_CLOUD) { const r = await withTimeout(cloudRewrite(src), 16000); out = r.text; source = 'Pollinations · ' + r.model; }
   if (!out) return [];
   const nums = src.match(/\d+/g) || [], labels = ['Light correction', 'Wording alternative', 'Another close variant'], res = [];
@@ -417,19 +443,16 @@ const sgStatus = document.createElement('div'); sgStatus.className = 'sgs'; sgSt
 function makeCard(src, it) {
   const wrap = document.createElement('div'); wrap.className = 'sgw'; const inner = document.createElement('div');
   const c = document.createElement('button'); c.className = 'sgc';
-  const m = document.createElement('div'); m.className = 'sgm';
-  const h = document.createElement('small'); h.textContent = it.label;
-  const sc = document.createElement('span'); sc.className = 'src'; sc.textContent = it.source; sc.title = it.source;
-  m.append(h, sc); c.appendChild(m);
   const body = document.createElement('div'); body.className = 'sgt'; const words = it.text.split(' '), ch = diffNew(src.split(' '), words);
   words.forEach((w, i) => { const sp = document.createElement('span'); sp.className = 'w' + (ch.has(i) ? ' chg' : ''); sp.style.animationDelay = (200 + i * 28) + 'ms'; sp.textContent = w; body.appendChild(sp); if (i < words.length - 1) body.appendChild(document.createTextNode(' ')); });
   c.appendChild(body);
-  c.addEventListener('click', () => { dictated = it.text; closeSg(); renderResult(false); });
+  const sc = document.createElement('div'); sc.className = 'src'; sc.textContent = it.source.split(' · ')[0]; sc.title = it.source; c.appendChild(sc);
+  c.addEventListener('click', () => { dictated = it.text; closeSg(); renderResult(true); syncText(); });
   inner.appendChild(c); wrap.appendChild(inner); return wrap;
 }
 async function openSg() {
   if (state !== 'done' || !dictated) return;
-  sg.classList.add('open'); $('swipe').classList.add('on');
+  sg.classList.add('open'); setSwipe(true);
   if (sgData && sgData.src === dictated) return;
   const src = dictated, words = src.split(' '), job = sgData = { src, count: 0, pending: 0 }, seen = new Set([src]);
   sgi.textContent = ''; sgi.scrollTop = 0; sgStatus.lastChild.textContent = 'Preparing versions…'; sgi.appendChild(sgStatus);
@@ -449,8 +472,9 @@ async function openSg() {
   run(() => add({ label: 'Expanded terms', text: swap(src, EXPAND), source: 'Local rules · clinical abbreviation list' }));
   run(() => add({ label: 'Abbreviated', text: swap(src, ABBR), source: 'Local rules · clinical abbreviation list' }));
 }
-function closeSg() { sg.classList.remove('open'); $('swipe').classList.remove('on'); }
-function resetSg() { sg.classList.remove('open'); sgi.textContent = ''; sgData = null; $('swipe').classList.remove('on'); $('txt').classList.remove('editing'); ed.blur(); }
+function setSwipe(on) { $('swipe').classList.toggle('on', on); $('swipeLbl').textContent = on ? 'Close' : 'See suggestions'; $('swipe').setAttribute('aria-label', on ? 'Close suggestions' : 'See suggestions'); }
+function closeSg() { sg.classList.remove('open'); setSwipe(false); }
+function resetSg() { sg.classList.remove('open'); sgi.textContent = ''; sgData = null; setSwipe(false); $('txt').classList.remove('editing'); ed.blur(); }
 $('swipe').addEventListener('click', () => { if (sg.classList.contains('open')) closeSg(); else openSg(); });
 let ty = null, tx = 0;
 const resultEl = document.querySelector('.result');
