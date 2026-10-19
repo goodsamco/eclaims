@@ -90,9 +90,18 @@ body.desk .hz{display:block}
 #txt.editing #words{white-space:pre-wrap}
 #txt.editing #words .w{color:transparent;animation:none;pointer-events:none}   /* words stay invisible, only the dashed review marks remain under the typed text */
 #txt.editing #ed{visibility:visible;caret-color:var(--accent)}
-.swipe{align-self:center;display:flex;align-items:center;gap:6px;padding:6px 12px;border:0;border-radius:999px;background:none;color:var(--muted);font:400 .72rem Inter,sans-serif;cursor:pointer}
+.swipe{display:flex;align-items:center;gap:6px;padding:6px 12px;border:0;border-radius:999px;background:none;color:var(--muted);font:400 .72rem Inter,sans-serif;cursor:pointer}
 .swipe svg{width:14px;height:14px;transition:transform .3s}
 .swipe.on svg{transform:rotate(180deg)}
+.swipew{align-self:center;display:flex;align-items:center;gap:2px}
+.swipew[data-mode=creating] .swipe svg,.swipew[data-mode=failed] .swipe svg{display:none}
+.swipew[data-mode=creating] #swipeLbl{animation:pulse .9s ease-in-out infinite alternate}
+.swipew[data-mode=failed] .swipe{color:var(--bad)}
+.swx{width:22px;height:22px;padding:0;border:0;border-radius:50%;background:none;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.swx[hidden]{display:none}
+.swx svg{width:12px;height:12px}
+.swx:hover{background:var(--panel);color:var(--text)}
+.swx:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .sg{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;transition:grid-template-rows .6s cubic-bezier(.22,1,.36,1),opacity .4s ease,visibility 0s .6s}
 .sgi{min-height:0;max-height:38vh;overflow-y:auto;padding:10px 6px 30px 0;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 12px,#000 calc(100% - 30px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 12px,#000 calc(100% - 30px),transparent 100%);overscroll-behavior:contain}
 .sg.open{grid-template-rows:1fr;opacity:1;visibility:visible;transition:grid-template-rows .6s cubic-bezier(.22,1,.36,1),opacity .4s ease,visibility 0s}
@@ -132,7 +141,10 @@ body.desk .hz{display:block}
 
   <section class="result">
     <div class="card" id="card"><div id="txt"></div><textarea id="ed" rows="1" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Edit text"></textarea></div>
-    <button class="swipe" id="swipe" aria-label="See suggestions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg><span id="swipeLbl">See suggestions</span></button>
+    <div class="swipew" id="swipew" data-mode="idle">
+      <button class="swipe" id="swipe" aria-label="See suggestions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg><span id="swipeLbl">See suggestions</span></button>
+      <button class="swx" id="swipeX" aria-label="Dismiss" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
     <div class="sg" id="sg"><div class="sgi" id="sgi"></div></div>
     <div class="row">
       <button class="btn main" id="bCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span>Copy</span></button>
@@ -359,7 +371,7 @@ ed.addEventListener('input', () => {
   if (v !== ed.value) { const c = Math.max(0, ed.selectionStart - (ed.value.length - v.length)); ed.value = v; ed.setSelectionRange(c, c); }
   paintUnder(); sizeEd();
 });
-ed.addEventListener('blur', () => { if (state !== 'done') return; const nt = clean(ed.value), changed = nt !== dictated; dictated = nt; renderResult(false); if (changed) { syncText(); if (sg.classList.contains('open')) { sgData = null; openSg(); } } });
+ed.addEventListener('blur', () => { if (state !== 'done') return; const nt = clean(ed.value), changed = nt !== dictated; dictated = nt; renderResult(false); if (changed) { syncText(); if (sgData) refreshSg(); } });
 $('card').addEventListener('click', e => {
   if (e.target === ed || state !== 'done') return;
   const el = e.target.closest('.w[data-m]');
@@ -450,32 +462,53 @@ function makeCard(src, it) {
   c.addEventListener('click', () => { dictated = it.text; closeSg(); renderResult(true); syncText(); });
   inner.appendChild(c); wrap.appendChild(inner); return wrap;
 }
+const wait = ms => new Promise(r => setTimeout(r, ms));
+function setSwipe(mode, n) {   // idle -> creating (x) -> dismiss, or failed -> retry
+  const txt = { idle: 'See suggestions', creating: 'Creating suggestions (' + (n || 0) + ')', ready: 'Dismiss', failed: 'Failed to generate suggestions. Retry' }[mode];
+  $('swipew').dataset.mode = mode; $('swipeLbl').textContent = txt; $('swipe').setAttribute('aria-label', txt);
+  $('swipe').classList.toggle('on', mode === 'ready'); $('swipeX').hidden = mode !== 'creating';
+}
+function sgStatusUpdate(job) {
+  if (sgData !== job) return;
+  if (job.count && job.pending > 0) { if (!sgStatus.parentNode) sgi.appendChild(sgStatus); sgStatus.lastChild.textContent = 'Others still in progress…'; }
+  else sgStatus.remove();
+}
 async function openSg() {
   if (state !== 'done' || !dictated) return;
-  sg.classList.add('open'); setSwipe(true);
-  if (sgData && sgData.src === dictated) return;
-  const src = dictated, words = src.split(' '), job = sgData = { src, count: 0, pending: 0 }, seen = new Set([src]);
-  sgi.textContent = ''; sgi.scrollTop = 0; sgStatus.lastChild.textContent = 'Preparing versions…'; sgi.appendChild(sgStatus);
+  if (sgData && sgData.src === dictated && !sgData.failed) return;   // already creating or ready
+  const src = dictated, words = src.split(' '), job = sgData = { src, count: 0, pending: 0, failed: false }, seen = new Set([src]);
+  sg.classList.remove('open'); sgStatus.remove(); sgi.textContent = ''; sgi.scrollTop = 0;
   const add = it => {
     if (sgData !== job || dictated !== src || state !== 'done' || !it.text || seen.has(it.text)) return;
-    seen.add(it.text); job.count++; sgi.insertBefore(makeCard(src, it), sgStatus); sgStatus.lastChild.textContent = 'Others still in progress…';
+    seen.add(it.text); job.count++;
+    sgi.insertBefore(makeCard(src, it), sgStatus.parentNode === sgi ? sgStatus : null);
+    if (job.count === 1) { sg.classList.add('open'); setSwipe('ready'); }   // the panel only opens once something is ready
+    sgStatusUpdate(job);
   };
-  const settle = () => {
-    if (sgData !== job || job.pending > 0) return;
-    sgStatus.remove();
-    if (!job.count) { sgData = null; const n = document.createElement('div'); n.className = 'sgn'; n.textContent = 'No alternative version available right now. Swipe up again to retry.'; sgi.appendChild(n); }
+  const run = fn => {
+    job.pending++;
+    Promise.resolve().then(fn).catch(() => {}).finally(() => {
+      job.pending--; if (sgData !== job) return;
+      sgStatusUpdate(job);
+      if (job.pending === 0 && !job.count) { job.failed = true; setSwipe('failed'); }
+      else if (!job.count) setSwipe('creating', job.pending);
+    });
   };
-  const run = fn => { job.pending++; Promise.resolve().then(fn).catch(() => {}).finally(() => { job.pending--; settle(); }); };
   run(() => aiRewrite(src).then(v => v.forEach(add)));
   if (USE_CLOUD && words.length >= 3) run(() => cloudVersion(src).then(c => add({ label: 'Grammar correction', text: c, source: 'LanguageTool · rule-based grammar and spelling' })));
-  run(() => add({ label: 'Quick fixes', text: localVersion(words), source: 'Local rules · medical lexicon + Hunspell en_US' }));
-  run(() => add({ label: 'Expanded terms', text: swap(src, EXPAND), source: 'Local rules · clinical abbreviation list' }));
-  run(() => add({ label: 'Abbreviated', text: swap(src, ABBR), source: 'Local rules · clinical abbreviation list' }));
+  run(() => wait(450).then(() => add({ label: 'Quick fixes', text: localVersion(words), source: 'Local rules · medical lexicon + Hunspell en_US' })));
+  run(() => wait(450).then(() => add({ label: 'Expanded terms', text: swap(src, EXPAND), source: 'Local rules · clinical abbreviation list' })));
+  run(() => wait(450).then(() => add({ label: 'Abbreviated', text: swap(src, ABBR), source: 'Local rules · clinical abbreviation list' })));
+  setSwipe('creating', job.pending);
 }
-function setSwipe(on) { $('swipe').classList.toggle('on', on); $('swipeLbl').textContent = on ? 'Close' : 'See suggestions'; $('swipe').setAttribute('aria-label', on ? 'Close suggestions' : 'See suggestions'); }
-function closeSg() { sg.classList.remove('open'); setSwipe(false); }
-function resetSg() { sg.classList.remove('open'); sgi.textContent = ''; sgData = null; setSwipe(false); $('txt').classList.remove('editing'); ed.blur(); }
-$('swipe').addEventListener('click', () => { if (sg.classList.contains('open')) closeSg(); else openSg(); });
+function closeSg() {   // dismiss: collapse, stop waiting for anything still in progress, back to "See suggestions"
+  sgData = null; sg.classList.remove('open'); sgStatus.remove(); setSwipe('idle');
+  setTimeout(() => { if (!sgData) sgi.textContent = ''; }, 700);
+}
+function refreshSg() { const was = sgData; sgData = null; if (was && !was.failed) openSg(); else setSwipe('idle'); }   // text changed: build versions for the new text
+function resetSg() { sg.classList.remove('open'); sgStatus.remove(); sgi.textContent = ''; sgData = null; setSwipe('idle'); $('txt').classList.remove('editing'); ed.blur(); }
+$('swipe').addEventListener('click', () => { const m = $('swipew').dataset.mode; if (m === 'idle' || m === 'failed') openSg(); else if (m === 'ready') closeSg(); });
+$('swipeX').addEventListener('click', closeSg);
 let ty = null, tx = 0;
 const resultEl = document.querySelector('.result');
 resultEl.addEventListener('touchstart', e => { const sc = e.target.closest('.sgi,.card'); if (e.target.closest('#ed') || (sc && sc.scrollHeight > sc.clientHeight + 2)) { ty = null; return; } ty = e.touches[0].clientY; tx = e.touches[0].clientX; }, { passive: true });
@@ -483,7 +516,7 @@ resultEl.addEventListener('touchend', e => {
   if (ty === null) return;
   const dy = e.changedTouches[0].clientY - ty, dx = Math.abs(e.changedTouches[0].clientX - tx); ty = null;
   if (Math.abs(dy) < 60 || dx > 50) return;
-  if (dy < 0) openSg(); else closeSg();
+  if (dy < 0) { const m = $('swipew').dataset.mode; if (m === 'idle' || m === 'failed') openSg(); } else if (sgData) closeSg();
 }, { passive: true });
 document.addEventListener('pointerdown', e => { if (!pop.hidden && !pop.contains(e.target) && !e.target.closest('.w[data-m]')) pop.hidden = true; });
 
