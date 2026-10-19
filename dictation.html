@@ -27,7 +27,9 @@ body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-ser
 .orb canvas{width:100%;height:100%;display:block}
 .core{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--accent);pointer-events:none}
 .core svg{width:38%;height:38%}
-.hint{font-size:.85rem;color:var(--muted);text-align:center;height:3.4em;max-width:30ch}
+.hint{font-size:.85rem;color:var(--muted);text-align:center;height:4.6em;max-width:30ch}
+.lt{width:100%;max-width:34ch;height:3.6rem;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 45%);mask-image:linear-gradient(transparent,#000 45%)}
+.lt span{font:400 .8rem/1.4 Inter,sans-serif;color:var(--muted);text-align:center;word-break:break-word;letter-spacing:.3px}
 .hint.err{color:var(--bad)}
 .hint strong{display:block;color:var(--accent);font-weight:600;font-size:1.05rem}
 
@@ -36,7 +38,7 @@ body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-ser
 .app.done .result{display:flex}
 .card{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding:12px 4px}
 #txt{margin:auto 0;text-align:left;font:600 1.15rem/1.6 Poppins,sans-serif;letter-spacing:.3px;word-break:break-word}
-.w{display:inline-block;margin-right:.32em;animation:rev 1.2s ease-out both}
+.w{display:inline-block;margin-right:.32em;animation:rev .45s ease-out both}
 @keyframes rev{from{filter:blur(12px);opacity:0;transform:translateY(4px)}to{filter:blur(0);opacity:1;transform:none}}
 .fin{display:block;margin-top:14px;color:var(--muted);font:400 .75rem Inter,sans-serif}
 .row{display:flex;gap:10px}
@@ -79,6 +81,7 @@ body.desk .hz{display:block}
       <div class="core" id="core"></div>
     </button>
     <div class="hint" id="hint"></div>
+    <div class="lt"><span id="lt"></span></div>
   </section>
 
   <section class="result">
@@ -128,15 +131,28 @@ try {
 
 const base = `dictation/${userId}`;
 let state = 'idle', link = 'off', dictated = '', finish = '', prevRemote = '';
+let liveText = '', keyMode = false, rec = null, committed = '', session = '', stopping = false;
 let offset = 0, dbOnline = true, offlineSince = 0, flaps = [], devices = {};
 
 /* ---------- helpers ---------- */
 const clean = s => s.toUpperCase().replace(/[^A-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+/* ---------- phrase fixes: turns common mishearings into your standard wording ---------- */
+const PHRASES = [
+  ['ONSET', ['IF ON SET', 'IF ONSET', 'ON SET']],
+  ['PRIOR TO ADMISSION', ['PRIOR TO A MISSION', 'PRIOR TO AD MISSION', 'PRIOR TO MISSION', 'PRIOR TO THE ADMISSION', 'PRIOR TO ADMISSIONS', 'PRIOR 2 ADMISSION']],
+  ['NO OTHER ASSOCIATED SYMPTOMS', ['NO OTHER ASSOCIATE SYMPTOMS', 'NO OTHER ASSOCIATED SYMPTOM', 'NO OTHER ASSOCIATING SYMPTOMS']],
+  ['ASSOCIATED WITH', ['ASSOCIATE WITH', 'ASSOCIATING WITH']],
+  ['NO MEDS TAKEN', ['NO MED TAKEN', 'NO MEDS TAKE', 'NO MEDICINE TAKEN']],
+  ['THUS THIS ADMISSION', ['THUS THE ADMISSION', 'THUS THIS A MISSION', 'THUS THIS AD MISSION', 'THIS THIS ADMISSION']],
+  ['PROMPTED THIS ADMISSION', ['PROMPT THIS ADMISSION', 'PROMPTED THE ADMISSION', 'PROMPTED THIS A MISSION', 'PROMPTED THIS AD MISSION', 'PROMPTING THIS ADMISSION']]
+].map(([to, from]) => [new RegExp('\\b(?:' + from.join('|') + ')\\b', 'g'), to]);
+const fix = t => PHRASES.reduce((x, [re, to]) => x.replace(re, to), t);
 const two = n => String(n).padStart(2, '0');
 const clock = d => { let h = d.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return two(h) + two(d.getMinutes()) + ' ' + ap; };
 
 /* ---------- UI state ---------- */
 function paint() {
+  if (state !== 'live') $('lt').textContent = '';
   app.classList.toggle('off', link === 'off');
   app.classList.toggle('weak', link === 'weak');
   app.classList.toggle('done', state === 'done');
@@ -146,7 +162,7 @@ function paint() {
   const other = role === 'phone' ? 'desktop' : 'phone';
   if (!userId) { core.innerHTML = role === 'phone' ? MIC : ''; hint.textContent = 'No account found. Sign in from your main app.'; hint.className = 'hint err'; orb.disabled = true; return; }
   if (role === 'phone') {
-    if (state === 'live') { core.innerHTML = ''; hint.innerHTML = '<strong>Listening</strong>Tap to finish'; orb.setAttribute('aria-label', 'Finish dictation'); return; }
+    if (state === 'live') { core.innerHTML = ''; hint.innerHTML = '<strong>Listening</strong>Tap to finish' + (link !== 'on' ? '<br>Will sync when connected' : keyMode ? '<br>Use the keyboard mic' : ''); orb.setAttribute('aria-label', 'Finish dictation'); return; }
     core.innerHTML = MIC;
     if (link === 'on') hint.textContent = 'Tap to dictate';
     else { orb.disabled = true; if (link === 'weak') hint.textContent = 'Connection is unstable'; else { hint.textContent = 'Open this page on your ' + other + ' to connect'; hint.className = 'hint err'; } }
@@ -163,7 +179,7 @@ function showResult() {
   state = 'done';
   const box = $('txt'); box.textContent = '';
   (dictated ? dictated.split(' ') : []).forEach((w, i) => {
-    const s = document.createElement('span'); s.className = 'w'; s.style.animationDelay = (i * 130) + 'ms'; s.textContent = w; box.appendChild(s);
+    const s = document.createElement('span'); s.className = 'w'; s.style.animationDelay = (i * 45) + 'ms'; s.textContent = w; box.appendChild(s);
   });
   const f = document.createElement('span'); f.className = 'fin'; f.textContent = finish; box.appendChild(f);
   paint();
@@ -173,18 +189,18 @@ function showResult() {
 function evaluate() {
   const now = Date.now() + offset;
   flaps = flaps.filter(t => Date.now() - t < 30000);
-  const fresh = r => Object.values(devices).filter(d => d && d.role === r && d.ts && now - d.ts < 20000);
+  const fresh = r => Object.values(devices).filter(d => d && d.role === r && d.ts && now - d.ts < 45000);
   const other = fresh(role === 'phone' ? 'desktop' : 'phone');
   let l = 'off';
-  if (!dbOnline) l = (Date.now() - offlineSince < 15000) ? 'weak' : 'off';
+  if (!dbOnline) l = (Date.now() - offlineSince < 60000) ? 'weak' : 'off';
   else if (other.length) {
     const age = Math.min(...other.map(x => now - x.ts));
-    l = (age > 9000 || flaps.length >= 2) ? 'weak' : 'on';
+    l = (age > 20000 || flaps.length >= 4) ? 'weak' : 'on';
   }
   if (!userId) l = 'off';
   if (l !== link) {
     link = l;
-    if (l === 'off' && state === 'live') { state = 'idle'; mic.blur(); pushSession('idle'); }
+    
     paint();
   }
 }
@@ -199,7 +215,10 @@ if (rtdb && userId) {
     const on = !!s.val();
     if (on !== dbOnline) { flaps.push(Date.now()); if (!on) offlineSince = Date.now(); }
     dbOnline = on;
-    if (on) { set(me, { role, ts: serverTimestamp() }); onDisconnect(me).remove(); }
+    if (on) {
+      set(me, { role, ts: serverTimestamp() }); onDisconnect(me).remove();
+      if (role === 'phone') { if (state === 'live') pushSession('live'); else if (state === 'done') pushSession('done', dictated, finish); }
+    }
     evaluate();
   });
   setInterval(() => { if (dbOnline) update(me, { ts: serverTimestamp() }).catch(() => {}); }, 4000);
@@ -225,14 +244,39 @@ if (userId && db) {
 }
 
 /* ---------- actions ---------- */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;   // native dictation when the browser has it
+function liveTx(t) { liveText = fix(clean(t)); $('lt').textContent = liveText; }
+function startKeys(seed) { keyMode = true; mic.value = seed ? seed + ' ' : ''; mic.focus(); paint(); }   // Gboard fallback
+function startNative() {
+  rec = new SR(); rec.lang = 'en-US'; rec.continuous = true; rec.interimResults = true;
+  rec.onresult = e => { let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript + ' '; session = t; liveTx(committed + ' ' + session); };
+  rec.onerror = e => {
+    if (e.error === 'no-speech' || e.error === 'aborted') return;
+    stopping = true; const seed = liveText; try { rec.abort(); } catch (x) {} rec = null;
+    if (state === 'live') startKeys(seed);   // keep going on the keyboard mic
+  };
+  rec.onend = () => { if (stopping || state !== 'live') return; committed += ' ' + session; session = ''; try { rec.start(); } catch (x) {} };
+  rec.start();
+}
+function startDictation() {
+  stopping = false; keyMode = false; committed = ''; session = ''; mic.value = ''; liveTx('');
+  state = 'live'; pushSession('live');
+  if (SR) { try { startNative(); paint(); return; } catch (e) { rec = null; } }
+  startKeys('');
+}
+function finishDictation() {
+  stopping = true; if (rec) { try { rec.stop(); } catch (e) {} rec = null; }
+  mic.blur(); dictated = liveText; finish = clock(new Date()); showResult(); pushSession('done', dictated, finish);
+}
 orb.addEventListener('click', () => {
   if (role !== 'phone' || !userId) return;
-  if (state === 'idle' && link === 'on') { state = 'live'; mic.value = ''; paint(); mic.focus(); pushSession('live'); }
-  else if (state === 'live') { dictated = clean(mic.value); finish = clock(new Date()); mic.blur(); showResult(); pushSession('done', dictated, finish); }
+  if (state === 'idle' && link === 'on') startDictation();
+  else if (state === 'live') finishDictation();
 });
 mic.addEventListener('input', () => {
   const v = mic.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '').replace(/\s{2,}/g, ' ');
   if (v !== mic.value) mic.value = v;
+  if (state === 'live' && keyMode) liveTx(v);
 });
 
 async function copyText(t, btnSpan) {
@@ -240,7 +284,7 @@ async function copyText(t, btnSpan) {
   if (btnSpan) { const o = btnSpan.textContent; btnSpan.textContent = 'Copied'; setTimeout(() => { btnSpan.textContent = o; }, 1200); }
 }
 $('bCopy').addEventListener('click', async () => {
-  const t = (dictated + ' ' + finish).trim();
+  const t = dictated;
   copyText(t, $('bCopy').querySelector('span'));
   if (role === 'desktop') logHistory(dictated, finish);
 });
@@ -269,7 +313,7 @@ if (role === 'desktop' && rtdb && userId) {
       const sp = document.createElement('span'); sp.textContent = it.text || '';
       const sm = document.createElement('small'); sm.textContent = it.copiedAt ? clock(new Date(it.copiedAt)) : '';
       b.append(sp, sm);
-      b.addEventListener('click', () => { copyText((it.text + ' ' + (it.finish || '')).trim()); sm.textContent = 'Copied'; setTimeout(() => { sm.textContent = it.copiedAt ? clock(new Date(it.copiedAt)) : ''; }, 1000); });
+      b.addEventListener('click', () => { copyText(it.text || ''); sm.textContent = 'Copied'; setTimeout(() => { sm.textContent = it.copiedAt ? clock(new Date(it.copiedAt)) : ''; }, 1000); });
       box.appendChild(b);
     });
   });
