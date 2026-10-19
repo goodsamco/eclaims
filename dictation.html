@@ -24,6 +24,7 @@ body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-ser
 .stage{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
 .orb{position:relative;width:min(80vw,320px,52vh);aspect-ratio:1;border:0;background:none;padding:0;cursor:pointer;border-radius:50%}
 .orb[disabled]{cursor:default}
+.orb{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
 .orb canvas{width:100%;height:100%;display:block}
 .core{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--accent);pointer-events:none}
 .core svg{width:38%;height:38%}
@@ -132,6 +133,7 @@ try {
 const base = `dictation/${userId}`;
 let state = 'idle', link = 'off', dictated = '', finish = '', prevRemote = '';
 let liveText = '', keyMode = false, rec = null, committed = '', session = '', stopping = false;
+let paused = false, held = false, holdT = null, pausedValue = '';
 let offset = 0, dbOnline = true, offlineSince = 0, flaps = [], devices = {};
 
 /* ---------- helpers ---------- */
@@ -162,7 +164,7 @@ function paint() {
   const other = role === 'phone' ? 'desktop' : 'phone';
   if (!userId) { core.innerHTML = role === 'phone' ? MIC : ''; hint.textContent = 'No account found. Sign in from your main app.'; hint.className = 'hint err'; orb.disabled = true; return; }
   if (role === 'phone') {
-    if (state === 'live') { core.innerHTML = ''; hint.innerHTML = '<strong>Listening</strong>Tap to finish' + (link !== 'on' ? '<br>Will sync when connected' : keyMode ? '<br>Use the keyboard mic' : ''); orb.setAttribute('aria-label', 'Finish dictation'); return; }
+    if (state === 'live') { core.innerHTML = ''; hint.innerHTML = paused ? '<strong>Paused</strong>Release to continue' : '<strong>Listening</strong>Tap to finish' + (link !== 'on' ? '<br>Will sync when connected' : keyMode ? '<br>Use the keyboard mic' : ''); orb.setAttribute('aria-label', 'Finish dictation'); return; }
     core.innerHTML = MIC;
     if (link === 'on') hint.textContent = 'Tap to dictate';
     else { orb.disabled = true; if (link === 'weak') hint.textContent = 'Connection is unstable'; else { hint.textContent = 'Open this page on your ' + other + ' to connect'; hint.className = 'hint err'; } }
@@ -245,39 +247,70 @@ if (userId && db) {
 
 /* ---------- actions ---------- */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;   // native dictation when the browser has it
+/* Android Chrome repeats the growing sentence as separate results, so keep only the newest version of each */
+function mergeResults(res) {
+  const segs = [], fin = [];
+  for (let i = 0; i < res.length; i++) {
+    const t = res[i][0].transcript.trim(); if (!t) continue;
+    const n = segs.length - 1, a = t.toLowerCase() + ' ';
+    if (n >= 0 && (a.startsWith(segs[n].toLowerCase() + ' ') || (!fin[n] && segs[n].toLowerCase().split(' ')[0] === t.toLowerCase().split(' ')[0]))) { segs[n] = t; fin[n] = res[i].isFinal; }
+    else { segs.push(t); fin.push(res[i].isFinal); }
+  }
+  return segs.join(' ');
+}
 function liveTx(t) { liveText = fix(clean(t)); $('lt').textContent = liveText; }
 function startKeys(seed) { keyMode = true; mic.value = seed ? seed + ' ' : ''; mic.focus(); paint(); }   // Gboard fallback
 function startNative() {
   rec = new SR(); rec.lang = 'en-US'; rec.continuous = true; rec.interimResults = true;
-  rec.onresult = e => { let t = ''; for (let i = 0; i < e.results.length; i++) t += e.results[i][0].transcript + ' '; session = t; liveTx(committed + ' ' + session); };
+  rec.onresult = e => { session = mergeResults(e.results); liveTx(committed + ' ' + session); };
   rec.onerror = e => {
     if (e.error === 'no-speech' || e.error === 'aborted') return;
     stopping = true; const seed = liveText; try { rec.abort(); } catch (x) {} rec = null;
     if (state === 'live') startKeys(seed);   // keep going on the keyboard mic
   };
-  rec.onend = () => { if (stopping || state !== 'live') return; committed += ' ' + session; session = ''; try { rec.start(); } catch (x) {} };
+  rec.onend = () => { if (stopping || paused || state !== 'live') return; committed += ' ' + session; session = ''; try { rec.start(); } catch (x) {} };
   rec.start();
 }
 function startDictation() {
-  stopping = false; keyMode = false; committed = ''; session = ''; mic.value = ''; liveTx('');
+  stopping = false; paused = false; keyMode = false; committed = ''; session = ''; mic.value = ''; liveTx('');
   state = 'live'; pushSession('live');
   if (SR) { try { startNative(); paint(); return; } catch (e) { rec = null; } }
   startKeys('');
 }
 function finishDictation() {
-  stopping = true; if (rec) { try { rec.stop(); } catch (e) {} rec = null; }
+  stopping = true; paused = false; if (rec) { try { rec.stop(); } catch (e) {} rec = null; }
   mic.blur(); dictated = liveText; finish = clock(new Date()); showResult(); pushSession('done', dictated, finish);
 }
 orb.addEventListener('click', () => {
   if (role !== 'phone' || !userId) return;
+  if (held) { held = false; return; }
   if (state === 'idle' && link === 'on') startDictation();
   else if (state === 'live') finishDictation();
 });
 mic.addEventListener('input', () => {
+  if (paused) { mic.value = pausedValue; return; }
   const v = mic.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '').replace(/\s{2,}/g, ' ');
   if (v !== mic.value) mic.value = v;
   if (state === 'live' && keyMode) liveTx(v);
 });
+
+/* ---------- hold the matrix to pause, release to continue, tap to finish ---------- */
+function pauseDict() {
+  if (state !== 'live' || paused) return;
+  paused = true; held = true; pausedValue = mic.value;
+  if (rec) { const r = rec; r.onresult = r.onend = r.onerror = null; try { r.abort(); } catch (x) {} rec = null; committed = (committed + ' ' + session).trim(); session = ''; }
+  if (navigator.vibrate) navigator.vibrate(20);
+  paint();
+}
+function resumeDict() {
+  if (!paused) return;
+  paused = false;
+  if (!keyMode && SR) { stopping = false; try { startNative(); } catch (e) { rec = null; startKeys(liveText); } }
+  paint();
+}
+orb.addEventListener('pointerdown', () => { if (role !== 'phone' || state !== 'live') return; held = false; clearTimeout(holdT); holdT = setTimeout(pauseDict, 350); });
+['pointerup', 'pointercancel', 'pointerleave'].forEach(n => orb.addEventListener(n, () => { clearTimeout(holdT); resumeDict(); }));
+orb.addEventListener('contextmenu', e => e.preventDefault());
 
 async function copyText(t, btnSpan) {
   try { await navigator.clipboard.writeText(t); } catch (e) {}
@@ -327,7 +360,7 @@ const cv = $('mx'), cx = cv.getContext('2d'), S = 640, C = S / 2, dots = [];
 for (let r = 22; r <= 300; r += 29) { const n = Math.max(1, Math.round(2 * Math.PI * r / 26)); for (let k = 0; k < n; k++) { const a = k / n * 6.2832; dots.push({ x: C + r * Math.cos(a), y: C + r * Math.sin(a), r, a }); } }
 const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
 function draw(t) {
-  const c = getComputedStyle(app).getPropertyValue('--accent').trim() || '#4cff3b', live = state === 'live';
+  const c = getComputedStyle(app).getPropertyValue('--accent').trim() || '#4cff3b', live = state === 'live' && !paused;
   cx.clearRect(0, 0, S, S); cx.fillStyle = c;
   for (const d of dots) {
     let sz = 3.2, al = 0.3;
