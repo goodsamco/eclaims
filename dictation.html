@@ -38,8 +38,8 @@ body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-ser
 .app.done .stage{display:none}
 .app.done .result{display:flex}
 .card{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding:12px 4px}
-#txt{margin:auto 0;text-align:left;font:600 1.15rem/1.6 Poppins,sans-serif;letter-spacing:.3px;word-break:break-word}
-.w{display:inline-block;margin-right:.32em;animation:rev .45s ease-out both}
+#txt{position:relative;margin:auto 0;text-align:left;font:600 1.15rem/1.6 Poppins,sans-serif;letter-spacing:.3px;word-break:break-word}
+.w{display:inline-block;animation:rev .45s ease-out both}
 @keyframes rev{from{filter:blur(12px);opacity:0;transform:translateY(4px)}to{filter:blur(0);opacity:1;transform:none}}
 .fin{display:block;margin-top:14px;color:var(--muted);font:400 .75rem Inter,sans-serif}
 .row{display:flex;gap:10px}
@@ -76,7 +76,9 @@ body.desk .hz{display:block}
 .pop button:hover,.pop button:focus-visible{background:var(--panel);outline:none}
 .pop button.keep{color:var(--muted);font:400 .75rem Inter,sans-serif}
 .glow{position:fixed;inset:0;pointer-events:none;z-index:0;filter:blur(26px);opacity:.15;background:radial-gradient(circle 48vmin at 50% 44%,color-mix(in srgb,var(--glow,var(--good)) 55%,transparent),transparent 100%),radial-gradient(circle 24vmin at 50% 44%,color-mix(in srgb,var(--glow,var(--good)) 40%,transparent),transparent 100%)}
-#ed{display:none;width:100%;margin:auto 0;padding:0;background:transparent;border:0;outline:0;resize:none;overflow:hidden;color:var(--text);caret-color:var(--accent);font:600 1.15rem/1.6 Poppins,sans-serif;letter-spacing:.3px}
+#ed{position:absolute;left:0;top:0;width:100%;height:1.6em;visibility:hidden;margin:0;padding:0;background:transparent;border:0;outline:0;resize:none;overflow:hidden;white-space:pre-wrap;word-break:break-word;color:var(--text);caret-color:transparent;font:600 1.15rem/1.6 Poppins,sans-serif;letter-spacing:.3px}
+#txt.editing #words .w{visibility:hidden}
+#txt.editing #ed{visibility:visible;caret-color:var(--accent)}
 .swipe{align-self:center;display:flex;align-items:center;gap:6px;padding:6px 12px;border:0;border-radius:999px;background:none;color:var(--muted);font:400 .72rem Inter,sans-serif;cursor:pointer}
 .swipe svg{width:14px;height:14px;transition:transform .3s}
 .swipe.on svg{transform:rotate(180deg)}
@@ -260,7 +262,9 @@ function analyze(words) {
 }
 const CHECK = '<svg viewBox="0 0 24 24" role="img" aria-label="Clear"><circle cx="12" cy="12" r="12" fill="currentColor"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 function renderResult(animate) {
-  const box = $('txt'); box.textContent = '';
+  if (document.activeElement === ed) return;   // never rebuild the view while you are typing
+  const box = $('txt'); box.classList.remove('editing'); box.textContent = '';
+  const wrap = document.createElement('div'); wrap.id = 'words'; box.appendChild(wrap); box.appendChild(ed);
   const words = dictated ? dictated.split(' ') : [];
   marksCache = analyze(words);
   const wm = [];
@@ -270,7 +274,7 @@ function renderResult(animate) {
     const sp = document.createElement('span'); sp.className = 'w'; sp.textContent = w;
     if (animate) sp.style.animationDelay = (i * 45) + 'ms'; else sp.style.animation = 'none';
     if (wm[i] !== undefined) { sp.dataset.m = wm[i]; sp.classList.add(marksCache[wm[i]].type === 'bad' ? 'u-bad' : 'u-warn'); }
-    box.appendChild(sp);
+    wrap.appendChild(sp); if (i < words.length - 1) wrap.appendChild(document.createTextNode(' '));
   });
   const f = document.createElement('span'); f.className = 'fin'; f.textContent = finish;
   if (words.length && dictReady && !marksCache.length) { const ok = document.createElement('span'); ok.className = 'ok'; ok.innerHTML = CHECK; f.appendChild(ok); }
@@ -298,10 +302,16 @@ function pulse(x) { energy = Math.min(1, energy + x); }
 
 /* ---- edit the result: tap a plain word (or empty space) to type; underlined words open suggestions ---- */
 const ed = $('ed'), sg = $('sg'), USE_CLOUD = true;   // USE_CLOUD sends the text to the free LanguageTool API when you swipe up; set false to stay fully local
-function sizeEd() { ed.style.height = 'auto'; ed.style.height = ed.scrollHeight + 'px'; }
+let edBase = 0;
+function sizeEd() {   // the words block is only touched once the text outgrows its original height
+  ed.style.height = '0px'; const need = ed.scrollHeight, h = need > edBase + 1 ? need : edBase;
+  ed.style.height = h + 'px'; $('words').style.height = h > edBase ? h + 'px' : '';
+}
 function startEdit(pos) {
-  pop.hidden = true; closeSg();
-  $('txt').style.display = 'none'; ed.style.display = 'block'; ed.value = dictated; sizeEd(); ed.focus();
+  pop.hidden = true;
+  const wr = $('words'); edBase = Math.max(wr.getBoundingClientRect().height, parseFloat(getComputedStyle(ed).lineHeight) || 29.44);   // exact fractional height, so nothing rounds and nudges the time
+  ed.value = dictated; ed.style.height = edBase + 'px';
+  $('txt').classList.add('editing'); ed.focus({ preventScroll: true });
   const p = pos === undefined ? ed.value.length : pos; ed.setSelectionRange(p, p);
 }
 ed.addEventListener('input', () => {
@@ -309,7 +319,7 @@ ed.addEventListener('input', () => {
   if (v !== ed.value) { const c = Math.max(0, ed.selectionStart - (ed.value.length - v.length)); ed.value = v; ed.setSelectionRange(c, c); }
   sizeEd();
 });
-ed.addEventListener('blur', () => { dictated = clean(ed.value); ed.style.display = 'none'; $('txt').style.display = ''; renderResult(false); });
+ed.addEventListener('blur', () => { const nt = clean(ed.value), changed = nt !== dictated; dictated = nt; renderResult(false); if (changed && sg.classList.contains('open')) { sgData = null; openSg(); } });
 $('card').addEventListener('click', e => {
   if (e.target === ed || state !== 'done') return;
   const el = e.target.closest('.w[data-m]');
@@ -354,30 +364,63 @@ function renderSg(items, note) {
     const c = document.createElement('button'); c.className = 'sgc'; c.style.animationDelay = (ci * 140) + 'ms';
     const h = document.createElement('small'); h.textContent = it.label; c.appendChild(h);
     const body = document.createElement('div'); body.className = 'sgt'; const words = it.text.split(' '), ch = diffNew(orig, words);
-    words.forEach((w, i) => { const sp = document.createElement('span'); sp.className = 'w' + (ch.has(i) ? ' chg' : ''); sp.style.animationDelay = (ci * 140 + 120 + i * 30) + 'ms'; sp.textContent = w; body.appendChild(sp); });
+    words.forEach((w, i) => { const sp = document.createElement('span'); sp.className = 'w' + (ch.has(i) ? ' chg' : ''); sp.style.animationDelay = (ci * 140 + 120 + i * 30) + 'ms'; sp.textContent = w; body.appendChild(sp); if (i < words.length - 1) body.appendChild(document.createTextNode(' ')); });
     c.appendChild(body);
     c.addEventListener('click', () => { dictated = it.text; closeSg(); renderResult(false); });
     sg.appendChild(c);
   });
   if (!items.length || note) { const n = document.createElement('div'); n.className = 'sgn'; n.textContent = note || 'No changes suggested. The wording looks fine.'; sg.appendChild(n); }
 }
+const REWRITE = t => 'Rewrite this dictated clinical history as 3 different complete versions. Keep every fact, number and unit of time exactly as given and do not add or remove medical information. Version 1 is clear and simple, version 2 is formal clinical style, version 3 is shorter. Use plain words with no punctuation. Output exactly 3 lines, one version per line, nothing else.\n\n' + t;
+const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
+async function deviceRewrite(text) {   // Chrome's on-device model when present: private, nothing leaves the device
+  const LM = self.LanguageModel; if (!LM) return null;
+  const o = { expectedInputs: [{ type: 'text', languages: ['en'] }], expectedOutputs: [{ type: 'text', languages: ['en'] }] };
+  const a = await LM.availability(o); if (a !== 'available' && a !== 'readily') return null;
+  const ses = await LM.create(o);
+  try { return await ses.prompt(REWRITE(text)); } finally { if (ses.destroy) ses.destroy(); }
+}
+async function cloudRewrite(text) {    // free Pollinations text API, no key
+  const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 15000);
+  try {
+    const r = await fetch('https://text.pollinations.ai/openai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctl.signal, body: JSON.stringify({ model: 'openai', private: true, messages: [{ role: 'user', content: REWRITE(text) }] }) });
+    if (!r.ok) throw new Error('ai'); const j = await r.json(); return j.choices[0].message.content;
+  } finally { clearTimeout(tm); }
+}
+async function aiRewrite(src) {
+  let out = null;
+  try { out = await withTimeout(deviceRewrite(src), 25000); } catch (e) {}
+  if (!out && USE_CLOUD) out = await withTimeout(cloudRewrite(src), 16000);
+  if (!out) return [];
+  const nums = src.match(/\d+/g) || [], labels = ['Clearer', 'Formal clinical', 'Concise'], res = [];
+  out.split('\n').map(l => fix(clean(l.replace(/^\s*(version\s*\d+\s*[:.\-]?|\d+[.)]|[-*•])\s*/i, '')))).filter(Boolean).forEach(v => {
+    if (res.length < 3 && v !== src && nums.every(n => new RegExp('\\b' + n + '\\b').test(v))) res.push([labels[res.length], v]);   // never drop a number
+  });
+  return res;
+}
+const EXPAND = [['MEDS', 'MEDICATIONS'], ['PTA', 'PRIOR TO ADMISSION'], ['HTN', 'HYPERTENSION'], ['DM', 'DIABETES MELLITUS'], ['SOB', 'SHORTNESS OF BREATH'], ['BP', 'BLOOD PRESSURE'], ['OPD', 'OUTPATIENT DEPARTMENT'], ['LPM', 'LITERS PER MINUTE']];
+const ABBR = [['PRIOR TO ADMISSION', 'PTA'], ['SHORTNESS OF BREATH', 'SOB'], ['BLOOD PRESSURE', 'BP'], ['HYPERTENSION', 'HTN'], ['OUTPATIENT DEPARTMENT', 'OPD'], ['LITERS PER MINUTE', 'LPM']];
+const swap = (t, pairs) => pairs.reduce((x, [a, b]) => x.replace(new RegExp('\\b' + a + '\\b', 'g'), b), t);
 async function openSg() {
   if (state !== 'done' || !dictated) return;
   sg.classList.add('open'); $('swipe').classList.add('on');
   if (sgData && sgData.src === dictated) return;
   const src = dictated, words = src.split(' '); sgData = { src };
-  sg.textContent = ''; const l = document.createElement('div'); l.className = 'sgn'; l.textContent = 'Checking wording…'; sg.appendChild(l);
-  const items = [], loc = localVersion(words); let note = '';
-  if (loc !== src) items.push({ label: 'Quick fixes', text: loc });
-  if (USE_CLOUD && words.length >= 3) {
-    try { const c = await cloudVersion(src); if (c && c !== src && !items.some(x => x.text === c)) items.push({ label: 'Grammar check', text: c }); }
-    catch (e) { note = 'Online grammar check unavailable.'; }
-  }
+  sg.textContent = ''; const l = document.createElement('div'); l.className = 'sgn'; l.textContent = 'Preparing versions…'; sg.appendChild(l);
+  const ai = [], rest = []; let note = '';
+  const add = (arr, label, text) => { if (text && text !== src && ![...ai, ...rest].some(x => x.text === text)) arr.push({ label, text }); };
+  await Promise.all([
+    aiRewrite(src).then(v => v.forEach(([lb, t]) => add(ai, lb, t))).catch(() => {}),
+    USE_CLOUD && words.length >= 3 ? cloudVersion(src).then(c => add(rest, 'Grammar check', c)).catch(() => { note = 'Online grammar check unavailable.'; }) : Promise.resolve()
+  ]);
+  add(rest, 'Quick fixes', localVersion(words)); add(rest, 'Expanded terms', swap(src, EXPAND)); add(rest, 'Abbreviated', swap(src, ABBR));
   if (dictated !== src || state !== 'done') return;
+  const items = ai.concat(rest);
+  if (!items.length) { sgData = null; note = note || 'No alternative version available right now. Swipe up again to retry.'; }
   renderSg(items, note);
 }
 function closeSg() { sg.classList.remove('open'); $('swipe').classList.remove('on'); sgData = null; }
-function resetSg() { sg.classList.remove('open'); sg.textContent = ''; sgData = null; $('swipe').classList.remove('on'); ed.style.display = 'none'; $('txt').style.display = ''; }
+function resetSg() { sg.classList.remove('open'); sg.textContent = ''; sgData = null; $('swipe').classList.remove('on'); $('txt').classList.remove('editing'); ed.blur(); }
 $('swipe').addEventListener('click', () => { if (sg.classList.contains('open')) closeSg(); else openSg(); });
 let ty = null, tx = 0;
 const resultEl = document.querySelector('.result');
