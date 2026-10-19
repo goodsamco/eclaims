@@ -12,7 +12,7 @@ html{scroll-padding-top:env(safe-area-inset-top,0px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%}
 body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;display:flex;justify-content:center;overflow:hidden}
-.app{--accent:var(--good);width:100%;max-width:520px;height:100%;display:flex;flex-direction:column;align-items:center;padding:14px 20px 16px}
+.app{--accent:var(--good);position:relative;z-index:1;width:100%;max-width:520px;height:100%;display:flex;flex-direction:column;align-items:center;padding:14px 20px 16px}
 .app.weak{--accent:var(--warn)}
 .app.off{--accent:var(--bad)}
 
@@ -24,11 +24,11 @@ body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-ser
 .stage{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
 .orb{position:relative;width:min(80vw,320px,52vh);aspect-ratio:1;border:0;background:none;padding:0;cursor:pointer;border-radius:50%}
 .orb[disabled]{cursor:default}
-.orb{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:manipulation}
+.orb{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;touch-action:none}
 .orb canvas{width:100%;height:100%;display:block}
 .core{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--accent);pointer-events:none}
-.core svg{width:38%;height:38%}
-.hint{font-size:.85rem;color:var(--muted);text-align:center;height:4.6em;max-width:30ch}
+.core svg{width:56px;height:56px}
+.hint{font-size:.85rem;color:var(--muted);text-align:center;height:5.2em;max-width:30ch}
 .lt{width:100%;max-width:34ch;height:3.6rem;display:flex;align-items:flex-end;justify-content:center;overflow:hidden;-webkit-mask-image:linear-gradient(transparent,#000 45%);mask-image:linear-gradient(transparent,#000 45%)}
 .lt span{font:400 .8rem/1.4 Inter,sans-serif;color:var(--muted);text-align:center;word-break:break-word;letter-spacing:.3px}
 .hint.err{color:var(--bad)}
@@ -75,10 +75,24 @@ body.desk .hz{display:block}
 .pop button{display:block;width:100%;text-align:left;padding:9px 12px;border:0;border-radius:14px;background:none;color:var(--text);font:600 .8rem Poppins,sans-serif;cursor:pointer}
 .pop button:hover,.pop button:focus-visible{background:var(--panel);outline:none}
 .pop button.keep{color:var(--muted);font:400 .75rem Inter,sans-serif}
+.glow{position:fixed;inset:0;pointer-events:none;z-index:0;filter:blur(26px);opacity:.15;background:radial-gradient(circle 48vmin at 50% 44%,color-mix(in srgb,var(--glow,var(--good)) 55%,transparent),transparent 100%),radial-gradient(circle 24vmin at 50% 44%,color-mix(in srgb,var(--glow,var(--good)) 40%,transparent),transparent 100%)}
+#ed{display:none;width:100%;margin:auto 0;padding:0;background:transparent;border:0;outline:0;resize:none;overflow:hidden;color:var(--text);caret-color:var(--accent);font:600 1.15rem/1.6 Poppins,sans-serif;letter-spacing:.3px}
+.swipe{align-self:center;display:flex;align-items:center;gap:6px;padding:6px 12px;border:0;border-radius:999px;background:none;color:var(--muted);font:400 .72rem Inter,sans-serif;cursor:pointer}
+.swipe svg{width:14px;height:14px;transition:transform .3s}
+.swipe.on svg{transform:rotate(180deg)}
+.sg{max-height:0;opacity:0;overflow:hidden;transition:max-height .45s ease,opacity .3s}
+.sg.open{max-height:40vh;opacity:1;overflow-y:auto}
+.sgc{display:block;width:100%;text-align:left;padding:12px 14px;margin-top:8px;border:1px solid var(--line);border-radius:20px;background:var(--panel);color:var(--text);cursor:pointer;animation:rise .5s ease-out both}
+.sgc small{display:block;margin-bottom:4px;color:var(--muted);font:400 .7rem Inter,sans-serif}
+.sgt{font:600 .9rem/1.5 Poppins,sans-serif;word-break:break-word}
+.sgt .w.chg{color:var(--accent)}
+.sgn{color:var(--muted);font-size:.8rem;padding:10px 4px}
+@keyframes rise{from{opacity:0;transform:translateY(16px);filter:blur(8px)}to{opacity:1;transform:none;filter:blur(0)}}
 @media (prefers-reduced-motion:reduce){.w{animation:none}}
 </style>
 </head>
 <body>
+<div class="glow" id="glow"></div>
 <div class="hz" id="hz">
   <button class="hb" aria-label="Copy history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
   <div class="hp"><h2>Last 5 copied</h2><div id="hl"></div></div>
@@ -97,7 +111,9 @@ body.desk .hz{display:block}
   </section>
 
   <section class="result">
-    <div class="card"><div id="txt"></div></div>
+    <div class="card" id="card"><div id="txt"></div><textarea id="ed" rows="1" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Edit text"></textarea></div>
+    <button class="swipe" id="swipe" aria-label="Show suggestions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg><span>Swipe up for suggestions</span></button>
+    <div class="sg" id="sg"></div>
     <div class="row">
       <button class="btn main" id="bCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span>Copy</span></button>
       <button class="btn" id="bReset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg>Reset</button>
@@ -145,7 +161,7 @@ const base = `dictation/${userId}`;
 let state = 'idle', link = 'off', dictated = '', finish = '', prevRemote = '';
 let liveText = '', keyMode = false, rec = null, committed = '', session = '', stopping = false;
 let paused = false, held = false, holdT = null, pausedValue = '';
-let failed = false, startedAt = 0, quick = 0;
+let failed = false, startedAt = 0, quick = 0, locked = false, energy = 0, speaking = false;
 let offset = 0, dbOnline = true, offlineSince = 0, flaps = [], devices = {};
 
 /* ---------- helpers ---------- */
@@ -153,7 +169,7 @@ const clean = s => s.toUpperCase().replace(/[^A-Z0-9\s]/g, '').replace(/\s+/g, '
 /* ---------- phrase fixes: turns common mishearings into your standard wording ---------- */
 const PHRASES = [
   ['ONSET', ['IF ON SET', 'IF ONSET', 'ON SET']],
-  ['PRIOR TO ADMISSION', ['PRIOR TO A MISSION', 'PRIOR TO AD MISSION', 'PRIOR TO MISSION', 'PRIOR TO THE ADMISSION', 'PRIOR TO ADMISSIONS', 'PRIOR 2 ADMISSION', 'FOR TO ADMISSION']],
+  ['PRIOR TO ADMISSION', ['PRIOR TO A MISSION', 'PRIOR TO AD MISSION', 'PRIOR TO MISSION', 'PRIOR TO THE ADMISSION', 'PRIOR TO ADMISSIONS', 'PRIOR 2 ADMISSION', 'FOR TO ADMISSION', 'PLAYER TO ADMISSION', 'PRAYER TO ADMISSION', 'PRIER TO ADMISSION', 'PRYOR TO ADMISSION', 'PRIORS TO ADMISSION', 'PRIOR ADMISSION', 'PRIOR TWO ADMISSION', 'PRIOR TOO ADMISSION', 'PLAYER TO A MISSION']],
   ['NO OTHER ASSOCIATED SYMPTOMS', ['NO OTHER ASSOCIATE SYMPTOMS', 'NO OTHER ASSOCIATED SYMPTOM', 'NO OTHER ASSOCIATING SYMPTOMS']],
   ['ASSOCIATED WITH', ['ASSOCIATE WITH', 'ASSOCIATING WITH']],
   ['NO MEDS TAKEN', ['NO MED TAKEN', 'NO MEDS TAKE', 'NO MEDICINE TAKEN']],
@@ -164,7 +180,10 @@ const PHRASES = [
 const NUMW = {ZERO:0,ONE:1,TWO:2,THREE:3,FOUR:4,FIVE:5,SIX:6,SEVEN:7,EIGHT:8,NINE:9,TEN:10,ELEVEN:11,TWELVE:12,THIRTEEN:13,FOURTEEN:14,FIFTEEN:15,SIXTEEN:16,SEVENTEEN:17,EIGHTEEN:18,NINETEEN:19,TWENTY:20,THIRTY:30,FORTY:40,FIFTY:50,SIXTY:60,SEVENTY:70,EIGHTY:80,NINETY:90};
 const NUMRE = new RegExp('\\b((?:TWENTY|THIRTY|FORTY|FIFTY|SIXTY|SEVENTY|EIGHTY|NINETY)(?: (?:ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE))?|' + Object.keys(NUMW).join('|') + ') (YEARS?|MONTHS?|WEEKS?|DAYS?|HOURS?)\\b', 'g');
 const numFix = t => t.replace(NUMRE, (m, n, u) => n.split(' ').reduce((a, w) => a + NUMW[w], 0) + ' ' + u);   // FIVE MONTHS -> 5 MONTHS
-const fix = t => PHRASES.reduce((x, [re, to]) => x.replace(re, to), numFix(t));
+const DUR = '\\d+ (?:YEARS?|MONTHS?|WEEKS?|DAYS?|HOURS?)';
+const DUPDUR = new RegExp('\\b(' + DUR + ')(?: \\1)+\\b', 'g');                                  // 3 YEARS 3 YEARS -> 3 YEARS
+const PRIORFIX = new RegExp('\\b(' + DUR + ') (?!PRIOR\\b)[A-Z]+ TO (?:A |THE )?ADMISSION\\b', 'g');  // any mishearing of PRIOR after a duration
+const fix = t => PHRASES.reduce((x, [re, to]) => x.replace(re, to), numFix(t)).replace(DUPDUR, '$1').replace(PRIORFIX, '$1 PRIOR TO ADMISSION');
 const two = n => String(n).padStart(2, '0');
 const clock = d => { let h = d.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return two(h) + ':' + two(d.getMinutes()) + ' ' + ap; };
 
@@ -261,7 +280,7 @@ function renderResult(animate) {
 const pop = document.createElement('div'); pop.className = 'pop'; pop.hidden = true; document.body.appendChild(pop);
 function applyFix(m, text) {
   const w = dictated.split(' '); w.splice(m.s, m.e - m.s, ...(text ? text.split(' ') : []));
-  dictated = fix(w.join(' ').trim()); pop.hidden = true; renderResult(false); pushSession('done', dictated, finish);
+  dictated = fix(w.join(' ').trim()); pop.hidden = true; renderResult(false);
 }
 function openPop(m, el) {
   pop.textContent = '';
@@ -274,7 +293,101 @@ function openPop(m, el) {
   pop.style.left = Math.max(8, Math.min(innerWidth - pop.offsetWidth - 8, r.left)) + 'px';
   pop.style.top = Math.max(8, Math.min(innerHeight - pop.offsetHeight - 8, r.bottom + 8)) + 'px';
 }
-$('txt').addEventListener('click', e => { const el = e.target.closest('.w[data-m]'); if (el) openPop(marksCache[el.dataset.m], el); });
+const LOCK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+function pulse(x) { energy = Math.min(1, energy + x); }
+
+/* ---- edit the result: tap a plain word (or empty space) to type; underlined words open suggestions ---- */
+const ed = $('ed'), sg = $('sg'), USE_CLOUD = true;   // USE_CLOUD sends the text to the free LanguageTool API when you swipe up; set false to stay fully local
+function sizeEd() { ed.style.height = 'auto'; ed.style.height = ed.scrollHeight + 'px'; }
+function startEdit(pos) {
+  pop.hidden = true; closeSg();
+  $('txt').style.display = 'none'; ed.style.display = 'block'; ed.value = dictated; sizeEd(); ed.focus();
+  const p = pos === undefined ? ed.value.length : pos; ed.setSelectionRange(p, p);
+}
+ed.addEventListener('input', () => {
+  const v = ed.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '').replace(/\s{2,}/g, ' ').replace(/^\s/, '');
+  if (v !== ed.value) { const c = Math.max(0, ed.selectionStart - (ed.value.length - v.length)); ed.value = v; ed.setSelectionRange(c, c); }
+  sizeEd();
+});
+ed.addEventListener('blur', () => { dictated = clean(ed.value); ed.style.display = 'none'; $('txt').style.display = ''; renderResult(false); });
+$('card').addEventListener('click', e => {
+  if (e.target === ed || state !== 'done') return;
+  const el = e.target.closest('.w[data-m]');
+  if (el) { openPop(marksCache[el.dataset.m], el); return; }
+  if (e.target.closest('.fin')) return;
+  const sp = e.target.closest('.w'); let pos;
+  if (sp) { const i = [...$('txt').querySelectorAll('.w')].indexOf(sp); pos = dictated.split(' ').slice(0, i + 1).join(' ').length; }
+  startEdit(pos);
+});
+
+/* ---- suggested versions of the whole phrase, below the original ---- */
+function diffNew(a, b) {   // words in b that are not part of the common sequence with a
+  const n = a.length, m = b.length, d = Array.from({ length: n + 1 }, () => new Array(m + 1).fill(0));
+  for (let i = n - 1; i >= 0; i--) for (let j = m - 1; j >= 0; j--) d[i][j] = a[i] === b[j] ? d[i + 1][j + 1] + 1 : Math.max(d[i + 1][j], d[i][j + 1]);
+  const keep = new Set(); let i = 0, j = 0;
+  while (i < n && j < m) { if (a[i] === b[j]) { keep.add(j); i++; j++; } else if (d[i + 1][j] >= d[i][j + 1]) i++; else j++; }
+  return new Set(b.map((_, k) => k).filter(k => !keep.has(k)));
+}
+function localVersion(words) {   // first suggestion of every local mark
+  const w = words.slice(), used = [];
+  analyze(words).filter(m => m.sugg && m.sugg.length && (m.sugg[0].text !== '' || m.note === 'Sentence ends unfinished')).sort((a, b) => b.s - a.s).forEach(m => {
+    if (used.some(u => m.s < u[1] && m.e > u[0])) return;
+    used.push([m.s, m.e]); const t = m.sugg[0].text; w.splice(m.s, m.e - m.s, ...(t ? t.split(' ') : []));
+  });
+  return clean(fix(w.join(' ')));
+}
+async function cloudVersion(text) {   // LanguageTool public API: free, no key, rule-based grammar and spelling
+  const lower = text.toLowerCase();
+  const r = await fetch('https://api.languagetool.org/v2/check', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ text: lower, language: 'en-US' }) });
+  if (!r.ok) throw new Error('lt');
+  const j = await r.json(); let out = lower;
+  j.matches.filter(m => m.replacements && m.replacements.length && !['typographical', 'whitespace', 'style'].includes(m.rule && m.rule.issueType))
+    .filter(m => !lower.slice(m.offset, m.offset + m.length).toUpperCase().split(' ').every(t => LEX.has(t) || LEX.has(t.replace(/S$/, '')) || NUM.test(t)))
+    .sort((a, b) => b.offset - a.offset).forEach(m => { out = out.slice(0, m.offset) + m.replacements[0].value + out.slice(m.offset + m.length); });
+  return clean(fix(out.toUpperCase()));
+}
+let sgData = null;
+function renderSg(items, note) {
+  sg.textContent = '';
+  const orig = dictated.split(' ');
+  items.forEach((it, ci) => {
+    const c = document.createElement('button'); c.className = 'sgc'; c.style.animationDelay = (ci * 140) + 'ms';
+    const h = document.createElement('small'); h.textContent = it.label; c.appendChild(h);
+    const body = document.createElement('div'); body.className = 'sgt'; const words = it.text.split(' '), ch = diffNew(orig, words);
+    words.forEach((w, i) => { const sp = document.createElement('span'); sp.className = 'w' + (ch.has(i) ? ' chg' : ''); sp.style.animationDelay = (ci * 140 + 120 + i * 30) + 'ms'; sp.textContent = w; body.appendChild(sp); });
+    c.appendChild(body);
+    c.addEventListener('click', () => { dictated = it.text; closeSg(); renderResult(false); });
+    sg.appendChild(c);
+  });
+  if (!items.length || note) { const n = document.createElement('div'); n.className = 'sgn'; n.textContent = note || 'No changes suggested. The wording looks fine.'; sg.appendChild(n); }
+}
+async function openSg() {
+  if (state !== 'done' || !dictated) return;
+  sg.classList.add('open'); $('swipe').classList.add('on');
+  if (sgData && sgData.src === dictated) return;
+  const src = dictated, words = src.split(' '); sgData = { src };
+  sg.textContent = ''; const l = document.createElement('div'); l.className = 'sgn'; l.textContent = 'Checking wording…'; sg.appendChild(l);
+  const items = [], loc = localVersion(words); let note = '';
+  if (loc !== src) items.push({ label: 'Quick fixes', text: loc });
+  if (USE_CLOUD && words.length >= 3) {
+    try { const c = await cloudVersion(src); if (c && c !== src && !items.some(x => x.text === c)) items.push({ label: 'Grammar check', text: c }); }
+    catch (e) { note = 'Online grammar check unavailable.'; }
+  }
+  if (dictated !== src || state !== 'done') return;
+  renderSg(items, note);
+}
+function closeSg() { sg.classList.remove('open'); $('swipe').classList.remove('on'); sgData = null; }
+function resetSg() { sg.classList.remove('open'); sg.textContent = ''; sgData = null; $('swipe').classList.remove('on'); ed.style.display = 'none'; $('txt').style.display = ''; }
+$('swipe').addEventListener('click', () => { if (sg.classList.contains('open')) closeSg(); else openSg(); });
+let ty = null, tx = 0;
+const resultEl = document.querySelector('.result');
+resultEl.addEventListener('touchstart', e => { if (e.target.closest('#ed')) { ty = null; return; } ty = e.touches[0].clientY; tx = e.touches[0].clientX; }, { passive: true });
+resultEl.addEventListener('touchend', e => {
+  if (ty === null) return;
+  const dy = e.changedTouches[0].clientY - ty, dx = Math.abs(e.changedTouches[0].clientX - tx); ty = null;
+  if (Math.abs(dy) < 60 || dx > 50) return;
+  if (dy < 0) openSg(); else closeSg();
+}, { passive: true });
 document.addEventListener('pointerdown', e => { if (!pop.hidden && !pop.contains(e.target) && !e.target.closest('.w[data-m]')) pop.hidden = true; });
 
 
@@ -282,6 +395,7 @@ document.addEventListener('pointerdown', e => { if (!pop.hidden && !pop.contains
 function paint() {
   if (state !== 'live') $('lt').textContent = '';
   if (state !== 'done') document.querySelectorAll('.pop').forEach(x => { x.hidden = true; });
+  if (state !== 'done') resetSg();
   app.classList.toggle('off', link === 'off');
   app.classList.toggle('weak', link === 'weak');
   app.classList.toggle('done', state === 'done');
@@ -291,7 +405,7 @@ function paint() {
   const other = role === 'phone' ? 'desktop' : 'phone';
   if (!userId) { core.innerHTML = role === 'phone' ? MIC : ''; hint.textContent = 'No account found. Sign in from your main app.'; hint.className = 'hint err'; orb.disabled = true; return; }
   if (role === 'phone') {
-    if (state === 'live') { core.innerHTML = ''; hint.innerHTML = paused ? '<strong>Paused</strong>Release to continue' : failed ? '<strong>Mic stopped</strong>Tap to finish<br>Next session uses the keyboard mic' : '<strong>Listening</strong>Tap to finish' + (link !== 'on' ? '<br>Will sync when connected' : keyMode ? '<br>Use the keyboard mic' : ''); orb.setAttribute('aria-label', 'Finish dictation'); return; }
+    if (state === 'live') { core.innerHTML = locked ? LOCK : ''; hint.innerHTML = paused ? (locked ? '<strong>Paused and locked</strong>Swipe up to resume<br>Tap to finish' : '<strong>Paused</strong>Release to continue<br>Swipe down to lock') : failed ? '<strong>Mic stopped</strong>Tap to finish<br>Next session uses the keyboard mic' : '<strong>Listening</strong>Tap to finish' + (link !== 'on' ? '<br>Will sync when connected' : keyMode ? '<br>Use the keyboard mic' : ''); orb.setAttribute('aria-label', 'Finish dictation'); return; }
     core.innerHTML = MIC;
     if (link === 'on') hint.textContent = 'Tap to dictate';
     else { orb.disabled = true; if (link === 'weak') hint.textContent = 'Connection is unstable'; else { hint.textContent = 'Open this page on your ' + other + ' to connect'; hint.className = 'hint err'; } }
@@ -413,7 +527,8 @@ function failNative() {
 function startNative() {
   killRec();                                            // never two recognizers at once
   rec = new SR(); rec.lang = 'en-US'; rec.continuous = true; rec.interimResults = true;
-  rec.onresult = e => { session = mergeResults(e.results); liveTx(joinText(committed, session)); };
+  rec.onresult = e => { const b = liveText.length; session = mergeResults(e.results); liveTx(joinText(committed, session)); pulse(.25 + Math.min(.5, Math.abs(liveText.length - b) * .04)); };
+  rec.onspeechstart = () => { speaking = true; }; rec.onspeechend = () => { speaking = false; };
   rec.onerror = e => { if (e.error === 'no-speech' || e.error === 'aborted') return; failNative(); };
   rec.onend = () => {
     if (stopping || paused || state !== 'live') return;
@@ -424,14 +539,14 @@ function startNative() {
   startedAt = Date.now(); rec.start();
 }
 function startDictation() {
-  stopping = false; paused = false; failed = false; quick = 0; keyMode = false; committed = ''; session = ''; mic.value = ''; liveTx('');
+  stopping = false; paused = false; failed = false; quick = 0; locked = false; energy = 0; speaking = false; keyMode = false; committed = ''; session = ''; mic.value = ''; liveTx('');
   state = 'live'; pushSession('live');
   if (pickEngine() === 'keys') { startKeys(''); return; }
   try { startNative(); } catch (e) { failNative(); }
   paint();
 }
 function finishDictation() {
-  stopping = true; paused = false; killRec();
+  stopping = true; paused = false; locked = false; killRec();
   mic.blur(); dictated = liveText; finish = clock(new Date()); showResult(); pushSession('done', dictated, finish);
 }
 orb.addEventListener('click', () => {
@@ -444,7 +559,7 @@ mic.addEventListener('input', () => {
   if (paused) { mic.value = pausedValue; return; }
   const v = mic.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '').replace(/\s{2,}/g, ' ');
   if (v !== mic.value) mic.value = v;
-  if (state === 'live' && keyMode) liveTx(v);
+  if (state === 'live' && keyMode) { liveTx(v); pulse(.3); }
 });
 
 /* ---------- hold the matrix to pause, release to continue, tap to finish ---------- */
@@ -457,12 +572,24 @@ function pauseDict() {
 }
 function resumeDict() {
   if (!paused) return;
-  paused = false;
+  paused = false; locked = false;
   if (!keyMode && !failed) { stopping = false; try { startNative(); } catch (e) { failNative(); } }
   paint();
 }
-orb.addEventListener('pointerdown', () => { if (role !== 'phone' || state !== 'live') return; held = false; clearTimeout(holdT); holdT = setTimeout(pauseDict, 350); });
-['pointerup', 'pointercancel', 'pointerleave'].forEach(n => orb.addEventListener(n, () => { clearTimeout(holdT); resumeDict(); }));
+let sy = 0, swiped = false;
+orb.addEventListener('pointerdown', e => {
+  if (role !== 'phone' || state !== 'live') return;
+  sy = e.clientY; swiped = false; held = false; clearTimeout(holdT);
+  if (!locked) holdT = setTimeout(pauseDict, 350);
+  try { orb.setPointerCapture(e.pointerId); } catch (x) {}
+});
+orb.addEventListener('pointermove', e => {
+  if (role !== 'phone' || state !== 'live' || swiped) return;
+  const dy = e.clientY - sy;
+  if (paused && !locked && dy > 45) { locked = true; swiped = true; held = true; if (navigator.vibrate) navigator.vibrate([15, 40, 15]); paint(); }
+  else if (locked && dy < -45) { swiped = true; held = true; resumeDict(); }
+});
+['pointerup', 'pointercancel'].forEach(n => orb.addEventListener(n, () => { clearTimeout(holdT); if (paused && !locked) resumeDict(); }));
 orb.addEventListener('contextmenu', e => e.preventDefault());
 
 async function copyText(t, btnSpan) {
@@ -508,19 +635,37 @@ if (role === 'desktop' && rtdb && userId) {
 /* ---------- keyboard-safe layout ---------- */
 if (window.visualViewport) { const vv = window.visualViewport; const fit = () => { app.style.height = vv.height + 'px'; }; vv.addEventListener('resize', fit); fit(); }
 
-/* ---------- dot matrix ---------- */
-const cv = $('mx'), cx = cv.getContext('2d'), S = 640, C = S / 2, dots = [];
-for (let r = 22; r <= 300; r += 29) { const n = Math.max(1, Math.round(2 * Math.PI * r / 26)); for (let k = 0; k < n; k++) { const a = k / n * 6.2832; dots.push({ x: C + r * Math.cos(a), y: C + r * Math.sin(a), r, a }); } }
+/* ---------- dot matrix (reacts to your speech on the phone; plain ripple on desktop) ---------- */
+const cv = $('mx'), cx = cv.getContext('2d'), glow = $('glow'), S = 640, C = S / 2, dots = [];
+for (let r = 22; r <= 300; r += 29) {
+  const n = Math.max(1, Math.round(2 * Math.PI * r / 26));
+  for (let k = 0; k < n; k++) { const a = k / n * 6.2832; dots.push({ x: C + r * Math.cos(a), y: C + r * Math.sin(a), c: Math.cos(a), r, a, b: r < 120 ? 0 : r < 210 ? 1 : 2 }); }
+}
+let lvl = 0; const bnd = [0, 0, 0];
 const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
 function draw(t) {
-  const c = getComputedStyle(app).getPropertyValue('--accent').trim() || '#4cff3b', live = state === 'live' && !paused;
-  cx.clearRect(0, 0, S, S); cx.fillStyle = c;
+  const col = getComputedStyle(app).getPropertyValue('--accent').trim() || '#4cff3b', live = state === 'live' && !paused;
+  let tb = [0, 0, 0], target = 0;
+  if (live && role === 'phone') {            // voice responsive: driven by what the recognizer hears
+    energy *= .93;
+    const e = Math.min(1, energy + (speaking ? .3 + .2 * Math.sin(t / 110) : 0) + .08);
+    tb = [e * (.6 + .4 * Math.sin(t / 410)), e * (.7 + .3 * Math.sin(t / 260 + 2)), e * (.5 + .5 * Math.sin(t / 180 + 4))];
+    target = Math.min(1, (tb[0] + tb[1] + tb[2]) / 1.7);
+  } else if (live) target = .5;
+  lvl += (target - lvl) * (target > lvl ? .42 : .07);
+  for (let k = 0; k < 3; k++) bnd[k] += (tb[k] - bnd[k]) * (tb[k] > bnd[k] ? .45 : .1);
+  glow.style.opacity = state === 'done' ? .1 : live ? Math.min(1, .2 + lvl * .9) : .15; glow.style.setProperty('--glow', col);
+
+  cx.clearRect(0, 0, S, S); cx.fillStyle = col;
   for (const d of dots) {
-    let sz = 3.2, al = 0.3;
-    if (live) { const v = reduce ? 0.5 : (Math.sin(t / 240 - d.r / 26 + Math.sin(d.a * 3 + t / 800) * 1.3) + 1) / 2; sz = 2.6 + v * 6.5; al = 0.2 + v * 0.8; }
-    else if (link === 'off') al = 0.4;
-    else if (link === 'weak') al = 0.25 + 0.3 * (Math.sin(t / 220 + d.a * 2) + 1) / 2;
-    cx.globalAlpha = al; cx.beginPath(); cx.arc(d.x, d.y, sz, 0, 6.2832); cx.fill();
+    let sz = 3.2, al = .3, off = 0;
+    if (live) {
+      const w = reduce ? .5 : (Math.sin(t / 240 - d.r / 26 + Math.sin(d.a * 3 + t / 800) * 1.3) + 1) / 2;
+      const amp = role === 'phone' ? Math.min(1, .15 + bnd[d.b] * 1.2 + lvl * .6) : .8, v = w * amp;
+      sz = 2.4 + v * 8; al = .2 + v * .8; off = v * (role === 'phone' ? 8 + lvl * 14 : 6);
+    } else if (link === 'off') al = .4;
+    else if (link === 'weak') al = .25 + .3 * (Math.sin(t / 220 + d.a * 2) + 1) / 2;
+    cx.globalAlpha = al; cx.beginPath(); cx.arc(d.x + d.c * off, d.y + Math.sin(d.a) * off, sz, 0, 6.2832); cx.fill();
   }
   cx.globalAlpha = 1; requestAnimationFrame(draw);
 }
