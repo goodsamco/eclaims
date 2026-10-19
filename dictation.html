@@ -41,6 +41,7 @@ body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-ser
 /* modern scrollbar: slim, rounded, tinted with the accent, brighter on hover */
 .card,.sgi,.hp{scrollbar-width:thin;scrollbar-color:color-mix(in srgb,var(--accent,var(--good)) 28%,transparent) transparent}
 .card:hover,.sgi:hover{scrollbar-color:color-mix(in srgb,var(--accent,var(--good)) 60%,transparent) transparent}
+.card.typing{-webkit-mask-image:none;mask-image:none}
 .card::-webkit-scrollbar,.sgi::-webkit-scrollbar{width:8px}
 .card::-webkit-scrollbar-track,.sgi::-webkit-scrollbar-track{background:transparent;margin:18px 0}
 .card::-webkit-scrollbar-thumb,.sgi::-webkit-scrollbar-thumb{background:color-mix(in srgb,var(--accent,var(--good)) 28%,transparent);border-radius:8px;border:2px solid transparent;background-clip:padding-box}
@@ -88,19 +89,24 @@ body.desk .hz{display:block}
 .glow{position:fixed;inset:0;pointer-events:none;z-index:0;filter:blur(26px);opacity:.15;background:radial-gradient(circle 48vmin at 50% 44%,color-mix(in srgb,var(--glow,var(--good)) 55%,transparent),transparent 100%),radial-gradient(circle 24vmin at 50% 44%,color-mix(in srgb,var(--glow,var(--good)) 40%,transparent),transparent 100%)}
 #ed{position:absolute;left:0;top:0;width:100%;height:1.6em;visibility:hidden;margin:0;padding:0;background:transparent;border:0;outline:0;resize:none;overflow:hidden;white-space:pre-wrap;word-break:break-word;color:var(--text);caret-color:transparent;font:600 1.15rem/1.6 Poppins,sans-serif;letter-spacing:.3px}
 #txt.editing #words{white-space:pre-wrap}
+#txt.editing.dirty #words .w{text-decoration-color:transparent!important}
 #txt.editing #words .w{color:transparent;animation:none;pointer-events:none}   /* words stay invisible, only the dashed review marks remain under the typed text */
 #txt.editing #ed{visibility:visible;caret-color:var(--accent)}
 .swipe{display:flex;align-items:center;gap:6px;padding:6px 12px;border:0;border-radius:999px;background:none;color:var(--muted);font:400 .72rem Inter,sans-serif;cursor:pointer}
 .swipe svg{width:14px;height:14px;transition:transform .3s}
 .swipe.on svg{transform:rotate(180deg)}
 .swipew{align-self:center;display:flex;align-items:center;gap:2px}
-.swipew[data-mode=creating] .swipe svg,.swipew[data-mode=failed] .swipe svg{display:none}
+.swipew[data-mode=creating] .swipe svg,.swipew[data-mode=failed] .swipe svg,.swipew[data-mode=none] .swipe svg,.swipew[data-mode=update] .swipe svg{display:none}
+.sgi{transition:opacity .3s}
+.sg.stale .sgi{opacity:.4}
+.sg.stale .sgc{pointer-events:none}   /* old versions of the text can't overwrite your edit */
+.swipew[data-mode=none] .swipe{cursor:default}
 .swipew[data-mode=creating] #swipeLbl{animation:pulse .9s ease-in-out infinite alternate}
 .swipew[data-mode=failed] .swipe{color:var(--bad)}
-.swx{width:22px;height:22px;padding:0;border:0;border-radius:50%;background:none;color:var(--muted);display:flex;align-items:center;justify-content:center;cursor:pointer}
+.swx{flex:none;width:18px;height:18px;margin-left:6px;padding:0;border:0;border-radius:50%;background:none;color:var(--bad);display:flex;cursor:pointer}
 .swx[hidden]{display:none}
-.swx svg{width:12px;height:12px}
-.swx:hover{background:var(--panel);color:var(--text)}
+.swx svg{width:100%;height:100%;display:block}
+.swx:hover{filter:brightness(1.15)}
 .swx:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .sg{display:grid;grid-template-rows:0fr;opacity:0;visibility:hidden;transition:grid-template-rows .6s cubic-bezier(.22,1,.36,1),opacity .4s ease,visibility 0s .6s}
 .sgi{min-height:0;max-height:38vh;overflow-y:auto;padding:10px 6px 30px 0;-webkit-mask-image:linear-gradient(to bottom,transparent 0,#000 12px,#000 calc(100% - 30px),transparent 100%);mask-image:linear-gradient(to bottom,transparent 0,#000 12px,#000 calc(100% - 30px),transparent 100%);overscroll-behavior:contain}
@@ -109,8 +115,10 @@ body.desk .hz{display:block}
 .sgw>div{min-height:0;overflow:hidden}
 @keyframes grow{from{grid-template-rows:0fr;opacity:0}to{grid-template-rows:1fr;opacity:1}}
 .src{margin-top:4px;color:var(--muted);font:400 .68rem/1.4 Inter,sans-serif;opacity:.8}
-.sgs{display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 4px 2px;color:var(--muted);font:400 .74rem Inter,sans-serif;animation:rise .5s ease-out both}
-.sgs i{width:7px;height:7px;border-radius:50%;background:var(--accent,var(--good));animation:pulse .8s ease-in-out infinite alternate}
+.sgs{display:flex;align-items:center;justify-content:flex-start;gap:5px;padding:14px 2px 2px;animation:rise .5s ease-out both}
+.sgs i{width:5px;height:5px;border-radius:50%;background:var(--muted);animation:pulse .7s ease-in-out infinite alternate}
+.sgs i:nth-child(2){animation-delay:.2s}
+.sgs i:nth-child(3){animation-delay:.4s}
 .sgc{display:block;width:100%;text-align:left;padding:14px 2px 13px;margin:0;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;color:var(--text);cursor:pointer;animation:rise .6s cubic-bezier(.22,1,.36,1) both;}
 .sgc:focus-visible{outline:2px solid var(--accent,var(--good));outline-offset:-2px;border-radius:8px}
 .sgt{font:600 .9rem/1.5 Poppins,sans-serif;word-break:break-word}
@@ -143,7 +151,7 @@ body.desk .hz{display:block}
     <div class="card" id="card"><div id="txt"></div><textarea id="ed" rows="1" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Edit text"></textarea></div>
     <div class="swipew" id="swipew" data-mode="idle">
       <button class="swipe" id="swipe" aria-label="See suggestions"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg><span id="swipeLbl">See suggestions</span></button>
-      <button class="swx" id="swipeX" aria-label="Dismiss" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+      <button class="swx" id="swipeX" aria-label="Dismiss" hidden><svg viewBox="0 0 24 24" role="img" aria-label="Dismiss"><circle cx="12" cy="12" r="12" fill="currentColor"/><path d="M8 8l8 8M16 8l-8 8" fill="none" stroke="#000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
     </div>
     <div class="sg" id="sg"><div class="sgi" id="sgi"></div></div>
     <div class="row">
@@ -215,7 +223,20 @@ const numFix = t => t.replace(NUMRE, (m, n, u) => n.split(' ').reduce((a, w) => 
 const DUR = '\\d+ (?:YEARS?|MONTHS?|WEEKS?|DAYS?|HOURS?)';
 const DUPDUR = new RegExp('\\b(' + DUR + ')(?: \\1)+\\b', 'g');                                  // 3 YEARS 3 YEARS -> 3 YEARS
 const PRIORFIX = new RegExp('\\b(' + DUR + ') (?!PRIOR\\b)[A-Z]+ TO (?:A |THE )?ADMISSION\\b', 'g');  // any mishearing of PRIOR after a duration
-const fix = t => PHRASES.reduce((x, [re, to]) => x.replace(re, to), numFix(t)).replace(DUPDUR, '$1').replace(PRIORFIX, '$1 PRIOR TO ADMISSION');
+const fix0 = t => PHRASES.reduce((x, [re, to]) => x.replace(re, to), numFix(t)).replace(DUPDUR, '$1').replace(PRIORFIX, '$1 PRIOR TO ADMISSION');
+/* the HPI nearly always ends with "THUS ADMISSION", "THIS ADMISSION" or "THUS THIS ADMISSION": fix mishearings of that ending only (end of the text, never mid-sentence) */
+const THUSW = 'DOES|DOSE|DOSS|DUS|DUSS|DUST|DAS|DAWS|DOWS|THUG|THUGS|THUSS|THAS', THISW = 'THESE|DISS|DIS|DEES|THEE|THEIS|THISS|TIS|DIZ';
+const END_RULES = [
+  [new RegExp('\\b(?:' + THUSW + ') THIS A(?:D)? ?MISSIONS?$'), 'THUS THIS ADMISSION'],
+  [new RegExp('\\b(?:' + THUSW + ') THIS ADMISSIONS?$'), 'THUS THIS ADMISSION'],
+  [new RegExp('\\b(?:' + THUSW + '|THUS) A(?:D)? ?MISSIONS?$'), 'THUS ADMISSION'],
+  [new RegExp('\\b(?:' + THUSW + ') ADMISSIONS?$'), 'THUS ADMISSION'],
+  [new RegExp('\\b(?:' + THISW + '|THIS) A(?:D)? ?MISSIONS?$'), 'THIS ADMISSION'],
+  [new RegExp('\\b(?:' + THISW + ') ADMISSIONS?$'), 'THIS ADMISSION'],
+  [/\b(THUS|THIS) ADMISSIONS$/, '$1 ADMISSION']
+];
+const fix = t => END_RULES.reduce((x, [re, to]) => x.replace(re, to), fix0(t));
+const SAFEPRE = new Set('THUS THIS TO ON UPON FOR AT HOSPITAL PRIOR HIS HER MY OUR EMERGENCY'.split(' '));
 const two = n => String(n).padStart(2, '0');
 const clock = d => { let h = d.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return two(h) + ':' + two(d.getMinutes()) + ' ' + ap; };
 
@@ -246,7 +267,9 @@ async function loadDict() {
 }
 setTimeout(loadDict, 2500);
 
-function known(w) {
+const kc = new Map();
+function known(w) { let r = kc.get(w); if (r === undefined) { r = known0(w); if (dictReady) kc.set(w, r); } return r; }
+function known0(w) {
   if (/^\d+([A-Z]{0,3}|\/\d+)?$/.test(w) || w.length <= 2) return true;
   if (LEX.has(w) || LEX.has(w.replace(/S$/, ''))) return true;
   if (!dictReady) return true;
@@ -264,7 +287,7 @@ const UNIT = /^(YEARS?|MONTHS?|WEEKS?|DAYS?|HOURS?)$/, NUM = /^\d+$/;
 const DANGLE = new Set('OF WITH TO AND OR THE A AN IN ON FOR BY AT FROM THAN BUT'.split(' '));
 const NONUM = new Set('A AN THE SEVERAL FEW MANY EVERY EACH PER LAST NEXT PAST THIS THAT THESE THOSE COUPLE'.split(' '));
 /* red = unknown spelling, orange = unclear or inconsistent wording */
-function analyze(words) {
+function analyze(words, quick) {   // quick = skip the expensive spelling suggestions (used while typing)
   const marks = [], n = words.length;
   const add = m => { m.key = m.type + ':' + words.slice(m.s, m.e).join(' '); if (!ignored.has(m.key)) marks.push(m); };
   const warn = (s, e, note, sugg) => add({ type: 'warn', s, e, note, sugg: sugg || [] });
@@ -273,7 +296,7 @@ function analyze(words) {
     if (!bad[i]) { i++; continue; }
     let j = i; while (j < n && bad[j]) j++;
     if (j - i >= 3) warn(i, j, 'This part may be unclear', [{ label: 'Remove this part', text: '' }]);
-    else for (let k = i; k < j; k++) add({ type: 'bad', s: k, e: k + 1, sugg: suggest(words[k]).map(t => ({ label: t, text: t })) });
+    else for (let k = i; k < j; k++) add({ type: 'bad', s: k, e: k + 1, sugg: quick ? [] : suggest(words[k]).map(t => ({ label: t, text: t })) });
     i = j;
   }
   for (let i = 0; i < n; i++) {
@@ -287,6 +310,7 @@ function analyze(words) {
     if (UNIT.test(w) && /S$/.test(w) && !(i > 0 && (NUM.test(words[i - 1]) || NONUM.has(words[i - 1])))) warn(i, i + 1, 'Number missing before ' + w);
     if (w === 'ASSOCIATED' && nx && !['WITH', 'SYMPTOMS', 'SIGNS', 'TO', 'FACTORS', 'FEATURES', 'COMPLAINTS'].includes(nx)) warn(i, i + 2, 'Did you mean ASSOCIATED WITH?', [{ label: 'ASSOCIATED WITH ' + nx, text: 'ASSOCIATED WITH ' + nx }]);
   }
+  if (n > 1 && words[n - 1] === 'ADMISSION' && !SAFEPRE.has(words[n - 2])) warn(n - 2, n, 'Did you mean THUS or THIS ADMISSION?', [{ label: 'THUS ADMISSION', text: 'THUS ADMISSION' }, { label: 'THIS ADMISSION', text: 'THIS ADMISSION' }]);
   if (n > 1 && DANGLE.has(words[n - 1])) warn(n - 1, n, 'Sentence ends unfinished', [{ label: 'Remove "' + words[n - 1] + '"', text: '' }]);
   return marks;
 }
@@ -314,7 +338,7 @@ function renderResult(animate) {
 const pop = document.createElement('div'); pop.className = 'pop'; pop.hidden = true; document.body.appendChild(pop);
 function applyFix(m, text) {
   const w = dictated.split(' '); w.splice(m.s, m.e - m.s, ...(text ? text.split(' ') : []));
-  dictated = fix(w.join(' ').trim()); pop.hidden = true; renderResult(false); syncText();
+  dictated = fix(w.join(' ').trim()); pop.hidden = true; renderResult(false); syncText(); staleSg();
 }
 function openPop(m, el) {
   pop.textContent = '';
@@ -346,7 +370,7 @@ function paintUnder() {   // mirrors the typed text in the hidden layer so the d
   const v = ed.value, toks = v.split(/(\s+)/), words = v.split(/\s+/).filter(Boolean), caret = ed.selectionStart;
   let pos = 0, wi = -1, active = -1;
   toks.forEach(t => { if (t && !/^\s+$/.test(t)) { wi++; if (caret >= pos && caret <= pos + t.length) active = wi; } pos += t.length; });
-  const marks = analyze(words).filter(m => !(m.type === 'bad' && m.s === active)), wm = [];   // the word being typed is not flagged yet
+  const marks = analyze(words, true).filter(m => !(m.type === 'bad' && m.s === active)), wm = [];   // the word being typed is not flagged yet
   marks.forEach((m, mi) => { if (m.type === 'warn') for (let k = m.s; k < m.e; k++) wm[k] = mi; });
   marks.forEach((m, mi) => { if (m.type === 'bad') wm[m.s] = mi; });
   wrap.textContent = ''; let i = 0;
@@ -358,9 +382,14 @@ function paintUnder() {   // mirrors the typed text in the hidden layer so the d
     wrap.appendChild(sp); i++;
   });
 }
-document.addEventListener('selectionchange', () => { if (document.activeElement === ed) paintUnder(); });
+let underT = null;
+function schedUnder(dirty) {   // marks refresh 200 ms after you stop typing; nothing heavy runs per keystroke
+  const t = $('txt'); if (dirty) t.classList.add('dirty');
+  clearTimeout(underT); underT = setTimeout(() => { paintUnder(); t.classList.remove('dirty'); }, 200);
+}
+document.addEventListener('selectionchange', () => { if (document.activeElement === ed) schedUnder(false); });
 function startEdit(pos) {
-  pop.hidden = true;
+  pop.hidden = true; editSg(); $('card').classList.add('typing');   // suggestions stop and nothing runs in the background while you type
   const wr = $('words'); edBase = Math.max(wr.getBoundingClientRect().height, parseFloat(getComputedStyle(ed).lineHeight) || 29.44);   // exact fractional height, so nothing rounds and nudges the time
   ed.value = dictated; ed.style.height = edBase + 'px';
   $('txt').classList.add('editing'); ed.focus({ preventScroll: true });
@@ -369,9 +398,9 @@ function startEdit(pos) {
 ed.addEventListener('input', () => {
   const v = ed.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '').replace(/\s{2,}/g, ' ').replace(/^\s/, '');
   if (v !== ed.value) { const c = Math.max(0, ed.selectionStart - (ed.value.length - v.length)); ed.value = v; ed.setSelectionRange(c, c); }
-  paintUnder(); sizeEd();
+  schedUnder(true); schedLive(); sizeEd();
 });
-ed.addEventListener('blur', () => { if (state !== 'done') return; const nt = clean(ed.value), changed = nt !== dictated; dictated = nt; renderResult(false); if (changed) { syncText(); if (sgData) refreshSg(); } });
+ed.addEventListener('blur', () => { $('card').classList.remove('typing'); clearTimeout(underT); clearTimeout(liveT1); clearTimeout(liveT2); $('txt').classList.remove('dirty'); if (state !== 'done') return; const nt = clean(ed.value), changed = nt !== dictated; dictated = nt; renderResult(false); if (changed) syncText(); staleSg(); });
 $('card').addEventListener('click', e => {
   if (e.target === ed || state !== 'done') return;
   const el = e.target.closest('.w[data-m]');
@@ -398,9 +427,9 @@ function localVersion(words) {   // first suggestion of every local mark
   });
   return clean(fix(w.join(' ')));
 }
-async function cloudVersion(text) {   // LanguageTool public API: free, no key, rule-based grammar and spelling
+async function cloudVersion(text, signal) {   // LanguageTool public API: free, no key, rule-based grammar and spelling
   const lower = text.toLowerCase();
-  const r = await fetch('https://api.languagetool.org/v2/check', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ text: lower, language: 'en-US' }) });
+  const r = await fetch('https://api.languagetool.org/v2/check', { method: 'POST', signal, headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ text: lower, language: 'en-US' }) });
   if (!r.ok) throw new Error('lt');
   const j = await r.json(); let out = lower;
   j.matches.filter(m => m.replacements && m.replacements.length && !['typographical', 'whitespace', 'style'].includes(m.rule && m.rule.issueType))
@@ -412,31 +441,38 @@ const REWRITE = t => `The text below is a dictated History of Present Illness (H
 
 ${t}
 
-Write 3 close variants of this exact HPI. Keep the same sentence structure, the same word order and almost all of the same words. Only change a few individual words: replace a misheard word with the medical term or standard HPI phrase it most likely was (for example onset, associated with, no other associated symptoms, prior to admission, no meds taken, prompted this admission), fix spelling, or fix grammar. If a word has no clear medical correction, leave it unchanged. Never add, remove or guess any symptom, diagnosis, drug name, dose, number or duration. Never reorder, merge, add or drop clauses, and give no advice or explanation. Variant 1 changes the fewest words, variant 2 changes a few more, variant 3 uses a different nearby word choice. Plain words with no punctuation. Output exactly 3 lines, one variant per line, nothing else.`;
+Write 3 close variants of this exact HPI. Keep the same sentence structure, the same word order and almost all of the same words. Only change a few individual words: replace a misheard word with the medical term or standard HPI phrase it most likely was (for example onset, associated with, no other associated symptoms, prior to admission, no meds taken, prompted this admission), fix spelling, or fix grammar. An admission HPI usually ends by stating what led to the admission, so the final words are most often "thus admission", "this admission" or "prompted this admission". Give priority to those endings: if the last words sound like one of them but were misheard (for example "does admission", "dus admission" or "these admission"), correct them to "thus admission" or "this admission" in at least one variant. Do not invent an ending when the text clearly ends some other way. If a word has no clear medical correction, leave it unchanged. Never add, remove or guess any symptom, diagnosis, drug name, dose, number or duration. Never reorder, merge, add or drop clauses, and give no advice or explanation. Variant 1 changes the fewest words, variant 2 changes a few more, variant 3 uses a different nearby word choice. Plain words with no punctuation. Output exactly 3 lines, one variant per line, nothing else.`;
 const withTimeout = (p, ms) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej(new Error('timeout')), ms))]);
-async function deviceRewrite(text) {   // Chrome's on-device model when present: private, nothing leaves the device
+const sleep = (ms, sig) => new Promise((res, rej) => { const t = setTimeout(res, ms); if (sig) sig.addEventListener('abort', () => { clearTimeout(t); rej(new Error('aborted')); }, { once: true }); });
+async function deviceRewrite(text, signal) {   // Chrome's on-device model when present: private, nothing leaves the device
   const LM = self.LanguageModel; if (!LM) return null;
   const o = { expectedInputs: [{ type: 'text', languages: ['en'] }], expectedOutputs: [{ type: 'text', languages: ['en'] }] };
   const a = await LM.availability(o); if (a !== 'available' && a !== 'readily') return null;
-  const ses = await LM.create(o);
-  try { return await ses.prompt(REWRITE(text)); } finally { if (ses.destroy) ses.destroy(); }
+  const ses = await LM.create(signal ? Object.assign({ signal }, o) : o);
+  try { return await ses.prompt(REWRITE(text), signal ? { signal } : undefined); } finally { if (ses.destroy) ses.destroy(); }
 }
-async function cloudRewrite(text) {    // free Pollinations text API, no key
-  const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 15000);
+const aiCache = new Map(); let lastCloud = 0;
+async function cloudRewrite(text, signal) {    // free Pollinations text API, no key. The anonymous tier allows about 1 request per 15 s, so calls are spaced and cached
+  if (aiCache.has(text)) return aiCache.get(text);
+  const gap = lastCloud + 15500 - Date.now(); if (gap > 0) await sleep(gap, signal);
+  lastCloud = Date.now();
+  const ctl = new AbortController(), tm = setTimeout(() => ctl.abort(), 20000), onAbort = () => ctl.abort();
+  if (signal) signal.addEventListener('abort', onAbort, { once: true });
   try {
     const r = await fetch('https://text.pollinations.ai/openai', { method: 'POST', headers: { 'Content-Type': 'application/json' }, signal: ctl.signal, body: JSON.stringify({ model: 'openai', private: true, messages: [{ role: 'user', content: REWRITE(text) }] }) });
-    if (!r.ok) throw new Error('ai'); const j = await r.json(); return { text: j.choices[0].message.content, model: j.model || 'openai' };
-  } finally { clearTimeout(tm); }
+    if (!r.ok) throw new Error('ai ' + r.status); const j = await r.json(); const res = { text: j.choices[0].message.content, model: j.model || 'openai' };
+    aiCache.set(text, res); return res;
+  } finally { clearTimeout(tm); if (signal) signal.removeEventListener('abort', onAbort); }
 }
 /* a version only counts if it stays close to what was said: same length, same order, only a few words changed */
 function isClose(src, v) {
   const a = src.split(' '), b = v.split(' ');
   return Math.abs(a.length - b.length) <= Math.max(2, Math.round(a.length * .25)) && diffNew(a, b).size <= Math.max(3, Math.ceil(b.length * .4));
 }
-async function aiRewrite(src) {
+async function aiRewrite(src, signal, noDevice) {
   let out = null, source = '';
-  try { out = await withTimeout(deviceRewrite(src), 25000); if (out) source = 'Gemini · Nano, on-device in Chrome'; } catch (e) {}
-  if (!out && USE_CLOUD) { const r = await withTimeout(cloudRewrite(src), 16000); out = r.text; source = 'Pollinations · ' + r.model; }
+  if (!noDevice) { try { out = await withTimeout(deviceRewrite(src, signal), 25000); if (out) source = 'Gemini · Nano, on-device in Chrome'; } catch (e) { if (signal && signal.aborted) throw e; } }
+  if (!out && USE_CLOUD) { const r = await cloudRewrite(src, signal); out = r.text; source = 'Pollinations · ' + r.model; }
   if (!out) return [];
   const nums = src.match(/\d+/g) || [], labels = ['Light correction', 'Wording alternative', 'Another close variant'], res = [];
   out.split('\n').map(l => fix(clean(l.replace(/^\s*(version\s*\d+\s*[:.\-]?|variant\s*\d+\s*[:.\-]?|\d+[.)]|[-*•])\s*/i, '')))).filter(Boolean).forEach(v => {
@@ -451,7 +487,7 @@ const swap = (t, pairs) => pairs.reduce((x, [a, b]) => x.replace(new RegExp('\\b
 /* ---- stacked reveal: each version appears as soon as its source finishes ---- */
 const sgi = $('sgi');
 let sgData = null;
-const sgStatus = document.createElement('div'); sgStatus.className = 'sgs'; sgStatus.innerHTML = '<i></i><span></span>';
+const sgStatus = document.createElement('div'); sgStatus.className = 'sgs'; sgStatus.innerHTML = '<i></i><i></i><i></i>'; sgStatus.setAttribute('role', 'status'); sgStatus.setAttribute('aria-label', 'More suggestions in progress');
 function makeCard(src, it) {
   const wrap = document.createElement('div'); wrap.className = 'sgw'; const inner = document.createElement('div');
   const c = document.createElement('button'); c.className = 'sgc';
@@ -463,51 +499,123 @@ function makeCard(src, it) {
   inner.appendChild(c); wrap.appendChild(inner); return wrap;
 }
 const wait = ms => new Promise(r => setTimeout(r, ms));
-function setSwipe(mode, n) {   // idle -> creating (x) -> dismiss, or failed -> retry
-  const txt = { idle: 'See suggestions', creating: 'Creating suggestions (' + (n || 0) + ')', ready: 'Dismiss', failed: 'Failed to generate suggestions. Retry' }[mode];
+function setSwipe(mode) {   // See suggestions -> Creating suggestions (x) -> Dismiss, or Failed ... Retry
+  const txt = { idle: 'See suggestions', creating: 'Creating suggestions', ready: 'Dismiss', failed: 'Failed to generate suggestions. Retry', none: 'No suggestions found', update: 'Update suggestions' }[mode];
   $('swipew').dataset.mode = mode; $('swipeLbl').textContent = txt; $('swipe').setAttribute('aria-label', txt);
   $('swipe').classList.toggle('on', mode === 'ready'); $('swipeX').hidden = mode !== 'creating';
 }
 function sgStatusUpdate(job) {
   if (sgData !== job) return;
-  if (job.count && job.pending > 0) { if (!sgStatus.parentNode) sgi.appendChild(sgStatus); sgStatus.lastChild.textContent = 'Others still in progress…'; }
+  if (job.count && job.pending > 0) { if (!sgStatus.parentNode) sgi.appendChild(sgStatus); }
   else sgStatus.remove();
+}
+function editSg() {   // typing pauses suggestion work but keeps what is already shown
+  if (!sgData) return;
+  if (!sgData.count) { closeSg(); return; }   // nothing ready yet: stop and go back to "See suggestions"
+  killJob(); sgStatus.remove();
+}
+function staleSg() {   // the text changed while suggestions are open: dim them and offer an update
+  if (!sgData || !sgData.count) return;
+  killJob(); sgStatus.remove();
+  if (sgData.src !== dictated) { if (sgComplete(dictated)) { openSg(); return; } sg.classList.add('stale'); setSwipe('update'); }   // text seen before: swap in its saved suggestions, nothing to generate
+  else { sg.classList.remove('stale'); setSwipe('ready'); }
+}
+function killJob() { if (sgData && sgData.ctl) sgData.ctl.abort(); }   // stops the on-device model and any request still running
+/* ---- smart reuse: every source result is remembered per text, so nothing is generated twice ---- */
+const sgCache = new Map();   // text -> { items, done: Set of finished source ids, dict }
+function cacheFor(src) {
+  let c = sgCache.get(src);
+  if (c) sgCache.delete(src); else c = { items: [], done: new Set(), dict: dictReady };
+  sgCache.set(src, c); if (sgCache.size > 12) sgCache.delete(sgCache.keys().next().value);   // keep the 12 most recent texts
+  if (c.dict !== dictReady) { c.items = c.items.filter(i => !i.source.startsWith('Local rules')); ['loc1', 'loc2', 'loc3'].forEach(k => c.done.delete(k)); c.dict = dictReady; }   // dictionary finished loading: redo only the local checks
+  return c;
+}
+const planIds = text => ['ai', USE_CLOUD && text.split(' ').length >= 3 ? 'lt' : null, 'loc1', 'loc2', 'loc3'].filter(Boolean);
+const sgComplete = text => { const c = sgCache.get(text); return !!c && planIds(text).every(k => c.done.has(k)); };
+/* ---- real time while editing, never in the way of typing ----
+   300 ms after the last keystroke the label flips to "Update suggestions" (one tiny DOM change).
+   After a longer pause the new text is prepared silently into the cache: local checks only run when the browser is idle,
+   online checks wait a bit more, the heavy on-device model is skipped, and the next keystroke cancels all of it. */
+let prep = null, liveT1 = null, liveT2 = null;
+function prepAbort() { if (prep) { prep.ctl.abort(); prep = null; } }
+const idle = (fn, sig) => new Promise((res, rej) => {
+  const go = () => { if (sig.aborted) return rej(new Error('aborted')); try { res(fn()); } catch (e) { rej(e); } };
+  if (self.requestIdleCallback) requestIdleCallback(go, { timeout: 2500 }); else setTimeout(go, 80);
+});
+function prepareSg(src) {
+  if (state !== 'done' || !src || sgComplete(src)) return;
+  prepAbort();
+  const cache = cacheFor(src), ctl = new AbortController(), sig = ctl.signal, words = src.split(' '); prep = { src, ctl };
+  const emit = it => { if (it.text && it.text !== src && !cache.items.some(x => x.text === it.text)) cache.items.push(it); };
+  [
+    { id: 'loc2', fn: () => idle(() => emit({ label: 'Expanded terms', text: swap(src, EXPAND), source: 'Local rules · clinical abbreviation list' }), sig) },
+    { id: 'loc3', fn: () => idle(() => emit({ label: 'Abbreviated', text: swap(src, ABBR), source: 'Local rules · clinical abbreviation list' }), sig) },
+    { id: 'loc1', fn: () => idle(() => emit({ label: 'Quick fixes', text: localVersion(words), source: 'Local rules · medical lexicon + Hunspell en_US' }), sig) },
+    USE_CLOUD && words.length >= 3 ? { id: 'lt', fn: () => sleep(300, sig).then(() => cloudVersion(src, sig)).then(c => emit({ label: 'Grammar correction', text: c, source: 'LanguageTool · rule-based grammar and spelling' })) } : null,
+    USE_CLOUD ? { id: 'ai', fn: () => sleep(900, sig).then(() => aiRewrite(src, sig, true)).then(v => v.forEach(emit)) } : null
+  ].filter(Boolean).filter(x => !cache.done.has(x.id)).forEach(x => x.fn().then(() => { if (!sig.aborted) cache.done.add(x.id); }).catch(() => {}));
+}
+function liveMark() {   // cheap: only toggles the label and the dimming
+  if (state !== 'done' || !sgData || !sgData.count) return;
+  if (clean(ed.value) !== sgData.src) { sg.classList.add('stale'); setSwipe('update'); }
+  else { sg.classList.remove('stale'); setSwipe('ready'); }
+}
+function schedLive() {   // called on every keystroke: cancels anything running, then waits for a pause
+  prepAbort(); clearTimeout(liveT1); clearTimeout(liveT2);
+  if (state !== 'done' || !sgData || !sgData.count) return;
+  liveT1 = setTimeout(liveMark, 300);
+  liveT2 = setTimeout(() => { const t = clean(ed.value); if (t && sgData && t !== sgData.src) prepareSg(t); }, 1000);
 }
 async function openSg() {
   if (state !== 'done' || !dictated) return;
-  if (sgData && sgData.src === dictated && !sgData.failed) return;   // already creating or ready
-  const src = dictated, words = src.split(' '), job = sgData = { src, count: 0, pending: 0, failed: false }, seen = new Set([src]);
-  sg.classList.remove('open'); sgStatus.remove(); sgi.textContent = ''; sgi.scrollTop = 0;
+  if (sgData && sgData.src === dictated && !sgData.failed && !sgData.none) return;   // already showing or creating these
+  killJob(); prepAbort();
+  const src = dictated, words = src.split(' '), ctl = new AbortController(), seen = new Set([src]), cache = cacheFor(src);
+  const job = sgData = { src, ctl, count: 0, pending: 0, remote: 0, errs: 0, failed: false, none: false };
+  const replacing = sg.classList.contains('open'); job.replacing = replacing;   // updating: the old list stays until the first new version arrives
+  sgStatus.remove(); if (!replacing) { sg.classList.remove('open'); sgi.textContent = ''; sgi.scrollTop = 0; }
   const add = it => {
-    if (sgData !== job || dictated !== src || state !== 'done' || !it.text || seen.has(it.text)) return;
+    if (sgData !== job || ctl.signal.aborted || dictated !== src || state !== 'done' || !it.text || seen.has(it.text)) return;
     seen.add(it.text); job.count++;
+    if (job.count === 1 && job.replacing) { sgi.textContent = ''; sgi.scrollTop = 0; sg.classList.remove('stale'); }
     sgi.insertBefore(makeCard(src, it), sgStatus.parentNode === sgi ? sgStatus : null);
     if (job.count === 1) { sg.classList.add('open'); setSwipe('ready'); }   // the panel only opens once something is ready
     sgStatusUpdate(job);
   };
-  const run = fn => {
-    job.pending++;
-    Promise.resolve().then(fn).catch(() => {}).finally(() => {
-      job.pending--; if (sgData !== job) return;
-      sgStatusUpdate(job);
-      if (job.pending === 0 && !job.count) { job.failed = true; setSwipe('failed'); }
-      else if (!job.count) setSwipe('creating', job.pending);
-    });
+  const emit = it => { if (it.text && it.text !== src && !cache.items.some(x => x.text === it.text)) cache.items.push(it); add(it); };   // remember it, then show it
+  const finished = () => {
+    if (sgData !== job || ctl.signal.aborted) return;
+    sgStatusUpdate(job);
+    if (job.pending > 0 || job.count) return;
+    if (job.remote && job.errs === job.remote) { job.failed = true; setSwipe('failed'); collapseOld(job); }   // every online source errored
+    else { job.none = true; setSwipe('none'); collapseOld(job); setTimeout(() => { if (sgData === job) { sgData = null; setSwipe('idle'); } }, 3000); }   // sources answered, nothing to change
   };
-  run(() => aiRewrite(src).then(v => v.forEach(add)));
-  if (USE_CLOUD && words.length >= 3) run(() => cloudVersion(src).then(c => add({ label: 'Grammar correction', text: c, source: 'LanguageTool · rule-based grammar and spelling' })));
-  run(() => wait(450).then(() => add({ label: 'Quick fixes', text: localVersion(words), source: 'Local rules · medical lexicon + Hunspell en_US' })));
-  run(() => wait(450).then(() => add({ label: 'Expanded terms', text: swap(src, EXPAND), source: 'Local rules · clinical abbreviation list' })));
-  run(() => wait(450).then(() => add({ label: 'Abbreviated', text: swap(src, ABBR), source: 'Local rules · clinical abbreviation list' })));
-  setSwipe('creating', job.pending);
+  const fresh = !cache.items.length;
+  const plan = [
+    { id: 'ai', remote: true, fn: () => aiRewrite(src, ctl.signal).then(v => v.forEach(emit)) },
+    USE_CLOUD && words.length >= 3 ? { id: 'lt', remote: true, fn: () => cloudVersion(src, ctl.signal).then(c => emit({ label: 'Grammar correction', text: c, source: 'LanguageTool · rule-based grammar and spelling' })) } : null,
+    { id: 'loc1', delay: 450, fn: () => emit({ label: 'Quick fixes', text: localVersion(words), source: 'Local rules · medical lexicon + Hunspell en_US' }) },
+    { id: 'loc2', delay: 450, fn: () => emit({ label: 'Expanded terms', text: swap(src, EXPAND), source: 'Local rules · clinical abbreviation list' }) },
+    { id: 'loc3', delay: 450, fn: () => emit({ label: 'Abbreviated', text: swap(src, ABBR), source: 'Local rules · clinical abbreviation list' }) }
+  ].filter(Boolean);
+  cache.items.slice().forEach(add);                       // 1. what is already known appears instantly
+  plan.filter(x => !cache.done.has(x.id)).forEach(x => {   // 2. only the missing or failed sources run
+    job.pending++; if (x.remote) job.remote++;
+    Promise.resolve().then(() => (x.delay && fresh ? wait(x.delay) : 0)).then(x.fn)
+      .then(() => { if (!ctl.signal.aborted) cache.done.add(x.id); })
+      .catch(() => { if (x.remote) job.errs++; })
+      .finally(() => { job.pending--; finished(); });
+  });
+  if (!job.count) setSwipe('creating');
+  finished();
 }
-function closeSg() {   // dismiss: collapse, stop waiting for anything still in progress, back to "See suggestions"
-  sgData = null; sg.classList.remove('open'); sgStatus.remove(); setSwipe('idle');
+function collapseOld(job) { if (!job.replacing) return; sg.classList.remove('open', 'stale'); setTimeout(() => { if (!sgData || sgData === job) sgi.textContent = ''; }, 700); }
+function closeSg() {   // dismiss: collapse, stop everything still running, back to "See suggestions"
+  killJob(); prepAbort(); sgData = null; sg.classList.remove('open', 'stale'); sgStatus.remove(); setSwipe('idle');
   setTimeout(() => { if (!sgData) sgi.textContent = ''; }, 700);
 }
-function refreshSg() { const was = sgData; sgData = null; if (was && !was.failed) openSg(); else setSwipe('idle'); }   // text changed: build versions for the new text
-function resetSg() { sg.classList.remove('open'); sgStatus.remove(); sgi.textContent = ''; sgData = null; setSwipe('idle'); $('txt').classList.remove('editing'); ed.blur(); }
-$('swipe').addEventListener('click', () => { const m = $('swipew').dataset.mode; if (m === 'idle' || m === 'failed') openSg(); else if (m === 'ready') closeSg(); });
+function resetSg() { killJob(); prepAbort(); sg.classList.remove('open', 'stale'); sgStatus.remove(); sgi.textContent = ''; sgData = null; setSwipe('idle'); $('txt').classList.remove('editing'); ed.blur(); }
+$('swipe').addEventListener('click', () => { const m = $('swipew').dataset.mode; if (m === 'idle' || m === 'failed' || m === 'update') openSg(); else if (m === 'ready') closeSg(); });
 $('swipeX').addEventListener('click', closeSg);
 let ty = null, tx = 0;
 const resultEl = document.querySelector('.result');
@@ -516,7 +624,7 @@ resultEl.addEventListener('touchend', e => {
   if (ty === null) return;
   const dy = e.changedTouches[0].clientY - ty, dx = Math.abs(e.changedTouches[0].clientX - tx); ty = null;
   if (Math.abs(dy) < 60 || dx > 50) return;
-  if (dy < 0) { const m = $('swipew').dataset.mode; if (m === 'idle' || m === 'failed') openSg(); } else if (sgData) closeSg();
+  if (dy < 0) { const m = $('swipew').dataset.mode; if (m === 'idle' || m === 'failed' || m === 'update') openSg(); } else if (sgData) closeSg();
 }, { passive: true });
 document.addEventListener('pointerdown', e => { if (!pop.hidden && !pop.contains(e.target) && !e.target.closest('.w[data-m]')) pop.hidden = true; });
 
@@ -773,7 +881,10 @@ for (let r = 22; r <= 300; r += 29) {
 }
 let lvl = 0; const bnd = [0, 0, 0];
 const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+let idleDrawn = false;
 function draw(t) {
+  if (state === 'done') { if (!idleDrawn) { glow.style.opacity = .1; cx.clearRect(0, 0, S, S); idleDrawn = true; } setTimeout(() => requestAnimationFrame(draw), 250); return; }   // result screen: no per-frame work
+  idleDrawn = false;
   const col = getComputedStyle(app).getPropertyValue('--accent').trim() || '#4cff3b', live = state === 'live' && !paused;
   let tb = [0, 0, 0], target = 0;
   if (live && role === 'phone') {            // voice responsive: driven by what the recognizer hears
