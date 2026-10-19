@@ -400,7 +400,7 @@ ed.addEventListener('input', () => {
   if (v !== ed.value) { const c = Math.max(0, ed.selectionStart - (ed.value.length - v.length)); ed.value = v; ed.setSelectionRange(c, c); }
   schedUnder(true); schedLive(); sizeEd();
 });
-ed.addEventListener('blur', () => { $('card').classList.remove('typing'); clearTimeout(underT); clearTimeout(liveT1); clearTimeout(liveT2); $('txt').classList.remove('dirty'); if (state !== 'done') return; const nt = clean(ed.value), changed = nt !== dictated; dictated = nt; renderResult(false); if (changed) syncText(); staleSg(); });
+ed.addEventListener('blur', () => { $('card').classList.remove('typing'); clearTimeout(underT); clearTimeout(liveT1); clearTimeout(liveT2); $('txt').classList.remove('dirty'); if (state !== 'done') return; const nt = clean(ed.value), changed = nt !== dictated; if (!nt) { toReady(); return; } dictated = nt; renderResult(false); if (changed) syncText(); staleSg(); });
 $('card').addEventListener('click', e => {
   if (e.target === ed || state !== 'done') return;
   const el = e.target.closest('.w[data-m]');
@@ -702,7 +702,7 @@ if (rtdb && userId) {
   onValue(ref(rtdb, base + '/session'), s => {
     const v = s.val() || { status: 'idle' };
     if (role === 'desktop') {
-      if (v.status === 'done') { const t = clean(v.text || ''); finish = String(v.finish || ''); if (prevRemote !== 'done') { dictated = t; showResult(); } else if (t !== dictated) { dictated = t; renderResult(false); } }
+      if (v.status === 'done' && clean(v.text || '')) { const t = clean(v.text || ''); finish = String(v.finish || ''); if (prevRemote !== 'done') { dictated = t; showResult(); } else if (t !== dictated) { dictated = t; renderResult(false); } }
       else { state = v.status === 'live' ? 'live' : 'idle'; paint(); }
     } else if (v.status === 'idle' && state === 'done') { state = 'idle'; paint(); }
     else if (v.status === 'done' && state === 'done') { const t = clean(v.text || ''); if (t !== dictated) { dictated = t; renderResult(false); } }
@@ -783,9 +783,12 @@ function startDictation() {
   try { startNative(); } catch (e) { failNative(); }
   paint();
 }
+function toReady() { state = 'idle'; dictated = ''; finish = ''; liveText = ''; mic.value = ''; paint(); pushSession('idle'); }   // back to the ready screen, nothing to show
 function finishDictation() {
   stopping = true; paused = false; locked = false; killRec();
-  mic.blur(); dictated = liveText; finish = clock(new Date()); showResult(); pushSession('done', dictated, finish);
+  mic.blur();
+  if (!liveText.trim()) { toReady(); return; }   // no speech detected: back to ready, no empty result
+  dictated = liveText; finish = clock(new Date()); showResult(); pushSession('done', dictated, finish);
 }
 orb.addEventListener('click', () => {
   if (role !== 'phone' || !userId) return;
@@ -881,10 +884,22 @@ for (let r = 22; r <= 300; r += 29) {
 }
 let lvl = 0; const bnd = [0, 0, 0];
 const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+/* desktop: the matrix reacts to the cursor, with rings pulsing out from where it is */
+let str = 0, act = 0, hx = C, hy = C, hx2 = C, hy2 = C, tcx = C, tcy = C, ptx = C, pty = C, hIn = false, lastT = 0;
+const ez = (dt, tau) => 1 - Math.exp(-dt / tau);   // frame-rate independent easing: same silky feel at 60, 120 or 144 Hz
+dots.forEach(d => { d.hs = 0; d.ha = 0; d.hox = 0; d.hoy = 0; });
+document.addEventListener('pointermove', e => {
+  if (role !== 'desktop') return;
+  const r = cv.getBoundingClientRect(); if (!r.width) { hIn = false; return; }
+  const k = S / r.width; tcx = (e.clientX - r.left) * k; tcy = (e.clientY - r.top) * k;
+  hIn = Math.hypot(tcx - C, tcy - C) < C * 1.08;
+}, { passive: true });
+document.documentElement.addEventListener('mouseleave', () => { hIn = false; });
 let idleDrawn = false;
 function draw(t) {
   if (state === 'done') { if (!idleDrawn) { glow.style.opacity = .1; cx.clearRect(0, 0, S, S); idleDrawn = true; } setTimeout(() => requestAnimationFrame(draw), 250); return; }   // result screen: no per-frame work
   idleDrawn = false;
+  const dt = Math.min(48, t - lastT || 16); lastT = t;
   const col = getComputedStyle(app).getPropertyValue('--accent').trim() || '#4cff3b', live = state === 'live' && !paused;
   let tb = [0, 0, 0], target = 0;
   if (live && role === 'phone') {            // voice responsive: driven by what the recognizer hears
@@ -895,7 +910,15 @@ function draw(t) {
   } else if (live) target = .5;
   lvl += (target - lvl) * (target > lvl ? .42 : .07);
   for (let k = 0; k < 3; k++) bnd[k] += (tb[k] - bnd[k]) * (tb[k] > bnd[k] ? .45 : .1);
-  glow.style.opacity = state === 'done' ? .1 : live ? Math.min(1, .2 + lvl * .9) : .15; glow.style.setProperty('--glow', col);
+  const hover = role === 'desktop' && hIn && !reduce;
+  const mv = Math.hypot(tcx - ptx, tcy - pty); ptx = tcx; pty = tcy;
+  const aT = hover && mv > .4 ? Math.min(1, .3 + mv / dt * 1.2) : 0;           // cursor moving -> active, cursor stopped -> rest
+  act += (aT - act) * ez(dt, aT > act ? 90 : 380);
+  const sT = hover ? .3 + .7 * act : 0;                                          // a soft glow stays under a resting cursor, the waves fade out
+  str += (sT - str) * ez(dt, sT > str ? 170 : 520);
+  hx += (tcx - hx) * ez(dt, 150); hy += (tcy - hy) * ez(dt, 150);                // the effect trails the cursor with a delay,
+  hx2 += (hx - hx2) * ez(dt, 110); hy2 += (hy - hy2) * ez(dt, 110);             // smoothed twice so it glides
+  glow.style.opacity = state === 'done' ? .1 : live ? Math.min(1, .2 + lvl * .9) : .15 + str * .12; glow.style.setProperty('--glow', col);
 
   cx.clearRect(0, 0, S, S); cx.fillStyle = col;
   for (const d of dots) {
@@ -906,7 +929,20 @@ function draw(t) {
       sz = 2.4 + v * 8; al = .2 + v * .8; off = v * (role === 'phone' ? 8 + lvl * 14 : 6);
     } else if (link === 'off') al = .4;
     else if (link === 'weak') al = .25 + .3 * (Math.sin(t / 220 + d.a * 2) + 1) / 2;
-    cx.globalAlpha = al; cx.beginPath(); cx.arc(d.x + d.c * off, d.y + Math.sin(d.a) * off, sz, 0, 6.2832); cx.fill();
+    let ox = d.c * off, oy = Math.sin(d.a) * off, tS = 0, tA = 0, tX = 0, tY = 0;
+    if (str > .005) {   // dots near the cursor grow, brighten and ease away; rings travel outward while it moves and calm down when it stops
+      const dx = d.x - hx2, dy = d.y - hy2, dist = Math.hypot(dx, dy), f = Math.exp(-(dist * dist) / 28800) * str;
+      if (f > .004) {
+        const wv = (Math.sin(t / 220 - dist / 20) + 1) / 2, wm = .5 + (wv - .5) * act, u = dist || 1, push = f * (3 + 6 * wm);
+        tS = f * (2.5 + 5 * wm); tA = f * (.3 + .35 * wm); tX = dx / u * push; tY = dy / u * push;
+      }
+    }
+    if (tS || d.hs > .01) {   // each dot eases toward its target on its own, so changes trail softly instead of snapping
+      const k = ez(dt, tS > d.hs ? 120 : 320);
+      d.hs += (tS - d.hs) * k; d.ha += (tA - d.ha) * k; d.hox += (tX - d.hox) * k; d.hoy += (tY - d.hoy) * k;
+      sz += d.hs; al = Math.min(1, al + d.ha); ox += d.hox; oy += d.hoy;
+    } else { d.hs = d.ha = d.hox = d.hoy = 0; }
+    cx.globalAlpha = al; cx.beginPath(); cx.arc(d.x + ox, d.y + oy, sz, 0, 6.2832); cx.fill();
   }
   cx.globalAlpha = 1; requestAnimationFrame(draw);
 }
