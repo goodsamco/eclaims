@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dictation</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Poppins:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#050805;--panel:rgba(255,255,255,.06);--line:rgba(255,255,255,.12);--text:#fff;--muted:#9a9a9a;--good:hsl(111,100%,60%);--bad:#ff4d4d;--warn:#f0a000;--onaccent:#000;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%}
+body{background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;display:flex;justify-content:center;overflow:hidden}
+.app{--accent:var(--good);width:100%;max-width:520px;height:100%;display:flex;flex-direction:column;align-items:center;padding:14px 20px 16px}
+.app.weak{--accent:var(--warn)}
+.app.off{--accent:var(--bad)}
+
+.conn{display:flex;align-items:center;gap:9px;padding:9px 16px;border-radius:999px;background:var(--panel);border:1px solid var(--line);font:600 .8rem Inter,sans-serif}
+.light{width:10px;height:10px;border-radius:50%;background:var(--accent);box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 25%,transparent),0 0 12px var(--accent)}
+.app.weak .light{animation:pulse .8s ease-in-out infinite alternate}
+@keyframes pulse{from{opacity:.35}to{opacity:1}}
+
+.stage{flex:1;min-height:0;width:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px}
+.orb{position:relative;width:min(80vw,320px,52vh);aspect-ratio:1;border:0;background:none;padding:0;cursor:pointer;border-radius:50%}
+.orb[disabled]{cursor:default}
+.orb canvas{width:100%;height:100%;display:block}
+.core{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--accent);pointer-events:none}
+.core svg{width:38%;height:38%}
+.hint{font-size:.85rem;color:var(--muted);text-align:center;height:3.4em;max-width:30ch}
+.hint.err{color:var(--bad)}
+.hint strong{display:block;color:var(--accent);font-weight:600;font-size:1.05rem}
+
+.result{display:none;flex:1;min-height:0;width:100%;flex-direction:column;gap:14px;padding-top:16px}
+.app.done .stage{display:none}
+.app.done .result{display:flex}
+.card{flex:1;min-height:0;overflow-y:auto;display:flex;flex-direction:column;padding:12px 4px}
+#txt{margin:auto 0;text-align:left;font:600 1.15rem/1.6 Poppins,sans-serif;letter-spacing:.3px;word-break:break-word}
+.w{display:inline-block;margin-right:.32em;animation:rev 1.2s ease-out both}
+@keyframes rev{from{filter:blur(12px);opacity:0;transform:translateY(4px)}to{filter:blur(0);opacity:1;transform:none}}
+.fin{display:block;margin-top:14px;color:var(--muted);font:400 .75rem Inter,sans-serif}
+.row{display:flex;gap:10px}
+.btn{flex:1;height:56px;border-radius:28px;border:1px solid var(--line);background:transparent;color:var(--text);font:600 .95rem Inter,sans-serif;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn.main{background:var(--accent);border-color:var(--accent);color:var(--onaccent)}
+.btn:active{transform:scale(.97)}
+.btn svg{width:18px;height:18px}
+.btn:focus-visible,.orb:focus-visible,.hb:focus-visible,.hi:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+#mic{position:absolute;left:-9999px;top:0;width:1px;height:1px;opacity:0;font-size:16px}
+
+/* desktop history: invisible until the top-right corner is hovered */
+.hz{display:none;position:fixed;top:0;right:0;padding:14px 16px 0 40px;opacity:0;transition:opacity .25s;z-index:10}
+body.desk .hz{display:block}
+.hz:hover,.hz:focus-within{opacity:1}
+.hb{width:40px;height:40px;margin-left:auto;display:flex;align-items:center;justify-content:center;border-radius:50%;border:1px solid var(--line);background:var(--panel);color:var(--accent);cursor:pointer}
+.hb svg{width:18px;height:18px}
+.hp{display:none;position:absolute;right:16px;top:54px;width:min(340px,86vw);padding:10px;border-radius:24px;background:rgba(13,13,13,.92);border:1px solid var(--line);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.hz:hover .hp,.hz:focus-within .hp{display:block}
+.hp h2{margin:4px 8px 8px;font:600 .75rem Inter,sans-serif;color:var(--muted)}
+.hi{display:block;width:100%;text-align:left;padding:10px 12px;border:0;border-radius:16px;background:none;color:var(--text);cursor:pointer;font:600 .8rem/1.4 Poppins,sans-serif}
+.hi:hover{background:var(--panel)}
+.hi span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.hi small{display:block;margin-top:2px;color:var(--muted);font:400 .7rem Inter,sans-serif}
+.empty{padding:10px 12px;color:var(--muted);font-size:.8rem}
+@media (prefers-reduced-motion:reduce){.w{animation:none}}
+</style>
+</head>
+<body>
+<div class="hz" id="hz">
+  <button class="hb" aria-label="Copy history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></button>
+  <div class="hp"><h2>Last 5 copied</h2><div id="hl"></div></div>
+</div>
+
+<div class="app" id="app">
+  <div class="conn"><span class="light"></span><span id="connLbl">Disconnected</span></div>
+
+  <section class="stage">
+    <button class="orb" id="orb" aria-label="Start dictation">
+      <canvas id="mx" width="640" height="640"></canvas>
+      <div class="core" id="core"></div>
+    </button>
+    <div class="hint" id="hint"></div>
+  </section>
+
+  <section class="result">
+    <div class="card"><div id="txt"></div></div>
+    <div class="row">
+      <button class="btn main" id="bCopy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/></svg><span>Copy</span></button>
+      <button class="btn" id="bReset"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8M3 3v5h5"/></svg>Reset</button>
+    </div>
+  </section>
+
+  <textarea id="mic" autocomplete="off" autocapitalize="characters" spellcheck="false" aria-label="Dictation input"></textarea>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getDatabase, ref, set, get, push, remove, update, onValue, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+const $ = i => document.getElementById(i);
+const app = $('app'), orb = $('orb'), core = $('core'), hint = $('hint'), mic = $('mic');
+const MIC = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="3" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+
+/* ---------- identity: same user retrieval as the other pages ---------- */
+const userId = localStorage.getItem("userId");
+const q = new URLSearchParams(location.search).get('role');   // ?role=phone or ?role=desktop to test on one machine
+const role = (q === 'phone' || q === 'desktop') ? q
+  : (matchMedia('(pointer:coarse)').matches || /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent)) ? 'phone' : 'desktop';
+const deviceId = sessionStorage.getItem('dictDevice') || (role + '_' + Math.random().toString(36).slice(2, 9));
+sessionStorage.setItem('dictDevice', deviceId);
+if (role === 'desktop') document.body.classList.add('desk');
+
+/* ---------- same database connection ---------- */
+let db, rtdb;
+try {
+  const app_ = initializeApp({
+    apiKey: "AIzaSyDaeNQF4qmW0vvwxUPp_NztnT0hoLzm1BQ",
+    authDomain: "svls-289ee.firebaseapp.com",
+    databaseURL: "https://svls-289ee-default-rtdb.firebaseio.com",
+    projectId: "svls-289ee",
+    storageBucket: "svls-289ee.firebasestorage.app",
+    messagingSenderId: "500705386198",
+    appId: "1:500705386198:web:96f189662bc2aa99cf7377",
+    measurementId: "G-5TNBMQ2HN5"
+  });
+  db = getFirestore(app_); rtdb = getDatabase(app_);
+} catch (e) { console.warn("Database unavailable."); }
+
+const base = `dictation/${userId}`;
+let state = 'idle', link = 'off', dictated = '', finish = '', prevRemote = '';
+let offset = 0, dbOnline = true, offlineSince = 0, flaps = [], devices = {};
+
+/* ---------- helpers ---------- */
+const clean = s => s.toUpperCase().replace(/[^A-Z0-9\s]/g, '').replace(/\s+/g, ' ').trim();
+const two = n => String(n).padStart(2, '0');
+const clock = d => { let h = d.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return two(h) + two(d.getMinutes()) + ' ' + ap; };
+
+/* ---------- UI state ---------- */
+function paint() {
+  app.classList.toggle('off', link === 'off');
+  app.classList.toggle('weak', link === 'weak');
+  app.classList.toggle('done', state === 'done');
+  $('connLbl').textContent = link === 'off' ? 'Disconnected' : link === 'weak' ? 'Connecting' : 'Connected';
+  orb.disabled = false; orb.setAttribute('aria-label', 'Start dictation'); hint.className = 'hint';
+  if (state === 'done') return;
+  const other = role === 'phone' ? 'desktop' : 'phone';
+  if (!userId) { core.innerHTML = role === 'phone' ? MIC : ''; hint.textContent = 'No account found. Sign in from your main app.'; hint.className = 'hint err'; orb.disabled = true; return; }
+  if (role === 'phone') {
+    if (state === 'live') { core.innerHTML = ''; hint.innerHTML = '<strong>Listening</strong>Tap to finish'; orb.setAttribute('aria-label', 'Finish dictation'); return; }
+    core.innerHTML = MIC;
+    if (link === 'on') hint.textContent = 'Tap to dictate';
+    else { orb.disabled = true; if (link === 'weak') hint.textContent = 'Connection is unstable'; else { hint.textContent = 'Open this page on your ' + other + ' to connect'; hint.className = 'hint err'; } }
+  } else {
+    orb.disabled = true; core.innerHTML = '';
+    if (state === 'live') hint.innerHTML = '<strong>Listening</strong>';
+    else if (link === 'on') hint.textContent = 'Use your phone to dictate';
+    else if (link === 'weak') hint.textContent = 'Connection is unstable';
+    else { hint.textContent = 'Open this page on your ' + other + ' to connect'; hint.className = 'hint err'; }
+  }
+}
+
+function showResult() {
+  state = 'done';
+  const box = $('txt'); box.textContent = '';
+  (dictated ? dictated.split(' ') : []).forEach((w, i) => {
+    const s = document.createElement('span'); s.className = 'w'; s.style.animationDelay = (i * 130) + 'ms'; s.textContent = w; box.appendChild(s);
+  });
+  const f = document.createElement('span'); f.className = 'fin'; f.textContent = finish; box.appendChild(f);
+  paint();
+}
+
+/* ---------- connection: presence + heartbeat ---------- */
+function evaluate() {
+  const now = Date.now() + offset;
+  flaps = flaps.filter(t => Date.now() - t < 30000);
+  const fresh = r => Object.values(devices).filter(d => d && d.role === r && d.ts && now - d.ts < 20000);
+  const other = fresh(role === 'phone' ? 'desktop' : 'phone');
+  let l = 'off';
+  if (!dbOnline) l = (Date.now() - offlineSince < 15000) ? 'weak' : 'off';
+  else if (other.length) {
+    const age = Math.min(...other.map(x => now - x.ts));
+    l = (age > 9000 || flaps.length >= 2) ? 'weak' : 'on';
+  }
+  if (!userId) l = 'off';
+  if (l !== link) {
+    link = l;
+    if (l === 'off' && state === 'live') { state = 'idle'; mic.blur(); pushSession('idle'); }
+    paint();
+  }
+}
+function pushSession(status, text = '', fin = '') {
+  if (rtdb && userId) set(ref(rtdb, base + '/session'), { status, text, finish: fin, by: deviceId, at: serverTimestamp() }).catch(() => {});
+}
+
+if (rtdb && userId) {
+  const me = ref(rtdb, `${base}/devices/${deviceId}`);
+  onValue(ref(rtdb, '.info/serverTimeOffset'), s => { offset = s.val() || 0; });
+  onValue(ref(rtdb, '.info/connected'), s => {
+    const on = !!s.val();
+    if (on !== dbOnline) { flaps.push(Date.now()); if (!on) offlineSince = Date.now(); }
+    dbOnline = on;
+    if (on) { set(me, { role, ts: serverTimestamp() }); onDisconnect(me).remove(); }
+    evaluate();
+  });
+  setInterval(() => { if (dbOnline) update(me, { ts: serverTimestamp() }).catch(() => {}); }, 4000);
+  onValue(ref(rtdb, base + '/devices'), s => { devices = s.val() || {}; evaluate(); });
+  setInterval(evaluate, 1000);
+
+  /* shared session: phone writes, desktop reads, either can reset */
+  onValue(ref(rtdb, base + '/session'), s => {
+    const v = s.val() || { status: 'idle' };
+    if (role === 'desktop') {
+      if (v.status === 'done') { dictated = clean(v.text || ''); finish = String(v.finish || ''); if (prevRemote !== 'done') showResult(); }
+      else { state = v.status === 'live' ? 'live' : 'idle'; paint(); }
+    } else if (v.status === 'idle' && state === 'done') { state = 'idle'; paint(); }
+    prevRemote = v.status;
+  });
+}
+
+/* ---------- account styling (same accounts doc) ---------- */
+if (userId && db) {
+  onSnapshot(doc(db, "accounts", userId), snap => {
+    if (snap.exists() && snap.data().btnValue) document.documentElement.style.setProperty('--good', snap.data().btnValue);
+  });
+}
+
+/* ---------- actions ---------- */
+orb.addEventListener('click', () => {
+  if (role !== 'phone' || !userId) return;
+  if (state === 'idle' && link === 'on') { state = 'live'; mic.value = ''; paint(); mic.focus(); pushSession('live'); }
+  else if (state === 'live') { dictated = clean(mic.value); finish = clock(new Date()); mic.blur(); showResult(); pushSession('done', dictated, finish); }
+});
+mic.addEventListener('input', () => {
+  const v = mic.value.toUpperCase().replace(/[^A-Z0-9\s]/g, '').replace(/\s{2,}/g, ' ');
+  if (v !== mic.value) mic.value = v;
+});
+
+async function copyText(t, btnSpan) {
+  try { await navigator.clipboard.writeText(t); } catch (e) {}
+  if (btnSpan) { const o = btnSpan.textContent; btnSpan.textContent = 'Copied'; setTimeout(() => { btnSpan.textContent = o; }, 1200); }
+}
+$('bCopy').addEventListener('click', async () => {
+  const t = (dictated + ' ' + finish).trim();
+  copyText(t, $('bCopy').querySelector('span'));
+  if (role === 'desktop') logHistory(dictated, finish);
+});
+$('bReset').addEventListener('click', () => { state = 'idle'; dictated = ''; finish = ''; mic.value = ''; paint(); pushSession('idle'); });
+
+/* ---------- desktop copy history: keep 5, delete the rest ---------- */
+async function logHistory(text, fin) {
+  if (!rtdb || !userId || !text) return;
+  try {
+    const h = ref(rtdb, base + '/history');
+    await push(h, { text, finish: fin, copiedAt: serverTimestamp() });
+    const snap = await get(h), items = [];
+    snap.forEach(c => { items.push({ k: c.key, t: c.val().copiedAt || Date.now() }); });
+    items.sort((a, b) => b.t - a.t);
+    items.slice(5).forEach(i => remove(ref(rtdb, `${base}/history/${i.k}`)));
+  } catch (e) { console.warn("History sync failed."); }
+}
+if (role === 'desktop' && rtdb && userId) {
+  onValue(ref(rtdb, base + '/history'), s => {
+    const list = [], box = $('hl'); box.textContent = '';
+    s.forEach(c => { list.push(c.val()); });
+    list.sort((a, b) => (b.copiedAt || 0) - (a.copiedAt || 0));
+    if (!list.length) { const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'Nothing copied yet'; box.appendChild(e); return; }
+    list.slice(0, 5).forEach(it => {
+      const b = document.createElement('button'); b.className = 'hi';
+      const sp = document.createElement('span'); sp.textContent = it.text || '';
+      const sm = document.createElement('small'); sm.textContent = it.copiedAt ? clock(new Date(it.copiedAt)) : '';
+      b.append(sp, sm);
+      b.addEventListener('click', () => { copyText((it.text + ' ' + (it.finish || '')).trim()); sm.textContent = 'Copied'; setTimeout(() => { sm.textContent = it.copiedAt ? clock(new Date(it.copiedAt)) : ''; }, 1000); });
+      box.appendChild(b);
+    });
+  });
+}
+
+/* ---------- keyboard-safe layout ---------- */
+if (window.visualViewport) { const vv = window.visualViewport; const fit = () => { app.style.height = vv.height + 'px'; }; vv.addEventListener('resize', fit); fit(); }
+
+/* ---------- dot matrix ---------- */
+const cv = $('mx'), cx = cv.getContext('2d'), S = 640, C = S / 2, dots = [];
+for (let r = 22; r <= 300; r += 29) { const n = Math.max(1, Math.round(2 * Math.PI * r / 26)); for (let k = 0; k < n; k++) { const a = k / n * 6.2832; dots.push({ x: C + r * Math.cos(a), y: C + r * Math.sin(a), r, a }); } }
+const reduce = matchMedia('(prefers-reduced-motion:reduce)').matches;
+function draw(t) {
+  const c = getComputedStyle(app).getPropertyValue('--accent').trim() || '#4cff3b', live = state === 'live';
+  cx.clearRect(0, 0, S, S); cx.fillStyle = c;
+  for (const d of dots) {
+    let sz = 3.2, al = 0.3;
+    if (live) { const v = reduce ? 0.5 : (Math.sin(t / 240 - d.r / 26 + Math.sin(d.a * 3 + t / 800) * 1.3) + 1) / 2; sz = 2.6 + v * 6.5; al = 0.2 + v * 0.8; }
+    else if (link === 'off') al = 0.4;
+    else if (link === 'weak') al = 0.25 + 0.3 * (Math.sin(t / 220 + d.a * 2) + 1) / 2;
+    cx.globalAlpha = al; cx.beginPath(); cx.arc(d.x, d.y, sz, 0, 6.2832); cx.fill();
+  }
+  cx.globalAlpha = 1; requestAnimationFrame(draw);
+}
+paint(); requestAnimationFrame(draw);
+</script>
+</body>
+</html>
