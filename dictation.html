@@ -64,6 +64,17 @@ body.desk .hz{display:block}
 .hi span{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .hi small{display:block;margin-top:2px;color:var(--muted);font:400 .7rem Inter,sans-serif}
 .empty{padding:10px 12px;color:var(--muted);font-size:.8rem}
+.w.u-bad,.w.u-warn{cursor:pointer;text-decoration:underline dashed;text-decoration-thickness:1px;text-underline-offset:6px}
+.w.u-bad{text-decoration-color:color-mix(in srgb,var(--bad) 65%,transparent)}
+.w.u-warn{text-decoration-color:color-mix(in srgb,var(--warn) 70%,transparent)}
+.ok{display:inline-block;width:.95rem;height:.95rem;margin-left:7px;vertical-align:-.2rem;color:var(--good)}
+.ok svg{width:100%;height:100%;display:block}
+.pop{position:fixed;z-index:30;min-width:170px;max-width:260px;padding:8px;border-radius:20px;background:rgba(18,18,18,.96);border:1px solid var(--line);box-shadow:0 12px 36px rgba(0,0,0,.6);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px)}
+.pop[hidden]{display:none}
+.pop h3{margin:4px 8px 6px;font:400 .72rem/1.3 Inter,sans-serif;color:var(--muted)}
+.pop button{display:block;width:100%;text-align:left;padding:9px 12px;border:0;border-radius:14px;background:none;color:var(--text);font:600 .8rem Poppins,sans-serif;cursor:pointer}
+.pop button:hover,.pop button:focus-visible{background:var(--panel);outline:none}
+.pop button.keep{color:var(--muted);font:400 .75rem Inter,sans-serif}
 @media (prefers-reduced-motion:reduce){.w{animation:none}}
 </style>
 </head>
@@ -147,15 +158,130 @@ const PHRASES = [
   ['ASSOCIATED WITH', ['ASSOCIATE WITH', 'ASSOCIATING WITH']],
   ['NO MEDS TAKEN', ['NO MED TAKEN', 'NO MEDS TAKE', 'NO MEDICINE TAKEN']],
   ['THUS THIS ADMISSION', ['THUS THE ADMISSION', 'THUS THIS A MISSION', 'THUS THIS AD MISSION', 'THIS THIS ADMISSION']],
-  ['PROMPTED THIS ADMISSION', ['PROMPT THIS ADMISSION', 'PROMPTED THE ADMISSION', 'PROMPTED THIS A MISSION', 'PROMPTED THIS AD MISSION', 'PROMPTING THIS ADMISSION']]
+  ['PROMPTED THIS ADMISSION', ['PROMPT THIS ADMISSION', 'PROMPTED THE ADMISSION', 'PROMPTED THIS A MISSION', 'PROMPTED THIS AD MISSION', 'PROMPTING THIS ADMISSION']],
+  ['NO MEDS', ['NOMADS', 'NO MADS', 'NO MEADS', 'NOMEDS']]
 ].map(([to, from]) => [new RegExp('\\b(?:' + from.join('|') + ')\\b', 'g'), to]);
-const fix = t => PHRASES.reduce((x, [re, to]) => x.replace(re, to), t);
+const NUMW = {ZERO:0,ONE:1,TWO:2,THREE:3,FOUR:4,FIVE:5,SIX:6,SEVEN:7,EIGHT:8,NINE:9,TEN:10,ELEVEN:11,TWELVE:12,THIRTEEN:13,FOURTEEN:14,FIFTEEN:15,SIXTEEN:16,SEVENTEEN:17,EIGHTEEN:18,NINETEEN:19,TWENTY:20,THIRTY:30,FORTY:40,FIFTY:50,SIXTY:60,SEVENTY:70,EIGHTY:80,NINETY:90};
+const NUMRE = new RegExp('\\b((?:TWENTY|THIRTY|FORTY|FIFTY|SIXTY|SEVENTY|EIGHTY|NINETY)(?: (?:ONE|TWO|THREE|FOUR|FIVE|SIX|SEVEN|EIGHT|NINE))?|' + Object.keys(NUMW).join('|') + ') (YEARS?|MONTHS?|WEEKS?|DAYS?|HOURS?)\\b', 'g');
+const numFix = t => t.replace(NUMRE, (m, n, u) => n.split(' ').reduce((a, w) => a + NUMW[w], 0) + ' ' + u);   // FIVE MONTHS -> 5 MONTHS
+const fix = t => PHRASES.reduce((x, [re, to]) => x.replace(re, to), numFix(t));
 const two = n => String(n).padStart(2, '0');
-const clock = d => { let h = d.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return two(h) + two(d.getMinutes()) + ' ' + ap; };
+const clock = d => { let h = d.getHours(); const ap = h >= 12 ? 'PM' : 'AM'; h = h % 12 || 12; return two(h) + ':' + two(d.getMinutes()) + ' ' + ap; };
+
+/* ---------- medical words + quiet review marks ---------- */
+const LEX = new Set(`ONSET DYSPNEA DIAPHORESIS TACHYCARDIA BRADYCARDIA TACHYPNEA HEMOPTYSIS HEMATEMESIS MELENA HEMATURIA DYSURIA POLYURIA POLYDIPSIA POLYPHAGIA PALPITATIONS SYNCOPE VERTIGO NAUSEA PRURITUS EDEMA ERYTHEMA CYANOSIS PALLOR JAUNDICE LETHARGY MALAISE ANOREXIA DYSPHAGIA ODYNOPHAGIA ORTHOPNEA PAROXYSMAL ARTHRALGIA MYALGIA PHOTOPHOBIA HEMIPARESIS HEMIPLEGIA PARESTHESIA AFEBRILE
+THORACIC LUMBAR CERVICAL SACRAL CLAVICLE SCAPULA HUMERUS FEMUR TIBIA FIBULA PATELLA METATARSAL INGUINAL SUPRAPUBIC RETROSTERNAL PRECORDIAL SUBCOSTAL EPIGASTRIC EPIGASTRIUM HYPOCHONDRIAC SUBCUTANEOUS
+HYPERTENSION HYPOTENSION MELLITUS PNEUMONIA BRONCHITIS COPD TUBERCULOSIS PTB CARDIOMYOPATHY MYOCARDIAL INFARCTION ANGINA ARRHYTHMIA FIBRILLATION CHF NEPHROLITHIASIS UROLITHIASIS CHOLELITHIASIS CHOLECYSTITIS APPENDICITIS GASTROENTERITIS GASTRITIS HEPATITIS CIRRHOSIS PYELONEPHRITIS CELLULITIS OSTEOARTHRITIS DENGUE LEPTOSPIROSIS TYPHOID SEPSIS CVA TIA ANEMIA THROMBOCYTOPENIA LEUKOCYTOSIS
+MEFENAMIC PARACETAMOL IBUPROFEN NAPROXEN DICLOFENAC CELECOXIB TRAMADOL AMOXICILLIN CEFTRIAXONE CEFUROXIME AZITHROMYCIN CIPROFLOXACIN LEVOFLOXACIN METRONIDAZOLE OMEPRAZOLE RANITIDINE METFORMIN GLIMEPIRIDE AMLODIPINE LOSARTAN ATENOLOL FUROSEMIDE SIMVASTATIN ATORVASTATIN CLOPIDOGREL SALBUTAMOL NEBULIZATION DEXAMETHASONE HYDROCORTISONE PREDNISONE LORATADINE CETIRIZINE
+ECG EKG TROPONIN CBC URINALYSIS XRAY RADIOGRAPH ULTRASOUND CT MRI CREATININE BUN SGPT SGOT HBA1C FBS RBS
+MG ML LPM BPM IV IM PO PRN BID TID QID HS STAT NGT FOLEY ER ICU OPD SPO2 O2 BP HR RR TEMP MEDS`.split(/\s+/));
+const ignored = new Set(); try { JSON.parse(localStorage.getItem('dictIgnore') || '[]').forEach(k => ignored.add(k)); } catch (e) {}
+let typo = null, dictReady = false, marksCache = [];
+
+/* general English dictionary (Typo.js + Hunspell en_US), loaded in the background; marks stay quiet until it is ready */
+function loadScript(urls) { return urls.reduce((p, u) => p.catch(() => new Promise((res, rej) => { const el = document.createElement('script'); el.src = u; el.onload = res; el.onerror = rej; document.head.appendChild(el); })), Promise.reject()); }
+async function loadDict() {
+  try {
+    await loadScript(['https://cdnjs.cloudflare.com/ajax/libs/typo-js/1.2.4/typo.min.js', 'https://cdn.jsdelivr.net/npm/typo-js@1.2.4/typo.js']);
+    for (const v of ['3.2.0', '4.0.0']) {
+      try {
+        const [aff, dic] = await Promise.all(['aff', 'dic'].map(x => fetch(`https://cdn.jsdelivr.net/npm/dictionary-en@${v}/index.${x}`).then(r => { if (!r.ok) throw 0; return r.text(); })));
+        typo = new Typo('en_US', aff, dic, { platform: 'any' }); dictReady = true;
+        if (state === 'done') renderResult(false);
+        return;
+      } catch (e) {}
+    }
+  } catch (e) { console.warn('Dictionary unavailable, spelling marks are off.'); }
+}
+setTimeout(loadDict, 2500);
+
+function known(w) {
+  if (/^\d+([A-Z]{0,3}|\/\d+)?$/.test(w) || w.length <= 2) return true;
+  if (LEX.has(w) || LEX.has(w.replace(/S$/, ''))) return true;
+  if (!dictReady) return true;
+  const l = w.toLowerCase();
+  return typo.check(l) || typo.check(l[0].toUpperCase() + l.slice(1));
+}
+function lev(a, b) { const d = Array.from({ length: a.length + 1 }, (_, i) => [i]); for (let j = 1; j <= b.length; j++) d[0][j] = j; for (let i = 1; i <= a.length; i++) for (let j = 1; j <= b.length; j++) d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)); return d[a.length][b.length]; }
+function suggest(w) {
+  const r = [...LEX].filter(t => t.length > 3 && Math.abs(t.length - w.length) <= 2).map(t => [lev(t, w), t]).filter(x => x[0] <= 2).sort((a, b) => a[0] - b[0]).map(x => x[1]).slice(0, 3);
+  if (typo) { try { typo.suggest(w.toLowerCase(), 4).forEach(x => { const u = x.toUpperCase(); if (!r.includes(u)) r.push(u); }); } catch (e) {} }
+  return r.slice(0, 4);
+}
+
+const UNIT = /^(YEARS?|MONTHS?|WEEKS?|DAYS?|HOURS?)$/, NUM = /^\d+$/;
+const DANGLE = new Set('OF WITH TO AND OR THE A AN IN ON FOR BY AT FROM THAN BUT'.split(' '));
+const NONUM = new Set('A AN THE SEVERAL FEW MANY EVERY EACH PER LAST NEXT PAST THIS THAT THESE THOSE COUPLE'.split(' '));
+/* red = unknown spelling, orange = unclear or inconsistent wording */
+function analyze(words) {
+  const marks = [], n = words.length;
+  const add = m => { m.key = m.type + ':' + words.slice(m.s, m.e).join(' '); if (!ignored.has(m.key)) marks.push(m); };
+  const warn = (s, e, note, sugg) => add({ type: 'warn', s, e, note, sugg: sugg || [] });
+  const bad = words.map(w => !known(w));
+  for (let i = 0; i < n;) {
+    if (!bad[i]) { i++; continue; }
+    let j = i; while (j < n && bad[j]) j++;
+    if (j - i >= 3) warn(i, j, 'This part may be unclear', [{ label: 'Remove this part', text: '' }]);
+    else for (let k = i; k < j; k++) add({ type: 'bad', s: k, e: k + 1, sugg: suggest(words[k]).map(t => ({ label: t, text: t })) });
+    i = j;
+  }
+  for (let i = 0; i < n; i++) {
+    const w = words[i], nx = words[i + 1];
+    if (nx && w === nx && !NUM.test(w)) warn(i, i + 2, 'Repeated word', [{ label: 'Keep one "' + w + '"', text: w }]);
+    if (NUM.test(w) && nx && UNIT.test(nx)) {
+      const pl = /S$/.test(nx), one = +w === 1;
+      if (one && pl) warn(i, i + 2, 'Singular expected', [{ label: w + ' ' + nx.slice(0, -1), text: w + ' ' + nx.slice(0, -1) }]);
+      else if (!one && !pl) warn(i, i + 2, 'Plural expected', [{ label: w + ' ' + nx + 'S', text: w + ' ' + nx + 'S' }]);
+    }
+    if (UNIT.test(w) && /S$/.test(w) && !(i > 0 && (NUM.test(words[i - 1]) || NONUM.has(words[i - 1])))) warn(i, i + 1, 'Number missing before ' + w);
+    if (w === 'ASSOCIATED' && nx && !['WITH', 'SYMPTOMS', 'SIGNS', 'TO', 'FACTORS', 'FEATURES', 'COMPLAINTS'].includes(nx)) warn(i, i + 2, 'Did you mean ASSOCIATED WITH?', [{ label: 'ASSOCIATED WITH ' + nx, text: 'ASSOCIATED WITH ' + nx }]);
+  }
+  if (n > 1 && DANGLE.has(words[n - 1])) warn(n - 1, n, 'Sentence ends unfinished', [{ label: 'Remove "' + words[n - 1] + '"', text: '' }]);
+  return marks;
+}
+const CHECK = '<svg viewBox="0 0 24 24" role="img" aria-label="Clear"><circle cx="12" cy="12" r="12" fill="currentColor"/><path d="M7 12.5l3.2 3.2L17 9" fill="none" stroke="#000" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+function renderResult(animate) {
+  const box = $('txt'); box.textContent = '';
+  const words = dictated ? dictated.split(' ') : [];
+  marksCache = analyze(words);
+  const wm = [];
+  marksCache.forEach((m, mi) => { if (m.type === 'warn') for (let k = m.s; k < m.e; k++) wm[k] = mi; });
+  marksCache.forEach((m, mi) => { if (m.type === 'bad') wm[m.s] = mi; });
+  words.forEach((w, i) => {
+    const sp = document.createElement('span'); sp.className = 'w'; sp.textContent = w;
+    if (animate) sp.style.animationDelay = (i * 45) + 'ms'; else sp.style.animation = 'none';
+    if (wm[i] !== undefined) { sp.dataset.m = wm[i]; sp.classList.add(marksCache[wm[i]].type === 'bad' ? 'u-bad' : 'u-warn'); }
+    box.appendChild(sp);
+  });
+  const f = document.createElement('span'); f.className = 'fin'; f.textContent = finish;
+  if (words.length && dictReady && !marksCache.length) { const ok = document.createElement('span'); ok.className = 'ok'; ok.innerHTML = CHECK; f.appendChild(ok); }
+  box.appendChild(f);
+}
+/* tap an underlined word for suggestions */
+const pop = document.createElement('div'); pop.className = 'pop'; pop.hidden = true; document.body.appendChild(pop);
+function applyFix(m, text) {
+  const w = dictated.split(' '); w.splice(m.s, m.e - m.s, ...(text ? text.split(' ') : []));
+  dictated = fix(w.join(' ').trim()); pop.hidden = true; renderResult(false); pushSession('done', dictated, finish);
+}
+function openPop(m, el) {
+  pop.textContent = '';
+  const h = document.createElement('h3'); h.textContent = m.type === 'bad' ? 'Possible spelling issue' : (m.note || 'Unclear wording'); pop.appendChild(h);
+  m.sugg.forEach(sg => { const b = document.createElement('button'); b.textContent = sg.label; b.addEventListener('click', () => applyFix(m, sg.text)); pop.appendChild(b); });
+  const k = document.createElement('button'); k.className = 'keep'; k.textContent = 'Keep as is';
+  k.addEventListener('click', () => { ignored.add(m.key); try { localStorage.setItem('dictIgnore', JSON.stringify([...ignored])); } catch (e) {} pop.hidden = true; renderResult(false); });
+  pop.appendChild(k); pop.hidden = false;
+  const r = el.getBoundingClientRect();
+  pop.style.left = Math.max(8, Math.min(innerWidth - pop.offsetWidth - 8, r.left)) + 'px';
+  pop.style.top = Math.max(8, Math.min(innerHeight - pop.offsetHeight - 8, r.bottom + 8)) + 'px';
+}
+$('txt').addEventListener('click', e => { const el = e.target.closest('.w[data-m]'); if (el) openPop(marksCache[el.dataset.m], el); });
+document.addEventListener('pointerdown', e => { if (!pop.hidden && !pop.contains(e.target) && !e.target.closest('.w[data-m]')) pop.hidden = true; });
+
 
 /* ---------- UI state ---------- */
 function paint() {
   if (state !== 'live') $('lt').textContent = '';
+  if (state !== 'done') document.querySelectorAll('.pop').forEach(x => { x.hidden = true; });
   app.classList.toggle('off', link === 'off');
   app.classList.toggle('weak', link === 'weak');
   app.classList.toggle('done', state === 'done');
@@ -178,15 +304,7 @@ function paint() {
   }
 }
 
-function showResult() {
-  state = 'done';
-  const box = $('txt'); box.textContent = '';
-  (dictated ? dictated.split(' ') : []).forEach((w, i) => {
-    const s = document.createElement('span'); s.className = 'w'; s.style.animationDelay = (i * 45) + 'ms'; s.textContent = w; box.appendChild(s);
-  });
-  const f = document.createElement('span'); f.className = 'fin'; f.textContent = finish; box.appendChild(f);
-  paint();
-}
+function showResult() { state = 'done'; renderResult(true); paint(); }
 
 /* ---------- connection: presence + heartbeat ---------- */
 function evaluate() {
@@ -232,9 +350,10 @@ if (rtdb && userId) {
   onValue(ref(rtdb, base + '/session'), s => {
     const v = s.val() || { status: 'idle' };
     if (role === 'desktop') {
-      if (v.status === 'done') { dictated = clean(v.text || ''); finish = String(v.finish || ''); if (prevRemote !== 'done') showResult(); }
+      if (v.status === 'done') { const t = clean(v.text || ''); finish = String(v.finish || ''); if (prevRemote !== 'done') { dictated = t; showResult(); } else if (t !== dictated) { dictated = t; renderResult(false); } }
       else { state = v.status === 'live' ? 'live' : 'idle'; paint(); }
     } else if (v.status === 'idle' && state === 'done') { state = 'idle'; paint(); }
+    else if (v.status === 'done' && state === 'done') { const t = clean(v.text || ''); if (t !== dictated) { dictated = t; renderResult(false); } }
     prevRemote = v.status;
   });
 }
