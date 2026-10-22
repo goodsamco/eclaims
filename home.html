@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Clinical Launchpad</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700\&family=Poppins:wght@600;700\&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --primary:#00e676;
@@ -107,12 +107,12 @@ body{
   transition:transform .45s var(--spring),box-shadow .3s ease;
   overflow:hidden;
 }
-.icon::after{ /* glossy sheen */
+.icon[data-fallback]::before{content:attr(data-fallback);font-size:1.1rem;font-weight:700;color:#fff;position:relative;z-index:1}\n.icon::after{ /* glossy sheen */
   content:"";position:absolute;inset:0;
   background:linear-gradient(160deg,rgba(255,255,255,.28) 0%,rgba(255,255,255,0) 45%);
   pointer-events:none;
 }
-.icon img{width:52%;height:52%;object-fit:contain;filter:drop-shadow(0 2px 3px rgba(0,0,0,.35));transition:transform .45s var(--spring)}
+.icon img{width:52%;height:52%;object-fit:contain;filter:brightness(0) invert(1) drop-shadow(0 2px 3px rgba(0,0,0,.35));transition:transform .45s var(--spring)}
 .tile:active .icon{transform:scale(.84)}
 .stage.is-open .tile:hover .icon img{transform:scale(1.1) rotate(-4deg)}
 .label{
@@ -163,11 +163,13 @@ body{
 </div>
 <script type="module" src="https://goodsamco.github.io/eclaims/esoa.js"></script>
 <script type="module">
-import { initializeApp } from "https\://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getFirestore, doc, onSnapshot } from "https\://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-import { getDatabase, ref, set } from "https\://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getFirestore, doc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getDatabase, ref, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 /* ---------- Apps (edit hrefs here) ---------- */
-const ic = (name, set = 'lucide') => `https\://api.iconify.design/${set}:${name}.svg?color=%23ffffff`;
+const ic = (name, set = 'lucide') => set === 'mdi'
+  ? `https://api.iconify.design/mdi/${name}.svg?color=%23ffffff`
+  : `https://cdn.jsdelivr.net/npm/lucide-static@latest/icons/${name}.svg`;
 const APPS = [
   { label:'eSOA',               href:'esoa.html',     cls:'c-esoa',   icon: ic('receipt') },
   { label:'ICD-10',             href:'icd10.html',    cls:'c-icd',    icon: ic('stethoscope') },
@@ -187,7 +189,7 @@ const tiles = APPS.map(a => {
   const el = document.createElement('a');
   el.className = 'tile';
   el.href = a.href;
-  el.innerHTML = `<div class="icon ${a.cls}"><img src="${a.icon}" alt="${a.label}"></div><span class="label">${a.label}</span>`;
+  el.innerHTML = `<div class="icon ${a.cls}"><img src="${a.icon}" alt="${a.label}" onerror="this.style.display='none';this.parentElement.dataset.fallback='${a.label.slice(0,2)}'"></div><span class="label">${a.label}</span>`;
   stage.appendChild(el);
   return el;
 });
@@ -251,14 +253,14 @@ requestAnimationFrame(() => requestAnimationFrame(() => {
 let db, rtdb;
 const userId = localStorage.getItem("userId");
 const premium3dAssets = {
-  'avatar-m1':'https\://global.discourse-cdn.com/monzo/original/3X/8/6/866e6d84e8c756b19050fbe2ca0932858118614c.jpg',
-  'avatar-f1':'https\://i.pinimg.com/474x/0e/d0/0d/0ed00d2ea51a4a714536d9b5d103827d.jpg'
+  'avatar-m1':'https://global.discourse-cdn.com/monzo/original/3X/8/6/866e6d84e8c756b19050fbe2ca0932858118614c.jpg',
+  'avatar-f1':'https://i.pinimg.com/474x/0e/d0/0d/0ed00d2ea51a4a714536d9b5d103827d.jpg'
 };
 try {
   const app = initializeApp({
     apiKey:"AIzaSyDaeNQF4qmW0vvwxUPp_NztnT0hoLzm1BQ",
     authDomain:"svls-289ee.firebaseapp.com",
-    databaseURL:"https\://svls-289ee-default-rtdb.firebaseio.com",
+    databaseURL:"https://svls-289ee-default-rtdb.firebaseio.com",
     projectId:"svls-289ee",
     storageBucket:"svls-289ee.firebasestorage.app",
     messagingSenderId:"500705386198",
